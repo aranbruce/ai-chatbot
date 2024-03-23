@@ -18,7 +18,7 @@ export default function Chat() {
       <>
        {messages.length === 0 ? (
         <div className="bg-background flex flex-col gap-2 rounded-lg border p-8 shadow-md">
-          <h1 className="text-md font-semibold">Welcome to a demo AI Chatbot with function calling!</h1>
+          <h1 className="text-md font-semibold">Welcome to a demo AI chatbot with function calling!</h1>
           <p className="text-muted-foreground leading-normal">
             This is an demo chatbot app template that helps answer your chatbot perform functions like searching the web.
           </p>
@@ -54,7 +54,7 @@ export default function Chat() {
                   onChange={handleInputChange}
                   onKeyDown={(event) => handleKeyDown(event)}
                   placeholder="Send a message..."
-                  className="min-h-[60px] w-full resize-none bg-transparent px-4 py-1 focus-within:outline-none text-sm"
+                  className="w-full resize-none bg-transparent px-4 py-3 focus-within:outline-none text-md"
                   autoFocus
                   spellCheck="false"
                   autoComplete="off"
