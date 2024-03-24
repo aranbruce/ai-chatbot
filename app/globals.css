@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply overflow-y-hidden h-screen flex flex-col justify-start items-stretch;
+    @apply overflow-y-hidden h-svh flex flex-col justify-start items-stretch;
   }
   a {
     @apply focus-visible:rounded-sm focus-visible:outline-none ring-black focus-visible:ring-offset-2 focus-visible:ring-2;
