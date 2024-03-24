@@ -16,9 +16,6 @@
     @apply contents;
   }
   
-  .messages li {
-    @apply contents;
-  }
   .messages pre {
     @apply bg-gray-100 border p-4 rounded-lg max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm;
   }
