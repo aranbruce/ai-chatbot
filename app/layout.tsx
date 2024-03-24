@@ -1,6 +1,6 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
-import Image from 'next/image';
+import Button from './components/button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,9 +28,7 @@ export default function RootLayout({
             </div>
           </a>
           <div className="flex items-center justify-end space-x-2">
-            <a href="https://www.buymeacoffee.com/aranbc" target="_blank" className=" border inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90  px-3 py-2">
-              <span className="block">Buy me a coffee</span>
-            </a>
+            <Button href="https://www.buymeacoffee.com/aranbc">Buy me a coffee</Button>
           </div>
         </header>
         {children}

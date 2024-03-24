@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
   }
 
   // call brave API
-  const url = `https://api.search.brave.com/res/v1/web/search?q=${query}` +
+  const url = `https://api.search.brave.com/res/v1/news/search?q=${query}` +
     `&count=${count}` +
     (country ? `&country=${country}` : '') +
     (freshness ? `&freshness=${freshness}` : '') +
@@ -113,8 +113,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.json();
-    const results = data.web.results
-    return new Response(JSON.stringify(results), { status: 200 });
+    return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
     console.error('Error:', error);
     return new Response('Error occurred', { status: 500 });
