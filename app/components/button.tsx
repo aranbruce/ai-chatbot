@@ -4,9 +4,10 @@ interface ButtonProps {
   children: any;
   href?: string;
   disabled?: boolean;
+  ariaLabel?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ onClick, children, href, disabled }) => {
+const Button: React.FC<ButtonProps> = ({ onClick, children, href, disabled, ariaLabel }) => {
   return href ? (
     <a href={href} aria-disabled={disabled}
       className="
@@ -26,7 +27,7 @@ const Button: React.FC<ButtonProps> = ({ onClick, children, href, disabled }) =>
         
         focus-visible:outline-none
         focus-visible:ring-2
-        focus-visible:ring-black
+        focus-visible:ring-grey-800
         focus-visible:ring-offset-2 
         focus-visible:bg-gray-100
 
@@ -44,6 +45,7 @@ const Button: React.FC<ButtonProps> = ({ onClick, children, href, disabled }) =>
     <button 
       onClick={onClick} 
       disabled={disabled}
+      aria-label={ariaLabel} // Fixed the typo here
       className="
         border
         inline-flex

@@ -1,16 +1,19 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
+  body {
+    @apply overflow-y-hidden h-screen flex flex-col justify-start items-stretch;
+  }
   a {
-    @apply focus-visible:rounded-sm focus-visible:outline-none ring-black focus-visible:ring-offset-2 focus-visible:ring-2 focus-visible:ring-offset-2;
+    @apply focus-visible:rounded-sm focus-visible:outline-none ring-black focus-visible:ring-offset-2 focus-visible:ring-2;
   }
   .messages a {
     @apply text-black underline ;
   }
   .messages ol, .messages ul {
-    @apply flex flex-col gap-3;
+    @apply contents;
   }
   
   .messages li {
@@ -21,7 +24,3 @@
   }
 }
 
-/* max-width: 100%;
-  overflow-x: auto;
-  white-space: pre-wrap; /* Optional: breaks long lines and wraps them to the next line */
-  word-wrap: break-word; /* Optional: ensures long words don't cause overflow */

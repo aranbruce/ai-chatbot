@@ -3,6 +3,7 @@
 import { NextRequest } from "next/server"; 
 
 export async function GET(request: NextRequest) {
+  console.log('GET request received for web-search route')
 
   // get the parameters from the query string of the request
   const query = request.nextUrl.searchParams.get('query')
