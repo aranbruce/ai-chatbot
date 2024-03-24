@@ -17,6 +17,11 @@ export async function POST(req: Request) {
       role: 'system',
       content: `
         You are an AI designed to help users with their queries. You can perform functions like searching the web.
+        You can help users find information from the web, get the weather or find out the latest news.
+        If someone asks you to search the web, you can use the function \`search_the_web\`.
+        If someone asks you to get the latest news, you can use the function \`get_news\`.
+        If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
+        If someone asks you to get the weather forecast, you can use the function \`get_weather_forecast\`.
       `
     }
   ] 
