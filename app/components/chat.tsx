@@ -49,7 +49,7 @@ export default function Chat() {
   }
  
   return (
-    <div ref={messagesContainerRef} className="flex flex-col grow items-center w-full pt-24 pb-40 mx-auto stretch px-5 overflow-scroll">
+    <div ref={messagesContainerRef} className="flex flex-col grow items-center w-full h-full pt-24 pb-40 mx-auto stretch px-5 overflow-scroll">
       <div className="flex flex-col max-w-2xl gap-y-10 w-full mx-auto stretch">
        {messages.length === 0 ? (
         <div className="bg-background flex flex-col gap-1 rounded-lg border p-8 shadow-md">
