@@ -42,6 +42,21 @@ export default function Chat() {
     }
   }, [messages, scrollUser]);
 
+  const handleScrollToBottom = () => {
+    // Scroll to the bottom of the messages container smoothly
+    const current = messagesContainerRef.current;
+    if (current) {
+      current.scrollTo({
+        top: current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+    // once animation has finished, set scrollUser to true
+    setTimeout(() => {
+      setScrollUser(true);
+    }, 300);
+  }
+
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter' && !event.shiftKey && !isLoading) {
       handleSubmit(event);
@@ -77,14 +92,14 @@ export default function Chat() {
         ))
         )}
       </div>
-      {!scrollUser && 
-        <div className="fixed inset-x-0 bottom-32 w-full flex justify-center">
-          <Button onClick={() => setScrollUser(true)} ariaLabel={"Scroll to bottom"}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 13L12 18L7 13M12 6L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          </Button>
-        </div>
-      }
-      <div className="fixed inset-x-0 bottom-0 w-full flex justify-center">
+      <div className="fixed inset-x-0 bottom-0 w-full flex flex-col justify-center items-center">
+        {!scrollUser && 
+          <div className="relative inset-x-0 top-[-8px] w-full flex justify-center">
+            <Button onClick={() => {handleScrollToBottom()}} ariaLabel={"Scroll to bottom"}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 13L12 18L7 13M12 6L12 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+            </Button>
+          </div>
+        }
         <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl border bg-white">
           <form onSubmit={handleSubmit} className="relative">
             <div className="flex relative max-h-60 w-full grow flex-col pr-14 rounded-md border border-gray-200 focus-within:border-gray-800 transition">
@@ -96,8 +111,8 @@ export default function Chat() {
                 tabIndex={0}
                 autoFocus
                 spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
+                autoComplete="on"
+                autoCorrect="on"
                 ariaLabel="message"
               />
             </div>

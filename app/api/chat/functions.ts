@@ -190,11 +190,17 @@ export const functions: ChatCompletionCreateParams.Function[] = [
 
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
   try {
-    const response = await fetch(`${process.env.URL}/api/web-search?query=${query}` +
-      (country ? `&country=${country}` : '') +
-      (freshness ? `&freshness=${freshness}` : '') +
-      (units ? `&units=${units}` : ''),
-      {method: 'GET'});
+    let url = `${process.env.URL}/api/web-search?query=${query}`
+    if (country) {
+      url += `&country=${country}`
+    }
+    if (freshness) {
+      url += `&freshness=${freshness}`
+    }
+    if (units) {
+      url += `&units=${units}`
+    }
+    const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
@@ -204,11 +210,17 @@ async function search_the_web(query: string, country?: string, freshness?: strin
 
 async function get_news(query: string, country?: string, freshness?: string, units?: string) {
   try {
-    const response = await fetch(`${process.env.URL}/api/news-search?query=${query}` +
-      (country ? `&country=${country}` : '') +
-      (freshness ? `&freshness=${freshness}` : '') +
-      (units ? `&units=${units}` : ''),
-      {method: 'GET'});
+    let url = `${process.env.URL}/api/news-search?query=${query}`
+    if (country) {
+      url += `&country=${country}`
+    }
+    if (freshness) {
+      url += `&freshness=${freshness}`
+    }
+    if (units) {
+      url += `&units=${units}`
+    }
+    const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
@@ -217,10 +229,16 @@ async function get_news(query: string, country?: string, freshness?: string, uni
 }
 
 async function get_current_weather(query: string, units?: string) {
+  console.log('attempting to get current weather for:', query)
   try {
-    const response = await fetch(`${process.env.URL}/api/get-weather?query=${query}` +
-      (units ? `&units=${units}` : ''),
-      {method: 'GET'});
+    let url = `${process.env.URL}/api/current-weather?query=${query}`
+    if (units) {
+      url += `&units=${units}`
+    }
+    if (!query) {
+      return new Response('A search query is required', { status: 400 })
+    }
+    const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
@@ -230,11 +248,17 @@ async function get_current_weather(query: string, units?: string) {
 
 async function get_weather_forecast(query: string, units?: string, forecast_days?: number, interval?: string) {
   try {
-    const response = await fetch(`${process.env.URL}/api/weather-forecast?query=${query}` +
-      (units ? `&units=${units}` : '') +
-      (forecast_days ? `&forecast_days=${forecast_days}` : '') +
-      (interval ? `&interval=${interval}` : ''),
-      {method: 'GET'});
+    let url = `${process.env.URL}/api/weather-forecast?query=${query}`
+    if (units) {
+      url += `&units=${units}`
+    }
+    if (forecast_days) {
+      url += `&forecast_days=${forecast_days}`
+    }
+    if (interval) {
+      url += `&interval=${interval}`
+    }
+    const response = await fetch(url,{method: 'GET'});
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
