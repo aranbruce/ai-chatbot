@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         const result = await runFunction(name, args);
         const newMessages = createFunctionCallMessages(result);
         return openai.chat.completions.create({
-          model: "gpt-3.5-turbo-0125",
+          model: "gpt-4-0125-preview",
           stream: true,
           messages: [...messagesWithoutIds, ...newMessages],
         });
