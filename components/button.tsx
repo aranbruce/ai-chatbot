@@ -7,7 +7,7 @@ interface ButtonProps {
   ariaLabel?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ onClick, children, href, disabled, ariaLabel }) => {
+const Button = ({ onClick, children, href, disabled, ariaLabel }:ButtonProps) => {
   return href ? (
     <a href={href} aria-disabled={disabled}
       className="

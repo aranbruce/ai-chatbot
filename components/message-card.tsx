@@ -12,7 +12,7 @@ const Message = ({id, role, content}:MessageProps) => {
   return (
     role === "system" ? null : 
       (
-        <div key={id} className="messages whitespace-pre-wrap flex flex-row gap-3 items-start">
+        <div key={id} className="messages whitespace-pre-wrap flex flex-row gap-3 items-start last:pb-32">
           <div className="flex flex-row gap-4 items-center">
             <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-md border shadow-sm bg-background">
               {role === "user" ? (

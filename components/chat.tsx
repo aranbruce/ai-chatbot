@@ -32,30 +32,6 @@ export default function Chat() {
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const exampleMessages = [
-    {
-      heading: "UK Prime Minister",
-      subheading: 'Who is the prime minister of the UK',
-      message: "Who is the prime minister of the UK"
-    },
-    {
-      heading: "Weather",
-      subheading: 'What is the weather like in London',
-      message: "What is the weather like in London"
-    },
-    {
-      heading: "News",
-      subheading: 'Get the latest news about GenAI',
-      message: "Get the latest news about GenAI"
-    },
-    {
-      heading: "Search",
-      subheading: 'Search for the best AI tools this year',
-      message: "Search for the best AI tools this year"
-    }
-
-  ]
-
   useEffect(() => {
     const handleScroll = () => {
       const current = messagesContainerRef.current;
@@ -99,7 +75,7 @@ export default function Chat() {
     }, 500);
   }
 
-  const handleSuggesstionClick = async (suggestion: string) => {
+  const handleExampleClick = async (suggestion: string) => {
     const userMessage = {
       id: uuidv4(),
       role: 'user',
@@ -140,28 +116,10 @@ export default function Chat() {
     };
   
   return (
-    <div ref={messagesContainerRef} className="flex flex-col grow items-center w-full h-full pt-24 pb-40 mx-auto stretch px-5 overflow-scroll">
-      <div className="flex flex-col max-w-2xl gap-y-10 w-full mx-auto stretch">
+    <div ref={messagesContainerRef} className="flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
+      <div className="flex flex-col min-h-full max-w-2xl gap-y-10 w-full mx-auto stretch">
         {messages.filter(message => message.role === 'user' || message.role === 'assistant').length === 0 ? (
-          <>
-            <EmptyScreen />
-            <div className="mb-4 grid grid-cols-2 gap-2 px-4 sm:px-0">
-              {exampleMessages.map((example, index) => (
-                <div
-                  key={example.heading}
-                  className={`cursor-pointer rounded-lg border bg-white p-4 hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900 ${
-                    index > 1 && 'hidden md:block'
-                  }`}
-                  onClick={() => handleSuggesstionClick(example.message)}
-                >
-                  <div className="text-sm font-semibold">{example.heading}</div>
-                  <div className="text-sm text-zinc-600">
-                    {example.subheading}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+          <EmptyScreen handleExampleClick={handleExampleClick}/>
         ) : (
           messages.map(message => (
             <MessageCard key={message.id} id={message.id} role={message.role} content={message.content}/>
