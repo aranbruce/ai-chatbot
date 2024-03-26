@@ -28,7 +28,6 @@ const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, 
 
   return (
     <textarea
-      ref={textareaRef}
       className="w-full resize-none bg-transparent px-4 py-3 outline-none text-md"
       rows={1}
       inputMode={"text"}
