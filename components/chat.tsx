@@ -10,7 +10,7 @@ import MessageCard from '@/components/message-card';
  
 
 export default function Chat() {
-  const { messages, setMessages, input, setInput, isLoading, handleInputChange, handleSubmit } = useChat({
+  const { messages, setMessages, input, isLoading, handleInputChange, handleSubmit } = useChat({
     initialMessages: [
       {
         id: uuidv4(),
@@ -26,6 +26,8 @@ export default function Chat() {
       }
     ] as Message[],
   });
+
+  const [isResponseLoading, setIsResponseLoading] = useState(false);
   const [scrollUser, setScrollUser] = useState(true);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -105,17 +107,17 @@ export default function Chat() {
     };
     const updatedMessages = [...messages, userMessage] as Message[];
     setMessages(updatedMessages);
+    setIsResponseLoading(true);
 
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ messages: updatedMessages }),
-      });
-      const reader = response.body?.getReader();
-      let responseText = "";
-
+      },
+      body: JSON.stringify({ messages: updatedMessages }),
+    });
+    const reader = response.body?.getReader();
+    let responseText = "";
       while (true) {
         if (reader) {
           const { done, value } = await reader.read();
@@ -133,8 +135,9 @@ export default function Chat() {
           ]);
         }
       }
-    return responseText;
-  };
+      setIsResponseLoading(false);
+      return responseText;
+    };
   
   return (
     <div ref={messagesContainerRef} className="flex flex-col grow items-center w-full h-full pt-24 pb-40 mx-auto stretch px-5 overflow-scroll">
@@ -167,7 +170,7 @@ export default function Chat() {
       </div>
       <PromptForm
         input={input}
-        isLoading={isLoading}
+        isLoading={isLoading || isResponseLoading}
         scrollUser={scrollUser}
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
