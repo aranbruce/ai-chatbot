@@ -22,6 +22,8 @@ export default function Chat() {
           If someone asks you to get the latest news, you can use the function \`get_news\`.
           If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
           If someone asks you to get the weather forecast, you can use the function \`get_weather_forecast\`.
+          If someone asks you to search for gifs, you can use the function \`search_for_gifs\`.
+          For gifs try to display the image as markdown and provide a link to the source with a title for the gif.
         `
       }
     ] as Message[],

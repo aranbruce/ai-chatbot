@@ -4,23 +4,23 @@ interface EmptyScreenProps {
 
 const exampleMessages = [
   {
-    heading: "UK Prime Minister",
-    subheading: 'Who is the prime minister of the UK',
-    message: "Who is the prime minister of the UK"
+    heading: "Sassy gifs",
+    subheading: "Show me some sassy gifs",
+    message: "Show me some sassy gifs"
   },
   {
     heading: "Weather",
-    subheading: 'What is the weather like in London',
-    message: "What is the weather like in London"
+    subheading: "What is the weather like in London?",
+    message: "What is the weather like in London?"
   },
   {
     heading: "News",
-    subheading: 'Get the latest news about GenAI',
+    subheading: "Get the latest news about GenAI",
     message: "Get the latest news about GenAI"
   },
   {
     heading: "Search",
-    subheading: 'Search for the best AI tools this year',
+    subheading: "Search for the best AI tools this year",
     message: "Search for the best AI tools this year"
   }
 ]
@@ -41,7 +41,7 @@ const EmptyScreen = ({handleExampleClick}:EmptyScreenProps) => {
           <div
             key={example.heading}
             className={`cursor-pointer rounded-lg border bg-white p-4 hover:bg-gray-100 ${
-              index > 1 && 'hidden md:block'
+              index > 1 && "hidden md:block"
             }`}
             onClick={() => handleExampleClick(example.message)}
           >

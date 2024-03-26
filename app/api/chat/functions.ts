@@ -185,7 +185,22 @@ export const functions: ChatCompletionCreateParams.Function[] = [
       },
       required: ["query"],
     },
-  }
+  },
+  {
+    name: "search_for_gifs",
+    description:
+      "Get popular gifs from giphy.com based on a search query",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "The search query to search for gifs",
+        },
+      },
+      required: ["query"],
+    }
+  },
 ];
 
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
@@ -229,7 +244,6 @@ async function get_news(query: string, country?: string, freshness?: string, uni
 }
 
 async function get_current_weather(query: string, units?: string) {
-  console.log('attempting to get current weather for:', query)
   try {
     let url = `${process.env.URL}/api/current-weather?query=${query}`
     if (units) {
@@ -266,6 +280,17 @@ async function get_weather_forecast(query: string, units?: string, forecast_days
   }
 }
 
+async function search_for_gifs(query: string) {
+  try {
+    const url = `${process.env.URL}/api/gifs?query=${query}`;
+    const response = await fetch(url, {method: "GET"});
+    return await response.json();
+  } catch (error) {
+    console.error("error: ", error);
+    return null;
+  }
+}
+
 export async function runFunction(name: string, args: any) {
   switch (name) {
     case "search_the_web":
@@ -276,6 +301,8 @@ export async function runFunction(name: string, args: any) {
       return await get_current_weather(args["query"], args["units"]);
     case "get_weather_forecast":
       return await get_weather_forecast(args["query"], args["units"], args["forecast_days"], args["interval"]);
+    case "search_for_gifs":
+      return await search_for_gifs(args["query"]);
     default:
       return null;
   }
