@@ -20,8 +20,8 @@ const exampleMessages = [
   },
   {
     heading: "Search",
-    subheading: "Search for the best AI tools this year",
-    message: "Search for the best AI tools this year"
+    subheading: "Search for the best AI tools this week",
+    message: "Search for the best AI tools this week"
   }
 ]
 
@@ -38,9 +38,10 @@ const EmptyScreen = ({handleExampleClick}:EmptyScreenProps) => {
       </div>
       <div className="mb-4 grid grid-cols-2 gap-2 px-4 sm:px-0">
         {exampleMessages.map((example, index) => (
-          <div
+          <button
             key={example.heading}
-            className={`cursor-pointer rounded-lg border bg-white p-4 hover:bg-gray-100 ${
+            className={`transition cursor-pointer rounded-lg border bg-white p-4 hover:border-gray-500 active:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:border-gray-500
+            text-left ${
               index > 1 && "hidden md:block"
             }`}
             onClick={() => handleExampleClick(example.message)}
@@ -49,7 +50,7 @@ const EmptyScreen = ({handleExampleClick}:EmptyScreenProps) => {
             <div className="text-sm text-zinc-600">
               {example.subheading}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
