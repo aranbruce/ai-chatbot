@@ -17,17 +17,21 @@ const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      let lineHeight = parseFloat(getComputedStyle(textareaRef.current).lineHeight);
+      if (isNaN(lineHeight)) {
+        // Fallback value when lineHeight is "normal"
+        lineHeight = parseFloat(getComputedStyle(textareaRef.current).fontSize) * 1.2;
+      }
       const maxHeight = lineHeight * 5;
-      textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 2 + "px";
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxHeight) + 2 + "px";
     }
   }, [value]);
 
   return (
     <textarea
+      ref={textareaRef}
       className="w-full resize-none bg-transparent px-4 py-3 outline-none text-md"
       rows={1}
       inputMode={"text"}
