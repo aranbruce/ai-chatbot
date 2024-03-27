@@ -19,6 +19,10 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
   const formRef = useRef<HTMLFormElement>(null);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isLoading && event.key === 'Enter') {
+      event.preventDefault();
+      return;
+    };
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       formRef.current?.dispatchEvent(new Event('submit', { bubbles: true }));
