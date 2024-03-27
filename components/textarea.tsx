@@ -18,14 +18,14 @@ const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, 
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.minHeight = "auto";
       let lineHeight = parseFloat(getComputedStyle(textareaRef.current).lineHeight);
       if (isNaN(lineHeight)) {
         // Fallback value when lineHeight is "normal"
         lineHeight = parseFloat(getComputedStyle(textareaRef.current).fontSize) * 1.2;
       }
       const maxHeight = lineHeight * 5;
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxHeight) + 2 + "px";
+      textareaRef.current.style.minHeight = Math.min(textareaRef.current.scrollHeight, maxHeight) + 2 + "px";
     }
   }, [value]);
 
