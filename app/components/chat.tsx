@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useChat, Message } from 'ai/react';
 import { v4 as uuidv4 } from 'uuid';
 
-import PromptForm from '@/components/prompt-form';
-import EmptyScreen from '@/components/empty-screen';
-import MessageCard from '@/components/message-card';
+import PromptForm from '../components/prompt-form';
+import EmptyScreen from '../components/empty-screen';
+import MessageCard from '../components/message-card';
  
 
 export default function Chat() {
@@ -118,7 +118,7 @@ export default function Chat() {
     };
   
   return (
-    <div ref={messagesContainerRef} className="flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
+    <div ref={messagesContainerRef} className="bg-white flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
       <div className="flex flex-col min-h-full max-w-2xl gap-y-10 w-full mx-auto stretch">
         {messages.filter(message => message.role === 'user' || message.role === 'assistant').length === 0 ? (
           <EmptyScreen handleExampleClick={handleExampleClick}/>

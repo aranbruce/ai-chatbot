@@ -16,23 +16,20 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded }:Button
 
         text-sm
         text-primary-foreground
-        font-medium
+        font-medium 
         
         transition
         
-        focus-visible:outline-none
+        focus-visible:border-gray-400
         focus-visible:ring-2
-        focus-visible:ring-grey-400 
-        focus-visible:ring-offset-2 
-      focus-visible:bg-white
-      focus-visible:border-gray-500
-        
+        focus-visible:ring-gray-200
 
         disabled:pointer-events-none 
         disabled:opacity-50 
 
         bg-white 
-        hover:border-gray-500
+        hover:border-gray-400
+        hover:shadow-md
         active:bg-gray-100
         `}
       >
@@ -52,18 +49,17 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded }:Button
         
         transition
         
-        focus-visible:outline-none
-        focus-visible:ring-2
-      focus-visible:ring-gray-900
-        focus-visible:ring-offset-2 
-      focus-visible:bg-white
-      focus-visible:border-gray-500
+      focus-visible:border-gray-400
+      focus-visible:ring-2
+      focus-visible:ring-gray-200
+
 
         disabled:pointer-events-none 
         disabled:opacity-50 
 
         bg-white 
         hover:border-gray-500
+        hover:shadow-md
         active:bg-gray-100
       `}
       >

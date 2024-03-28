@@ -1,6 +1,6 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
-import Button from '@/components/button';
+import Button from './components/button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,7 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <header className="sticky top-0 z-50 flex h-fit w-full shrink-0 items-center justify-between border-b bg-white px-4 py-2">
-          <a href="/">
+          <a href="/" className="focus-visible:rounded-sm focus-visible:ring-gray-400 focus-visible:ring-2 focus-visible:ring-offset-2">
             <div className="font-bold text-lg flex gap-x-0.5">
               Chatbot
               <svg viewBox="0 0 14 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 inline mr-0 w-4 mb-0.5">

@@ -2,8 +2,8 @@ import { useRef } from 'react';
 
 // import { useChat } from 'ai/react';
 
-import Textarea from '@/components/textarea';
-import Button from '@/components/button';
+import Textarea from '../components/textarea';
+import Button from '../components/button';
 import Image from 'next/image';
 
 interface PromptFormProps {
@@ -40,7 +40,7 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
         }
       <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl border bg-white">
         <form ref={formRef} onSubmit={handleSubmit} className="relative">
-          <div className="flex relative max-h-60 w-full grow flex-col rounded-md border border-gray-200 focus-within:border-gray-900 focus-within:ring-gray-900 focus-within:ring-2 focus-within:ring-offset-2 transition">
+          <div className="flex relative max-h-60 w-full grow flex-col rounded-md border border-gray-200 focus-within:border-gray-400 focus-within:shadow-md transition">
             <Textarea
               placeholder="Send a message..."
               value={input}
@@ -64,7 +64,7 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
             </Button>
           </div>
         </form>
-        <p className="text-xs  text-center text-gray-500">This chatbot can make mistakes. Consider checking important information.</p>
+        <p className="text-xs text-center text-zinc-500">This chatbot can make mistakes. Consider checking important information.</p>
       </div>
     </div>
   )

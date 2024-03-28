@@ -6,20 +6,24 @@
   body {
     @apply overflow-y-hidden h-svh flex flex-col justify-start items-stretch;
   }
-  a {
-    @apply focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-2;
+  * {
+    @apply focus-visible:outline-none;
   }
+
   .messages a {
-    @apply text-black underline ;
+    @apply text-black underline focus-visible:rounded-sm focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-2;
   }
-  .messages ol, .messages ul {
+
+  .messages ol,
+  .messages ul {
     @apply contents;
   }
 
-  .messages ol > *, .messages ul > * {
+  .messages ol > *,
+  .messages ul > * {
     @apply contents;
   }
-  
+
   .messages pre {
     @apply bg-gray-800 text-gray-100 border p-4 rounded-lg max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm;
   }
@@ -28,4 +32,3 @@
     @apply contents;
   }
 }
-
