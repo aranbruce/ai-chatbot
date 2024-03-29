@@ -197,8 +197,32 @@ export const functions: ChatCompletionCreateParams.Function[] = [
           type: "string",
           description: "The search query to search for gifs",
         },
+        limit: {
+          type: "number",
+          description: "The number of gifs to return specified as an integer (int32) ranging from 1 to 50",
+        },
+        rating: {
+          type: "string",
+          description: "The rating of the gifs to return. The rating string is limited to g, pg, pg-13 or r. If no rating is specified results will be returned for all audiences.",
+          enum: ["g", "pg", "pg-13", "r"],
+        },
       },
       required: ["query"],
+    }
+  },
+  {
+    name: "search_for_movies",
+    description:
+      "Get movies from a database based on an input",
+    parameters: {
+      type: "object",
+      properties: {
+        input: {
+          type: "string",
+          description: "The input used to search for movies",
+        },
+      },
+      required: ["input"],
     }
   },
 ];
@@ -280,9 +304,26 @@ async function get_weather_forecast(query: string, units?: string, forecast_days
   }
 }
 
-async function search_for_gifs(query: string) {
+async function search_for_gifs(query: string, limit?: number, rating?: string) {
   try {
-    const url = `${process.env.URL}/api/gifs?query=${query}`;
+    let url = `${process.env.URL}/api/gifs?query=${query}`;
+    if (limit) {
+      url += `&limit=${limit}`
+    }
+    if (rating) {
+      url += `&rating=${rating}`
+    }
+    const response = await fetch(url, {method: "GET"});
+    return await response.json();
+  } catch (error) {
+    console.error("error: ", error);
+    return null;
+  }
+}
+
+async function search_for_movies(input: string) {
+  try {
+    let url = `${process.env.URL}/api/movies-vector-db?input=${input}`;
     const response = await fetch(url, {method: "GET"});
     return await response.json();
   } catch (error) {
@@ -303,6 +344,8 @@ export async function runFunction(name: string, args: any) {
       return await get_weather_forecast(args["query"], args["units"], args["forecast_days"], args["interval"]);
     case "search_for_gifs":
       return await search_for_gifs(args["query"]);
+    case "search_for_movies":
+      return await search_for_movies(args["input"]);
     default:
       return null;
   }

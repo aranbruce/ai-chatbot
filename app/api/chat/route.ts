@@ -1,11 +1,18 @@
 import OpenAI from 'openai';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 import { functions, runFunction } from "./functions";
+import { Pinecone } from '@pinecone-database/pinecone';
 
 // Create an OpenAI API client (that's edge friendly!)
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || "",
 });
+
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY || ""
+});
+
+const index = pc.index("sample-movies")
 
 // IMPORTANT! Set the runtime to edge
 export const runtime = 'edge';

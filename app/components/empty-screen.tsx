@@ -19,9 +19,9 @@ const exampleMessages = [
     message: "Get the latest news about GenAI"
   },
   {
-    heading: "Search",
-    subheading: "Search for the best AI tools this week",
-    message: "Search for the best AI tools this week"
+    heading: "Action movies",
+    subheading: "What are some great action movies?",
+    message: "What are some great action movies?"
   }
 ]
 
