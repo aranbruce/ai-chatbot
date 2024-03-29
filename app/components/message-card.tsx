@@ -17,9 +17,9 @@ const Message = ({id, role, content}:MessageProps) => {
             <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-md border shadow-sm bg-background">
               {role === "user" ? (
                 <Image src={"./icons/user-avatar.svg"} alt="user avatar" height={16} width={16}/>
-                ) : role !== "user" ? (
+                ) : (
                 <Image src={"./icons/ai-avatar.svg"} alt="ai avatar" height={16} width={16}/>
-                ) : null
+                )
               }
             </div>
           </div>
