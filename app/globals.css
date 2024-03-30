@@ -24,6 +24,11 @@
     @apply contents;
   }
 
+  .message ol li,
+  ul li {
+    @apply list-item;
+  }
+
   .messages pre {
     @apply bg-gray-800 text-gray-100 border p-4 rounded-lg max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm;
   }
