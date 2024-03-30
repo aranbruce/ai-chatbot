@@ -219,11 +219,31 @@ export const functions: ChatCompletionCreateParams.Function[] = [
       properties: {
         input: {
           type: "string",
-          description: "The input used to search for movies",
+          description: "A description of the type of movies to search for",
+        },
+        minimumIMDBRating: {
+          type: "number",
+          description: "The minimum IMDB rating of the movies to return",
+        },
+        minimumReleaseYear: {
+          type: "number",
+          description: "The minimum release year of the movies to return",
+        },
+        maximumReleaseYear: {
+          type: "number",
+          description: "The maximum release year of the movies to return",
+        },
+        director: {
+          type: "string",
+          description: "The director of the movies to return",
+        },
+        limit: {
+          type: "number",
+          description: "The number of movies to return specified as an integer (int32) ranging from 1 to 50. If no limit is specified, the default limit is 10.",
         },
       },
       required: ["input"],
-    }
+    },
   },
 ];
 
@@ -321,9 +341,25 @@ async function search_for_gifs(query: string, limit?: number, rating?: string) {
   }
 }
 
-async function search_for_movies(input: string) {
+async function search_for_movies(input: string, minimumIMDBRating?: number, minimumReleaseYear?: number, maximumReleaseYear?: number, director?: string, limit?: number) {
   try {
     let url = `${process.env.URL}/api/movies-vector-db?input=${input}`;
+    if (minimumIMDBRating) {
+      url += `&minimumIMDBRating=${minimumIMDBRating}`
+    }
+    if (minimumReleaseYear) {
+      url += `&minimumReleaseYear=${minimumReleaseYear}`
+    }
+    if (maximumReleaseYear) {
+      url += `&maximumReleaseYear=${maximumReleaseYear}`
+    }
+    if (limit) {
+      url += `&limit=${limit}`
+    }
+    if (director) {
+      url += `&director=${director}`
+    }
+
     const response = await fetch(url, {method: "GET"});
     return await response.json();
   } catch (error) {
@@ -345,7 +381,7 @@ export async function runFunction(name: string, args: any) {
     case "search_for_gifs":
       return await search_for_gifs(args["query"]);
     case "search_for_movies":
-      return await search_for_movies(args["input"]);
+      return await search_for_movies(args["input"], args["minimumIMDBRating"], args["minimumReleaseYear"], args["maximumReleaseYear"], args["director"], args["limit"]);
     default:
       return null;
   }
