@@ -24,8 +24,8 @@
     @apply contents;
   }
 
-  .message ol li,
-  ul li {
+  .message ol > li,
+  ul > li {
     @apply list-item;
   }
 
