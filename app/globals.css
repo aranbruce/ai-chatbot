@@ -19,10 +19,10 @@
     @apply contents;
   }
 
-  .messages ol > *,
+  /* .messages ol > *,
   .messages ul > * {
     @apply contents;
-  }
+  } */
 
   .message ol > li,
   ul > li {
