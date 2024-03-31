@@ -1,6 +1,6 @@
-// import ReactMarkdown from 'react-markdown';
-import Markdown from 'react-markdown'
-
+import Markdown from "react-markdown"
+import {Prism as SyntaxHighlighter} from "react-syntax-highlighter"
+import {vscDarkPlus} from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 interface MessageProps {
   id: string;
@@ -8,12 +8,11 @@ interface MessageProps {
   content: string;
 }
 
-
 const Message = ({id, role, content}:MessageProps) => {
   return (
     role === "system" ? null : 
       (
-        <div key={id} className="messages whitespace-pre-wrap flex flex-row gap-3 items-start last:pb-40">
+        <div key={id} className="messages whitespace-pre-wrap flex flex-row gap-3 items-start last:pb-52">
           <div className="flex flex-row gap-4 items-center">
             <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-md text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 shadow-sm">
               {role === "user" ? (
@@ -31,44 +30,62 @@ const Message = ({id, role, content}:MessageProps) => {
             </div>
           </div>
           <div className="flex gap-2 flex-col max-w-full">
-            <h5 className="text-md text-zinc-950 dark:text-zinc-300 font-semibold pt-1">{role === 'user' ? "You" : "Chatbot"}</h5>
+            <h5 className="text-md text-zinc-950 dark:text-zinc-300 font-semibold pt-1">{role === "user" ? "You" : "Chatbot"}</h5>
             <div className="text-zinc-950 dark:text-zinc-300 flex flex-col gap-4">
-              {/* <ReactMarkdown>{content}</ReactMarkdown> */}
               <Markdown
+                children={content}
                 components={{
                   // Map `h1` (`# heading`) to use `h2`s.
-                  h1: 'h2',
+                  h1: "h2",
                   ol(props) {
                     const {node, ...rest} = props
                     return <ol className="flex flex-wrap gap-4" {...rest} />
                   },
                   ul(props) {
                     const {node, ...rest} = props
-                    return <ul className="flex flex-wrap gap-2" {...rest} />
+                    return <ul className="flex flex-wrap gap-4" {...rest} />
                   },
                   li(props) {
                     const {node, ...rest} = props
-                    return <li className="flex flex-wrap" {...rest} />
+                    return <span className="" {...rest} />
                   },
                   a(props) {
                     const {node, ...rest} = props
                     return <a target="_blank" rel="noopener noreferrer" className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2" {...rest} />
                   },
-                  pre(props) {
-                    const {node, ...rest} = props
-                    return (
-                      <div className="flex flex-col relative bg-zinc-900 text-zinc-100 text-xs border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
-                        <div className="flex items-center relative bg-zinc-700 px-4 py-2 text-xs">Code</div>
-                        <pre className="bg-zinc-800 dark:bg-zinc-90  dark:border-zinc-800 p-4 max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm" {...rest} />
+                  code(props) {
+                    const {children, className, node, ...rest} = props
+                    const match = /language-(\w+)/.exec(className || "")
+                    const language = match ? match[1] : "text"
+                    const capitalizedLanguage = language.charAt(0).toUpperCase() + language.slice(1).toLowerCase();
+                    return match ? (
+                      <div className="flex flex-col text-zinc-200 rounded-md overflow-hidden bg-zinc-900 border border-zinc-300 dark:border-zinc-800">
+                        <div className="flex justify-between relative bg-zinc-700 text-zinc:600 px-4 py-2 text-xs">
+                          <div>{capitalizedLanguage}</div>
+                          <button onClick={() => navigator.clipboard.writeText(String(children))}>
+                            Copy
+                          </button>
+                        </div>
+                        <SyntaxHighlighter
+                          PreTag="div"
+                          language={language} 
+                          style={vscDarkPlus}
+                          customStyle={{margin: "0", background: "none"}}
+                          children={String(children).replace(/\n$/, '')}
+                        />
                       </div>
+                    ) : (
+                      <code {...rest} className="text-sm font-semibold">
+                        {children}
+                      </code>
                     )
                   },
-                  br(props) { 
-                    const {node, ...rest} = props
-                    return <br className="" {...rest} />
-                  },
+                  // br(props) { 
+                  //   const {node, ...rest} = props
+                  //   return <br className="" {...rest} />
+                  // },
                 }}
-              >{content}</Markdown>
+              />
             </div>
           </div>
         </div>

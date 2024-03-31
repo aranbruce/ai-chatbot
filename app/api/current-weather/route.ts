@@ -3,36 +3,68 @@ import { NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
   console.log('GET request received for current-weather route')
 
-  // get the parameters from the query string of the request
-  const query = request.nextUrl.searchParams.get('query')
-  let units = request.nextUrl.searchParams.get('units')
+  // get the parameters from the location in the request
+  const location = request.nextUrl.searchParams.get('location')
+  const units = request.nextUrl.searchParams.get('units')
 
-  console.log('query:', query)
-
-  if (!query) {
-    return new Response('A search query is required', { status: 400 })
+  if (!location) {
+    return new Response('A location is required', { status: 400 })
   }
   
   if (units && !['metric', 'imperial'].includes(units)) {
     return new Response('Invalid units parameter', { status: 400 })
-  } else if (units === "metric") {
-    units = 'm'
-  } else if (units === "imperial") {
-    units = 'f'
   }
 
-  // call weatherstack API
-  let url = `http://api.weatherstack.com/current?access_key=${process.env.WEATHER_API_KEY}&query=${query}`;
-  if (units) {
-    url += `&units=${units}`;
+  // Get the longitude and latitude from the location
+  const getCoordinates = async (query: string) => {
+    try {
+      let url = `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`;
+      const headers = {
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+      };
+      const response = await fetch(url, {
+        method: "GET",
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const latitude: number = data[0].lat;
+      const longitude: number = data[0].lon;
+      return { 
+        latitude: latitude,
+        longitude: longitude 
+      };
+
+    } catch (error) {
+      console.error('Error:', error);
+      return new Response('Error occurred', { status: 500 });
+    }
   }
 
-  const headers = {
-    "Accept": "application/json",
-    "Accept-Encoding": "gzip",
-  };
+  // call OpenWeather API using the location
+  const coordinates = await getCoordinates(location);
 
-  try {
+  try {    
+    if (typeof coordinates !== 'object' || coordinates === null || !('latitude' in coordinates) || !('longitude' in coordinates)) {
+      return new Response('Invalid location', { status: 400 });
+    }
+
+    let url = `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}`;
+    
+    if (units) {
+      url += `&units=${units}`;
+    }
+
+    const headers = {
+      "Accept": "application/json",
+      "Accept-Encoding": "gzip",
+    };
+
     const res = await fetch(url, {
       method: "GET",
       headers: headers
@@ -40,8 +72,7 @@ export async function GET(request: NextRequest) {
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    const data = await res.json();
-    const response = data.current;
+    const response = await res.json();
     return new Response(JSON.stringify(response), { status: 200 });
   } catch (error) {
     console.error('Error:', error);

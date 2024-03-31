@@ -21,7 +21,7 @@ export default function Chat() {
           If someone asks you to search the web, you can use the function \`search_the_web\`.
           If someone asks you to get the latest news, you can use the function \`get_news\`.
           If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
-          If someone asks you to get the weather forecast, you can use the function \`get_weather_forecast\`.
+          If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
           If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
           If someone asks a question about movies, you can use the function \`search_for_movies\`.
           For gifs try to display the image as markdown and provide a link to the source with a title for the gif.

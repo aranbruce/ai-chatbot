@@ -144,7 +144,7 @@ export const functions: ChatCompletionCreateParams.Function[] = [
     parameters: {
       type: "object",
       properties: {
-        query: {
+        location: {
           type: "string",
           description: "The place or location to search for the current weather",
         },
@@ -154,7 +154,7 @@ export const functions: ChatCompletionCreateParams.Function[] = [
           enum: ["metric", "imperial"],
         }
       },
-      required: ["query"],
+      required: ["location"],
     },
   },
   {
@@ -164,7 +164,7 @@ export const functions: ChatCompletionCreateParams.Function[] = [
     parameters: {
       type: "object",
       properties: {
-        query: {
+        location: {
           type: "string",
           description: "The place or location to search for the weather forecast",
         },
@@ -177,13 +177,8 @@ export const functions: ChatCompletionCreateParams.Function[] = [
           type: "number",
           description: "The number of days to forecast the weather for",
         },
-        interval: {
-          type: "string",
-          description: "The interval of the weather forecast data. The interval string is limited to hourly, every three hours, every six hours, every twelve hours and daily.",
-          enum: ["hourly", "every-three-hours", "every-six-hours", "every-twelve-hours", "daily"],
-        }
       },
-      required: ["query"],
+      required: ["location"],
     },
   },
   {
@@ -287,13 +282,13 @@ async function get_news(query: string, country?: string, freshness?: string, uni
   }
 }
 
-async function get_current_weather(query: string, units?: string) {
+async function get_current_weather(location: string, units?: string) {
   try {
-    let url = `${process.env.URL}/api/current-weather?query=${query}`
+    let url = `${process.env.URL}/api/current-weather?location=${location}`
     if (units) {
       url += `&units=${units}`
     }
-    if (!query) {
+    if (!location) {
       return new Response('A search query is required', { status: 400 })
     }
     const response = await fetch(url, {method: 'GET'});
@@ -304,17 +299,14 @@ async function get_current_weather(query: string, units?: string) {
   }
 }
 
-async function get_weather_forecast(query: string, units?: string, forecast_days?: number, interval?: string) {
+async function get_weather_forecast(location: string, units?: string, forecast_days?: number) {
   try {
-    let url = `${process.env.URL}/api/weather-forecast?query=${query}`
+    let url = `${process.env.URL}/api/weather-forecast?location=${location}`
     if (units) {
       url += `&units=${units}`
     }
     if (forecast_days) {
       url += `&forecast_days=${forecast_days}`
-    }
-    if (interval) {
-      url += `&interval=${interval}`
     }
     const response = await fetch(url,{method: 'GET'});
     return await response.json();
@@ -375,9 +367,9 @@ export async function runFunction(name: string, args: any) {
     case "get_news":
       return await get_news(args["query"], args["country"], args["freshness"], args["units"]);
     case "get_current_weather":
-      return await get_current_weather(args["query"], args["units"]);
+      return await get_current_weather(args["location"], args["units"]);
     case "get_weather_forecast":
-      return await get_weather_forecast(args["query"], args["units"], args["forecast_days"], args["interval"]);
+      return await get_weather_forecast(args["location"], args["units"], args["forecast_days"]);
     case "search_for_gifs":
       return await search_for_gifs(args["query"]);
     case "search_for_movies":
