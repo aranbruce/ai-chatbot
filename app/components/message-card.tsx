@@ -37,17 +37,29 @@ const Message = ({id, role, content}:MessageProps) => {
                 components={{
                   // Map `h1` (`# heading`) to use `h2`s.
                   h1: "h2",
+                  h2 (props) {
+                    const {node, ...rest} = props
+                    return <h2 className="text-xl font-semibold" {...rest} />
+                  },
+                  h3 (props) {
+                    const {node, ...rest} = props
+                    return <h3 className="text-lg font-semibold" {...rest} />
+                  },
+                  h4 (props) {
+                    const {node, ...rest} = props
+                    return <h4 className="text-md font-semibold" {...rest} />
+                  },
                   ol(props) {
                     const {node, ...rest} = props
-                    return <ol className="flex flex-wrap gap-4" {...rest} />
+                    return <ol className="flex flex-col flex-wrap gap-4" {...rest} />
                   },
                   ul(props) {
                     const {node, ...rest} = props
-                    return <ul className="flex flex-wrap gap-4" {...rest} />
+                    return <ul className="flex flex-col flex-wrap gap-4" {...rest} />
                   },
                   li(props) {
                     const {node, ...rest} = props
-                    return <span className="" {...rest} />
+                    return <li className="" {...rest} />
                   },
                   a(props) {
                     const {node, ...rest} = props
