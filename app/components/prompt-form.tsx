@@ -38,9 +38,9 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
             </Button>
           </div>
         }
-      <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl border bg-white">
+      <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl md:border border-t md:border-b-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
         <form ref={formRef} onSubmit={handleSubmit} className="relative">
-          <div className="flex relative max-h-60 w-full grow flex-col rounded-md border border-gray-200 focus-within:border-gray-400 focus-within:shadow-md transition">
+          <div className="flex relative max-h-60 w-full grow flex-col rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 focus-within:border-zinc-500 focus-within:dark:border-zinc-400 focus-within:shadow-md transition">
             <Textarea
               placeholder="Send a message..."
               value={input}
@@ -57,14 +57,16 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
           <div className="absolute top-2 right-3">
             <Button disabled={isLoading} ariaLabel='Send message'>
             {isLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-black"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-zinc-950 dark:border-zinc-100"></div>
               ) : (
-                <Image src={"/icons/submit.svg"} height={16} width={16} alt={"submission icon"}/>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" className="h-4 w-4">
+                  <path d="M200 32v144a8 8 0 0 1-8 8H67.31l34.35 34.34a8 8 0 0 1-11.32 11.32l-48-48a8 8 0 0 1 0-11.32l48-48a8 8 0 0 1 11.32 11.32L67.31 168H184V32a8 8 0 0 1 16 0Z"></path>
+                </svg>
               )} 
             </Button>
           </div>
         </form>
-        <p className="text-xs text-center text-zinc-500">This chatbot can make mistakes. Consider checking important information.</p>
+        <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">This chatbot can make mistakes. Consider checking important information.</p>
       </div>
     </div>
   )

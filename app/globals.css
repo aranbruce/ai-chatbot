@@ -11,7 +11,7 @@
   }
 
   .messages a {
-    @apply text-black underline focus-visible:rounded-sm focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-2;
+    @apply text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2;
   }
 
   .messages ol,
@@ -29,8 +29,13 @@
     @apply list-item;
   }
 
+  .message ol > li > *,
+  ul > li > * {
+    @apply contents;
+  }
+
   .messages pre {
-    @apply bg-gray-800 text-gray-100 border p-4 rounded-lg max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm;
+    @apply bg-zinc-800 dark:bg-zinc-900 text-zinc-100 border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm;
   }
 
   .messages > code {
