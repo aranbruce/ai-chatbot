@@ -14,7 +14,7 @@ const Header = () => {
         </div>
       </a>
       <div className="flex items-center justify-end space-x-2">
-        <Button href="https://www.buymeacoffee.com/aranbc">Buy me a coffee</Button>
+        <Button openInNewTab href="https://www.buymeacoffee.com/aranbc">Buy me a coffee</Button>
       </div>
     </header>
   )

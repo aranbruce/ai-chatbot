@@ -6,11 +6,14 @@ interface ButtonProps {
   disabled?: boolean;
   ariaLabel?: string;
   rounded?: boolean;
+  openInNewTab?: boolean;
 }
 
-const Button = ({ onClick, children, href, disabled, ariaLabel, rounded }:ButtonProps) => {
+const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInNewTab }:ButtonProps) => {
   return href ? (
     <a href={href} aria-disabled={disabled}
+      target={openInNewTab ? "_blank" : "_self"}
+      rel={openInNewTab ? "noopener noreferrer" : ""}
       className={`
         border border-zinc-300 dark:border-zinc-700 inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-md py-2"} px-3
 
