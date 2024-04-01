@@ -25,14 +25,14 @@ const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, 
         lineHeight = parseFloat(getComputedStyle(textareaRef.current).fontSize) * 1.2;
       }
       const maxHeight = lineHeight * 5;
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxHeight) + 2 + "px";
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxHeight) + "px";
     }
   }, [value]);
 
   return (
     <textarea
       ref={textareaRef}
-      className="w-full resize-none bg-transparent pl-4 pr-16 py-3 text-md text-zinc-950 placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-700"
+      className="w-full resize-none bg-transparent pl-[40px] pr-16 py-3 text-md text-zinc-950 placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-700"
       rows={1}
       inputMode={"text"}
       placeholder={placeholder}

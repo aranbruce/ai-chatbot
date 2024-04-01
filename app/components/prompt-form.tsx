@@ -1,10 +1,8 @@
 import { useRef } from 'react';
 
-// import { useChat } from 'ai/react';
-
 import Textarea from '../components/textarea';
 import Button from '../components/button';
-import Image from 'next/image';
+import UploadButton from "./upload-button";
 
 interface PromptFormProps {
   input: string;
@@ -29,6 +27,8 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
     }
   }
 
+  
+
   return (
     <div className="fixed inset-x-0 bottom-0 w-full flex flex-col justify-center items-center">
       {!scrollUser && 
@@ -40,7 +40,8 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
         }
       <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl md:border border-t md:border-b-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
         <form ref={formRef} onSubmit={handleSubmit} className="relative">
-          <div className="flex relative max-h-60 w-full grow flex-col rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 focus-within:border-zinc-500 focus-within:dark:border-zinc-400 focus-within:shadow-md transition">
+          <div className="flex flex-col relative max-h-60 w-full grow  rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 focus-within:border-zinc-500 focus-within:dark:border-zinc-400 focus-within:shadow-md transition">
+            <UploadButton />
             <Textarea
               placeholder="Send a message..."
               value={input}
@@ -54,7 +55,7 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
               ariaLabel="message"
             />
           </div>
-          <div className="absolute top-2 right-3">
+          <div className="absolute bottom-2 right-3">
             <Button disabled={isLoading} ariaLabel='Send message'>
             {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-zinc-950 dark:border-zinc-100"></div>
