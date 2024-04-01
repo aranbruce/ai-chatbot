@@ -68,15 +68,15 @@ export async function GET(request: NextRequest) {
   ]
 
   if (!query) {
-    return new Response('A search query is required', { status: 400 })
+    return new Response(JSON.stringify({message: 'A search query is required'}), { status: 400 })
   }
 
   if (country && !countriesOptions.includes(country)) {
-    return new Response('Invalid country code', { status: 400 })
+    return new Response(JSON.stringify({message: 'Invalid country code'}), { status: 400 })
   }
 
   if (freshness && !freshnessOptions.includes(freshness)) {
-    return new Response('Invalid freshness option', { status: 400 })
+    return new Response(JSON.stringify({message: 'Invalid freshness option'}), { status: 400 })
   } else if (freshness === 'past-day') {
     freshness = 'pd'
   } else if (freshness === 'past-week') {
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (units && !unitsOptions.includes(units)) {
-    return new Response('Invalid units option', { status: 400 })
+    return new Response(JSON.stringify({message: 'Invalid units option'}), { status: 400 })
   }
 
   // call brave API
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     return new Response(JSON.stringify(results), { status: 200 });
   } catch (error) {
     console.error('Error:', error);
-    return new Response('Error occurred', { status: 500 });
+    return new Response(JSON.stringify({message: `Error occurred: ${error}`}), { status: 500 });
   }
 }
 

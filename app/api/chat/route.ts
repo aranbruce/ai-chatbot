@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     return new StreamingTextResponse(stream);
   } catch (error) {
     console.error(error);
-    return new Response(`Internal Server Error: ${error}`, { status: 500 });
+    return new Response(JSON.stringify({message: `Internal Server Error: ${error}`}), { status: 500 });
   }
 
 }

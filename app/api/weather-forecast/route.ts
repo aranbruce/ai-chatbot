@@ -15,15 +15,15 @@ export async function GET(request: NextRequest) {
   console.log('forecast_days:', forecast_days)
 
   if (!location) {
-    return new Response('A location is required', { status: 400 })
+    return new Response(JSON.stringify({message: 'A location is required'}), { status: 400 })
   }
   
   if (units && !['metric', 'imperial'].includes(units)) {
-    return new Response('Invalid units parameter', { status: 400 })
+    return new Response(JSON.stringify({message: 'Invalid units parameter'}), { status: 400 })
   }
 
   if (forecast_days < 1 || forecast_days > 21){
-    return new Response('Invalid forecast_days parameter', { status: 400 })
+    return new Response(JSON.stringify({message: 'Invalid forecast_days parameter'}), { status: 400 })
   }
     
   // Get the location from the query
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   
   try {    
     if (typeof coordinates !== 'object' || coordinates === null || !('latitude' in coordinates) || !('longitude' in coordinates)) {
-      return new Response('Invalid location', { status: 400 });
+      return new Response(JSON.stringify({message: 'Invalid location'}), { status: 400 });
     }
     
     let baseUrl = `https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}`;
@@ -99,6 +99,6 @@ export async function GET(request: NextRequest) {
     return new Response(JSON.stringify(forecast), { status: 200 });
   } catch (error) {
     console.error('Error:', error);
-    return new Response('Error occurred', { status: 500 });
+    return new Response(JSON.stringify({message: `Error occurred: ${error}`}), { status: 500 });
   }
 }

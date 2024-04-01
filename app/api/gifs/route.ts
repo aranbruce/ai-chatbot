@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const rating = request.nextUrl.searchParams.get('rating')
 
   if (!query) {
-    return new Response('A search query is required', { status: 400 })
+    return new Response(JSON.stringify({message: 'A search query is required'}), { status: 400 })
   }
 
   // call giphy API
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (error) {
     console.error('Error:', error);
-    return new Response('Error occurred', { status: 500 });
+    return new Response(JSON.stringify({message: `Error occurred: ${error}`}), { status: 500 });
   }
 }
 

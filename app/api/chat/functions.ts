@@ -288,9 +288,6 @@ async function get_current_weather(location: string, units?: string) {
     if (units) {
       url += `&units=${units}`
     }
-    if (!location) {
-      return new Response('A search query is required', { status: 400 })
-    }
     const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
