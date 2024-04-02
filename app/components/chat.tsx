@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { useChat, Message } from 'ai/react';
 import { v4 as uuidv4 } from 'uuid';
+import { FileCollectionContext } from '../contexts/file-collection-context';
 
 import PromptForm from '../components/prompt-form';
 import EmptyScreen from '../components/empty-screen';
 import MessageCard from '../components/message-card';
- 
 
 export default function Chat() {
-  const { messages, setMessages, input, isLoading, handleInputChange, handleSubmit } = useChat({
+  const { fileCollectionData, setFile } = useContext(FileCollectionContext);
+  const { messages, setMessages, input, setInput, isLoading, handleInputChange } = useChat({
     initialMessages: [
       {
         id: uuidv4(),
@@ -25,15 +26,25 @@ export default function Chat() {
           If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
           If someone asks a question about movies, you can use the function \`search_for_movies\`.
           For gifs try to display the image as markdown and provide a link to the source with a title for the gif.
-        `
+          When asked to analyze a file make sure to look at the most recent file provided when appropriate.
+          If the user doesn't ask about the file, you can ignore it.
+          `
       }
     ] as Message[],
   });
-
+    
   const [isResponseLoading, setIsResponseLoading] = useState(false);
   const [scrollUser, setScrollUser] = useState(true);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    console.log(fileCollectionData);
+  }, [fileCollectionData]);
+
+  useEffect(() => {
+    console.log(messages);
+  }, [messages]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -116,7 +127,62 @@ export default function Chat() {
       }
       setIsResponseLoading(false);
       return responseText;
-    };
+  };
+
+  const handleFormSubmit = () => async (event: React.FormEvent<HTMLFormElement>) => {
+    // append file to end of messages
+    const newMessage = {
+      id: uuidv4(),
+      role: 'user',
+      content: input,
+    } as Message;
+    
+    const updatedMessages = [ ...messages, newMessage ];
+    setMessages(updatedMessages);
+    if (fileCollectionData) {
+      const fileMessage = {
+        id: uuidv4(),
+        role: "system",
+        content: `
+        When asked to analyze the file make sure to analyze the following data 
+        provided as a document as part of your answer to the users question: 
+        <fileData>${JSON.stringify(fileCollectionData)}</fileData>
+        If the user doesn't ask about the file, you can ignore it.
+        `,
+      } as Message;
+      updatedMessages.push(fileMessage);
+    }
+    setInput("");
+    setFile(null);
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ messages: updatedMessages }),
+    });
+    const reader = response.body?.getReader();
+    let responseText = "";
+      while (true) {
+        if (reader) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          responseText += new TextDecoder().decode(value);
+          setMessages([
+            ...updatedMessages,
+            {
+              id: uuidv4(),
+              role: 'assistant',
+              content: responseText,
+            }
+          ]);
+        }
+      }
+      setIsResponseLoading(false);
+      return responseText;
+  };
   
   return (
     <div ref={messagesContainerRef} className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
@@ -134,7 +200,7 @@ export default function Chat() {
         isLoading={isLoading || isResponseLoading}
         scrollUser={scrollUser}
         handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
+        handleSubmit={handleFormSubmit()}
         handleScrollToBottom={handleScrollToBottom}
       />
     </div>

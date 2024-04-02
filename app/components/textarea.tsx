@@ -32,7 +32,7 @@ const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, 
   return (
     <textarea
       ref={textareaRef}
-      className="w-full resize-none bg-transparent pl-[40px] pr-16 py-3 text-md text-zinc-950 placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-700"
+      className="w-full resize-none bg-transparent pl-[40px] pr-16 py-3 text-md text-zinc-950 placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-600"
       rows={1}
       inputMode={"text"}
       placeholder={placeholder}

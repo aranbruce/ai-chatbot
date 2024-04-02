@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import { useRef, useContext } from 'react';
+import { FileCollectionContext, FileCollectionContextProps } from '../contexts/file-collection-context'; // adjust the path as needed
 
 import Textarea from '../components/textarea';
 import Button from '../components/button';
@@ -15,19 +16,25 @@ interface PromptFormProps {
 
 const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubmit, handleScrollToBottom}: PromptFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
+  const {fileIsLoading} = useContext<FileCollectionContextProps>(FileCollectionContext);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (isLoading && event.key === 'Enter') {
+    if (isLoading && event.key === 'Enter' || fileIsLoading && event.key === 'Enter') {
       event.preventDefault();
       return;
     };
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === 'Enter' && !event.shiftKey && !fileIsLoading) {
       event.preventDefault();
       formRef.current?.dispatchEvent(new Event('submit', { bubbles: true }));
     }
   }
 
-  
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!isLoading && !fileIsLoading) {
+      handleSubmit(event);
+    }
+  }
 
   return (
     <div className="fixed inset-x-0 bottom-0 w-full flex flex-col justify-center items-center">
@@ -39,9 +46,9 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
           </div>
         }
       <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl md:border border-t md:border-b-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-        <form ref={formRef} onSubmit={handleSubmit} className="relative">
+        <form ref={formRef} onSubmit={handleFormSubmit} className="relative">
           <div className="flex flex-col relative max-h-60 w-full grow  rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 focus-within:border-zinc-500 focus-within:dark:border-zinc-400 focus-within:shadow-md transition">
-            <UploadButton />
+            <UploadButton/>
             <Textarea
               placeholder="Send a message..."
               value={input}
