@@ -37,6 +37,7 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
         hover:border-zinc-400
         hover:shadow-md
         active:bg-zinc-100
+        dark:active-bg-zinc-900
         `}
       >
       {children}
@@ -71,6 +72,7 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
         hover:border-zinc-500
         hover:shadow-md
         active:bg-zinc-100
+        dark:active-bg-zinc-900
       `}
       >
       {children}
