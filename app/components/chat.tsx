@@ -94,7 +94,7 @@ export default function Chat() {
 
   const handleFormSubmit = () => async (event: React.FormEvent<HTMLFormElement>) => {
     // append file to end of messages
-    // event.preventDefault();
+    setInput("");
     const newMessage = {
       id: uuidv4(),
       role: 'user',
@@ -115,7 +115,6 @@ export default function Chat() {
       } as Message;
       const updatedMessages = [ ...messages, newMessage , fileMessage ] as Message[];
       setMessages(updatedMessages);
-      setInput("");
       setFile(null);
       const response = await fetch('/api/chat', {
         method: 'POST',
