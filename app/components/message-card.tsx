@@ -65,6 +65,10 @@ const Message = ({id, role, content}:MessageProps) => {
                     const {node, ...rest} = props
                     return <a target="_blank" rel="noopener noreferrer" className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2" {...rest} />
                   },
+                  pre(props) {
+                    const {node, ...rest} = props
+                    return <pre className="grid w-full" {...rest} />
+                  },
                   code(props) {
                     const {children, className, node, ...rest} = props
                     const match = /language-(\w+)/.exec(className || "")
@@ -92,10 +96,6 @@ const Message = ({id, role, content}:MessageProps) => {
                       </code>
                     )
                   },
-                  // br(props) { 
-                  //   const {node, ...rest} = props
-                  //   return <br className="" {...rest} />
-                  // },
                 }}
               />
             </div>

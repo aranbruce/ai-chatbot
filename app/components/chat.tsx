@@ -148,7 +148,6 @@ export default function Chat() {
   };
   
   return (
-    // <div ref={messagesContainerRef} className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
     <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
       <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
         <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
