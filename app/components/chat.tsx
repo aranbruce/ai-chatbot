@@ -11,7 +11,7 @@ import MessageCard from '../components/message-card';
 
 export default function Chat() {
   const { fileCollectionData, setFile } = useContext(FileCollectionContext);
-  const { messages, setMessages, input, setInput, isLoading, handleInputChange } = useChat({
+  const { messages, setMessages, input, setInput, isLoading, handleInputChange, append } = useChat({
     initialMessages: [
       {
         id: uuidv4(),
@@ -37,14 +37,6 @@ export default function Chat() {
   const [scrollUser, setScrollUser] = useState(true);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    console.log(fileCollectionData);
-  }, [fileCollectionData]);
-
-  useEffect(() => {
-    console.log(messages);
-  }, [messages]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -90,56 +82,27 @@ export default function Chat() {
   }
 
   const handleExampleClick = async (suggestion: string) => {
+    setIsResponseLoading(true);
     const userMessage = {
       id: uuidv4(),
       role: 'user',
       content: suggestion,
-    };
-    const updatedMessages = [...messages, userMessage] as Message[];
-    setMessages(updatedMessages);
-    setIsResponseLoading(true);
-
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ messages: updatedMessages }),
-    });
-    const reader = response.body?.getReader();
-    let responseText = "";
-      while (true) {
-        if (reader) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
-          responseText += new TextDecoder().decode(value);
-          setMessages([
-            ...updatedMessages,
-            {
-              id: uuidv4(),
-              role: 'assistant',
-              content: responseText,
-            }
-          ]);
-        }
-      }
-      setIsResponseLoading(false);
-      return responseText;
-  };
+    } as Message;
+    append(userMessage);
+    setIsResponseLoading(false);
+  }
 
   const handleFormSubmit = () => async (event: React.FormEvent<HTMLFormElement>) => {
     // append file to end of messages
+    // event.preventDefault();
     const newMessage = {
       id: uuidv4(),
       role: 'user',
       content: input,
     } as Message;
-    
-    const updatedMessages = [ ...messages, newMessage ];
-    setMessages(updatedMessages);
-    if (fileCollectionData) {
+    if (!fileCollectionData) {
+      append(newMessage);
+    } else {
       const fileMessage = {
         id: uuidv4(),
         role: "system",
@@ -150,19 +113,19 @@ export default function Chat() {
         If the user doesn't ask about the file, you can ignore it.
         `,
       } as Message;
-      updatedMessages.push(fileMessage);
-    }
-    setInput("");
-    setFile(null);
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ messages: updatedMessages }),
-    });
-    const reader = response.body?.getReader();
-    let responseText = "";
+      const updatedMessages = [ ...messages, newMessage , fileMessage ] as Message[];
+      setMessages(updatedMessages);
+      setInput("");
+      setFile(null);
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ messages: updatedMessages }),
+      });
+      const reader = response.body?.getReader();
+      let responseText = "";
       while (true) {
         if (reader) {
           const { done, value } = await reader.read();
@@ -182,6 +145,7 @@ export default function Chat() {
       }
       setIsResponseLoading(false);
       return responseText;
+    }
   };
   
   return (

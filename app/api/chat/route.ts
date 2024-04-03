@@ -23,12 +23,12 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   // remove id from messages
-  const messagesWithoutIds = messages.map(({ id, ...rest }: { id: string, [key: string]: any }) => rest);
+  const messagesWithOnlyContentAndRole = messages.map(({ content, role }: { content: string, role: string }) => ({ content, role }));
 
   try {
     const initialResponse = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-0125",
-      messages: messagesWithoutIds,
+      messages: messagesWithOnlyContentAndRole,
       stream: true,
       functions,
       function_call: "auto",
