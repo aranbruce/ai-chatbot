@@ -37,14 +37,14 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 w-full flex flex-col justify-center items-center">
+    <div className="relative w-full flex flex-col justify-center items-center">
       {!scrollUser && 
-          <div className="relative inset-x-0 top-[-8px] w-full flex justify-center">
-            <Button rounded onClick={() => {handleScrollToBottom()}} ariaLabel={"Scroll to bottom"}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 13L12 18L7 13M12 6L12 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
-            </Button>
-          </div>
-        }
+        <div className="absolute inset-x-0 top-[-54px] w-full flex justify-center">
+          <Button rounded onClick={() => {handleScrollToBottom()}} ariaLabel={"Scroll to bottom"}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 13L12 18L7 13M12 6L12 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          </Button>
+        </div>
+      }
       <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 shadow-lg md:rounded-t-xl md:border border-t md:border-b-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
         <form ref={formRef} onSubmit={handleFormSubmit} className="relative">
           <div className="flex flex-col relative max-h-60 w-full grow  rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 focus-within:border-zinc-500 focus-within:dark:border-zinc-400 focus-within:shadow-md transition">
@@ -63,7 +63,7 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
             />
           </div>
           <div className="absolute bottom-2 right-3">
-            <Button disabled={isLoading} ariaLabel='Send message'>
+            <Button disabled={isLoading || input.length === 0 || fileIsLoading} ariaLabel='Send message'>
             {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-zinc-950 dark:border-zinc-100"></div>
               ) : (

@@ -148,15 +148,18 @@ export default function Chat() {
   };
   
   return (
-    <div ref={messagesContainerRef} className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
-      <div className="flex flex-col min-h-full max-w-2xl gap-y-10 w-full mx-auto stretch">
-        {messages.filter(message => message.role === 'user' || message.role === 'assistant').length === 0 ? (
-          <EmptyScreen handleExampleClick={handleExampleClick}/>
-        ) : (
-          messages.map(message => (
-            <MessageCard key={message.id} id={message.id} role={message.role} content={message.content}/>
-          ))
-        )}
+    // <div ref={messagesContainerRef} className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full h-full pt-12 pb-32 mx-auto stretch px-5 overflow-scroll">
+    <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
+      <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
+        <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
+          {messages.filter(message => message.role === 'user' || message.role === 'assistant').length === 0 ? (
+            <EmptyScreen handleExampleClick={handleExampleClick}/>
+          ) : (
+            messages.map(message => (
+              <MessageCard key={message.id} id={message.id} role={message.role} content={message.content}/>
+            ))
+          )}
+        </div>
       </div>
       <PromptForm
         input={input}
