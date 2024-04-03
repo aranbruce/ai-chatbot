@@ -30,7 +30,8 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
         focus-visible:ring-zinc-200
 
         disabled:pointer-events-none 
-        disabled:opacity-50 
+        disabled:opacity-50
+        disabled:bg-zinc-400
 
         bg-white 
         dark:bg-zinc-950
@@ -58,14 +59,15 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
         
         transition
         
-      focus-visible:border-zinc-400
-      focus-visible:ring-2
-      focus-visible:ring-zinc-200
-      dark:focus-visible:ring-zinc-500  
+        focus-visible:border-zinc-400
+        focus-visible:ring-2
+        focus-visible:ring-zinc-200
+        dark:focus-visible:ring-zinc-500  
 
 
         disabled:pointer-events-none 
-        disabled:opacity-50 
+        disabled:opacity-50
+        disabled:bg-zinc-400
 
         bg-white 
         dark:bg-zinc-950
