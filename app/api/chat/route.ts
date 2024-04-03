@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   // Customise your system messages here
   const { messages } = await req.json();
 
-  // remove id from messages
+  // remove ids and createdAt from messages
   const messagesWithOnlyContentAndRole = messages.map(({ content, role }: { content: string, role: string }) => ({ content, role }));
 
   try {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         return openai.chat.completions.create({
           model: "gpt-4-0125-preview",
           stream: true,
-          messages: [...messagesWithoutIds, ...newMessages],
+          messages: [...messagesWithOnlyContentAndRole, ...newMessages],
         });
       },
     });
