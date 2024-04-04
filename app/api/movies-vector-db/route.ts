@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server"; 
+import { NextRequest, NextResponse } from "next/server"; 
 import OpenAI from "openai";
 import { Pinecone } from "@pinecone-database/pinecone";
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
   console.log("Limit:", limit)
 
   if (!input) {
-    return new Response(JSON.stringify({message: "An input is required"}), { status: 400 })
+    return NextResponse.json({error: "An input is required"}, { status: 400 })
   }
 
   try {
@@ -65,13 +65,13 @@ export async function GET(request: NextRequest) {
     console.log("Query results:", queryResults);
 
     if (!queryResults) {
-      return new Response(JSON.stringify({message: "No results found"}), { status: 404 })
+      return NextResponse.json({message: "No results found"}, { status: 404 })
     }
 
-    return new Response(JSON.stringify(queryResults), { status: 200 });
+    return NextResponse.json(queryResults, { status: 200 });
   }
   catch (error) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({message: `Error occurred: ${error}`}), { status: 500 });
+    return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });
   }
 }

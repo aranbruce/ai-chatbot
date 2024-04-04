@@ -1,6 +1,6 @@
 // Create an api that returns a credit file for a next.js app
 
-import { NextRequest } from "next/server"; 
+import { NextRequest, NextResponse } from "next/server"; 
 
 export async function GET(request: NextRequest) {
   console.log('GET request received for the weather-forecast route')
@@ -15,19 +15,19 @@ export async function GET(request: NextRequest) {
   console.log('forecast_days:', forecast_days)
 
   if (!location) {
-    return new Response(JSON.stringify({message: 'A location is required'}), { status: 400 })
+    return NextResponse.json({error: 'A location is required'}, { status: 400 })
   }
   
   if (units && !['metric', 'imperial'].includes(units)) {
-    return new Response(JSON.stringify({message: 'Invalid units parameter'}), { status: 400 })
+    return NextResponse.json({error: 'Invalid units parameter'}, { status: 400 })
   }
 
   if (forecast_days < 1 || forecast_days > 21){
-    return new Response(JSON.stringify({message: 'Invalid forecast_days parameter'}), { status: 400 })
+    return NextResponse.json({error: 'Invalid forecast_days parameter'}, { status: 400 })
   }
     
   // Get the location from the query
-  const getCoordiantes = async (query: string) => {
+  const getCoordinates = async (query: string) => {
     try {
       let url = `http://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`;
       const headers = {
@@ -53,16 +53,16 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
       console.error('Error:', error);
-      return new Response('Error occurred', { status: 500 });
+      return new NextResponse('Error occurred', { status: 500 });
     }
   }
   
   // call OpenWeather API using the location
-  const coordinates = await getCoordiantes(location);
+  const coordinates = await getCoordinates(location);
   
   try {    
     if (typeof coordinates !== 'object' || coordinates === null || !('latitude' in coordinates) || !('longitude' in coordinates)) {
-      return new Response(JSON.stringify({message: 'Invalid location'}), { status: 400 });
+      return NextResponse.json({error: 'Invalid location'}, { status: 400 });
     }
     
     let baseUrl = `https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}`;
@@ -96,9 +96,9 @@ export async function GET(request: NextRequest) {
       // add response to forecast array
       forecast.push(response);
     }
-    return new Response(JSON.stringify(forecast), { status: 200 });
+    return NextResponse.json(forecast, { status: 200 });
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({message: `Error occurred: ${error}`}), { status: 500 });
+    return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });
   }
 }

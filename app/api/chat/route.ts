@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 import { functions, runFunction } from "./functions";
 import { Pinecone } from '@pinecone-database/pinecone';
+import { NextRequest, NextResponse } from "next/server";
 
 // Create an OpenAI API client (that's edge friendly!)
 const openai = new OpenAI({
@@ -17,10 +18,10 @@ const index = pc.index("sample-movies")
 // IMPORTANT! Set the runtime to edge
 export const runtime = 'edge';
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   console.log('POST request received for chat route')
   // Customise your system messages here
-  const { messages } = await req.json();
+  const { messages } = await request.json();
 
   // remove ids and createdAt from messages
   const messagesWithOnlyContentAndRole = messages.map(({ content, role }: { content: string, role: string }) => ({ content, role }));
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
     return new StreamingTextResponse(stream);
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({message: `Internal Server Error: ${error}`}), { status: 500 });
+    return NextResponse.json({message: `Internal Server Error: ${error}`}, { status: 500 });
   }
 
 }

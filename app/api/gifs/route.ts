@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server"; 
+import { NextRequest, NextResponse } from "next/server"; 
 
 export async function GET(request: NextRequest) {
   console.log('GET request received for gifs route')
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const rating = request.nextUrl.searchParams.get('rating')
 
   if (!query) {
-    return new Response(JSON.stringify({message: 'A search query is required'}), { status: 400 })
+    return NextResponse.json({error: 'A search query is required'}, { status: 400 })
   }
 
   // call giphy API
@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.json();
-    return new Response(JSON.stringify(data), { status: 200 });
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({message: `Error occurred: ${error}`}), { status: 500 });
+    return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });
   }
 }
 
