@@ -240,6 +240,31 @@ export const functions: ChatCompletionCreateParams.Function[] = [
       required: ["input"],
     },
   },
+  {
+    name: "search_for_locations",
+    description:
+      "Get a list of locations from tripadvisor based on a query",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "A description of the type of location to search for",
+        },
+        category: {
+          type: "string",
+          enum: ["hotels", "restaurants", "attractions", "geos"],
+          description: "The type of locations to be searched for. The category string is limited to hotels, restaurants, attractions or geos.",
+        },
+        currency: {
+          type: "string",
+          description: "The currency to be used for the location details. The currency string is limited to 3 character currency codes following ISO 4217.",
+        },
+        
+      },
+      required: ["query"],
+    },
+  },
 ];
 
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
@@ -258,7 +283,7 @@ async function search_the_web(query: string, country?: string, freshness?: strin
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
-    return null;
+    return error;
   }
 }
 
@@ -292,7 +317,7 @@ async function get_current_weather(location: string, units?: string) {
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
-    return null;
+    return error;
   }
 }
 
@@ -309,7 +334,7 @@ async function get_weather_forecast(location: string, units?: string, forecast_d
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
-    return null;
+    return error;
   }
 }
 
@@ -326,7 +351,7 @@ async function search_for_gifs(query: string, limit?: number, rating?: string) {
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
-    return null;
+    return error;
   }
 }
 
@@ -353,7 +378,24 @@ async function search_for_movies(input: string, minimumIMDBRating?: number, mini
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
-    return null;
+    return error;
+  }
+}
+
+async function search_for_locations(query: string, category?: string, currency?: string) {
+  try {
+    let url = `${process.env.URL}/api/location-search?query=${query}`;
+    if (category) {
+      url += `&category=${category}`
+    }
+    if (currency) {
+      url += `&currency=${currency}`
+    }
+    const response = await fetch(url, {method: "GET"});
+    return await response.json();
+  } catch (error) {
+    console.error("error: ", error);
+    return error;
   }
 }
 
@@ -371,6 +413,8 @@ export async function runFunction(name: string, args: any) {
       return await search_for_gifs(args["query"]);
     case "search_for_movies":
       return await search_for_movies(args["input"], args["minimumIMDBRating"], args["minimumReleaseYear"], args["maximumReleaseYear"], args["director"], args["limit"]);
+    case "search_for_locations":
+      return await search_for_locations(args["query"], args["category"], args["currency"]);
     default:
       return null;
   }

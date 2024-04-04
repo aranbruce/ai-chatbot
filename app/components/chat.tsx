@@ -25,7 +25,9 @@ export default function Chat() {
           If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
           If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
           If someone asks a question about movies, you can use the function \`search_for_movies\`.
-          For gifs try to display the image as markdown and provide a link to the source with a title for the gif.
+          If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
+          For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
+          For locations, try to provide a link to the location, a brief description of the location and a rating.
           When asked to analyze a file make sure to look at the most recent file provided when appropriate.
           If the user doesn't ask about the file, you can ignore it.
           `

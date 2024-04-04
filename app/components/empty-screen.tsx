@@ -4,9 +4,9 @@ interface EmptyScreenProps {
 
 const exampleMessages = [
   {
-    heading: "Work gifs",
-    subheading: "Show me some gifs about work",
-    message: "Show me some gifs about work"
+    heading: "New York Pizza",
+    subheading: "Recommend great pizza places in New York",
+    message: "Recommend great pizza places in New York",
   },
   {
     heading: "Weather",
