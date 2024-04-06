@@ -10,7 +10,7 @@ import EmptyScreen from '../components/empty-screen';
 import MessageCard from '../components/message-card';
 
 export default function Chat() {
-  const { fileCollectionData, setFile } = useContext(FileCollectionContext);
+  const { fileCollection, fileAsInput, setFileAsInput } = useContext(FileCollectionContext);
   const { messages, setMessages, input, setInput, isLoading, handleInputChange, append } = useChat({
     initialMessages: [
       {
@@ -34,10 +34,12 @@ export default function Chat() {
       }
     ] as Message[],
   });
-    
-  const [isResponseLoading, setIsResponseLoading] = useState(false);
-  const [scrollUser, setScrollUser] = useState(true);
+  
+  useEffect(() => {
+    console.log('messages', messages);
+  }, [messages]);
 
+  const [scrollUser, setScrollUser] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,41 +86,47 @@ export default function Chat() {
   }
 
   const handleExampleClick = async (suggestion: string) => {
-    setIsResponseLoading(true);
     const userMessage = {
       id: uuidv4(),
       role: 'user',
       content: suggestion,
     } as Message;
     append(userMessage);
-    setIsResponseLoading(false);
   }
 
   const handleFormSubmit = () => async (event: React.FormEvent<HTMLFormElement>) => {
-    // append file to end of messages
     setInput("");
-    setIsResponseLoading(true);
-    const newMessage = {
-      id: uuidv4(),
-      role: 'user',
-      content: input,
-    } as Message;
-    if (!fileCollectionData) {
+    if (!fileAsInput) {
+      const newMessage = {
+        id: uuidv4(),
+        role: 'user',
+        content: input,
+      } as Message;
       append(newMessage);
     } else {
-      const fileMessage = {
-        id: uuidv4(),
-        role: "system",
-        content: `
-        When asked to analyze the file make sure to analyze the following data 
-        provided as a document as part of your answer to the users question: 
-        <fileData>${JSON.stringify(fileCollectionData)}</fileData>
-        If the user doesn't ask about the file, you can ignore it.
-        `,
-      } as Message;
-      const updatedMessages = [ ...messages, newMessage , fileMessage ] as Message[];
+      const fileMessages = [
+        {
+          id: uuidv4(),
+          role: "user",
+          content: input,
+          data: {
+            file: fileCollection[fileCollection.length - 1]
+          } 
+        } as Message,
+        {
+          id: uuidv4(),
+          role: "system",
+          content: `
+          Analyze the following data 
+          provided as a document as part of your answer to the users question: 
+          <fileData>${JSON.stringify(fileCollection[fileCollection.length - 1])}</fileData>
+          `,
+        } as Message
+        
+      ] as Message[];
+      const updatedMessages = [ ...messages, ...fileMessages ] as Message[];
       setMessages(updatedMessages);
-      setFile(null);
+      setFileAsInput(null);
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -145,8 +153,6 @@ export default function Chat() {
           ]);
         }
       }
-      setIsResponseLoading(false);
-      setIsResponseLoading(false);
       return responseText;
     }
   };
@@ -155,18 +161,18 @@ export default function Chat() {
     <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
       <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
         <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
-          {messages.filter(message => message.role === 'user' || message.role === 'assistant').length === 0 ? (
+          {messages.filter(message => message.role === "user" || message.role === "assistant").length === 0 ? (
             <EmptyScreen handleExampleClick={handleExampleClick}/>
           ) : (
             messages.map(message => (
-              <MessageCard key={message.id} id={message.id} role={message.role} content={message.content}/>
+              <MessageCard key={message.id} id={message.id} role={message.role} content={message.content} data={message.data} />
             ))
           )}
         </div>
       </div>
       <PromptForm
         input={input}
-        isLoading={isLoading || isResponseLoading}
+        isLoading={isLoading}
         scrollUser={scrollUser}
         handleInputChange={handleInputChange}
         handleSubmit={handleFormSubmit()}

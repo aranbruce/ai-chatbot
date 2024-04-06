@@ -11,9 +11,10 @@ interface TextareaProps {
   autoComplete: string;
   autoCorrect: string;
   ariaLabel: string;
+  required: boolean;
 }
 
-const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, tabIndex, autoFocus, spellCheck, autoComplete, autoCorrect, ariaLabel }) => {
+const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, tabIndex, autoFocus, spellCheck, autoComplete, autoCorrect, ariaLabel, required }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, 
       autoComplete={autoComplete}
       autoCorrect={autoCorrect}
       aria-label={ariaLabel}
-      required={true}
+      required={required}
     />
   );
 };

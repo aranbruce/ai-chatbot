@@ -16,14 +16,14 @@ interface PromptFormProps {
 
 const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubmit, handleScrollToBottom}: PromptFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const {fileIsLoading} = useContext<FileCollectionContextProps>(FileCollectionContext);
+  const {fileAsInput} = useContext<FileCollectionContextProps>(FileCollectionContext);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (isLoading && event.key === 'Enter' || fileIsLoading && event.key === 'Enter') {
+    if (isLoading && event.key === 'Enter' || fileAsInput?.isUploading && event.key === 'Enter') {
       event.preventDefault();
       return;
     };
-    if (event.key === 'Enter' && !event.shiftKey && !fileIsLoading) {
+    if (event.key === 'Enter' && !event.shiftKey && !fileAsInput?.isUploading) {
       event.preventDefault();
       formRef.current?.dispatchEvent(new Event('submit', { bubbles: true }));
     }
@@ -31,7 +31,7 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isLoading && !fileIsLoading) {
+    if (!isLoading && !fileAsInput?.isUploading) {
       handleSubmit(event);
     }
   }
@@ -60,10 +60,11 @@ const PromptForm = ({input, isLoading, scrollUser, handleInputChange, handleSubm
               autoComplete="on"
               autoCorrect="on"
               ariaLabel="message"
+              required={fileAsInput?.isUploading ?? false}
             />
           </div>
           <div className="absolute bottom-[0.5rem] right-3">
-            <Button disabled={isLoading || input.length === 0 || fileIsLoading} ariaLabel='Send message'>
+            <Button disabled={isLoading || input.length === 0 && !fileAsInput || fileAsInput?.isUploading} ariaLabel='Send message'>
             {isLoading ? (
                 <div className="animate-spin rounded-full h-[18px] w-[18px] border-t-2 border-zinc-950 dark:border-zinc-100"></div>
               ) : (

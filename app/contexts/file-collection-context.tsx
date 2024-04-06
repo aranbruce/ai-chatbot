@@ -1,38 +1,35 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useState } from 'react';
+
+interface FileInput {
+  isUploading: boolean;
+  fileName: string;
+}
 
 export interface FileCollectionContextProps {
-    fileCollectionData: string;
-    setFileCollectionData: React.Dispatch<React.SetStateAction<string>>;
-    file: File | null;
-    setFile: React.Dispatch<React.SetStateAction<File | null>>;
-    fileIsLoading: boolean;
-    setFileIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  fileCollection: Array<object>; // Specify the type argument for the Array type
+  setFileCollection: React.Dispatch<React.SetStateAction<Array<object>>>;
+  fileAsInput: FileInput | null
+  setFileAsInput: React.Dispatch<React.SetStateAction<FileInput | null>>;
 }
 
 export const FileCollectionContext = createContext<FileCollectionContextProps>({
-    fileCollectionData: "",
-    setFileCollectionData: () => {}, // initial value
-    file: null,
-    setFile: () => {}, // initial value
-    fileIsLoading: false,
-    setFileIsLoading: () => {}, // initial value
+    fileCollection: [],
+    setFileCollection: () => {}, // initial value
+    fileAsInput: null,
+    setFileAsInput: () => {}, // initial value
 });
 
-
 export const FileCollectionContextProvider = (props: any) => {
-  const [fileCollectionData, setFileCollectionData] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [fileIsLoading, setFileIsLoading] = useState(false);
+  const [fileCollection, setFileCollection] = useState([] as Array<object>);
+  const [fileAsInput, setFileAsInput] = useState<FileInput | null>(null);
 
   return (
     <FileCollectionContext.Provider
       value={{
-        fileCollectionData,
-        setFileCollectionData,
-        file,
-        setFile,
-        fileIsLoading,
-        setFileIsLoading,
+        fileCollection,
+        setFileCollection,
+        fileAsInput,
+        setFileAsInput,
       }}
     >
       {props.children}
