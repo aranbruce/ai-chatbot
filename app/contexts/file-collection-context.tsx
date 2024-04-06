@@ -1,35 +1,42 @@
 import { createContext, useState } from 'react';
 
-interface FileInput {
+export interface FileInputItem {
+  fileId: string;
   isUploading: boolean;
   fileName: string;
 }
 
+export interface FileCollectionItem {
+  fileId: string;
+  fileName: string;
+  fileContent: string;
+}
+
 export interface FileCollectionContextProps {
-  fileCollection: Array<object>; // Specify the type argument for the Array type
-  setFileCollection: React.Dispatch<React.SetStateAction<Array<object>>>;
-  fileAsInput: FileInput | null
-  setFileAsInput: React.Dispatch<React.SetStateAction<FileInput | null>>;
+  fileCollection: Array<FileCollectionItem>; // Specify the type argument for the Array type
+  setFileCollection: React.Dispatch<React.SetStateAction<Array<FileCollectionItem>>>;
+  filesAsInput: Array<FileInputItem>;
+  setFilesAsInput: React.Dispatch<React.SetStateAction< Array<FileInputItem>>>;
 }
 
 export const FileCollectionContext = createContext<FileCollectionContextProps>({
-    fileCollection: [],
-    setFileCollection: () => {}, // initial value
-    fileAsInput: null,
-    setFileAsInput: () => {}, // initial value
+  fileCollection: [],
+  setFileCollection: () => {}, // initial value
+  filesAsInput: [],
+  setFilesAsInput: () => {}, // initial value
 });
 
 export const FileCollectionContextProvider = (props: any) => {
-  const [fileCollection, setFileCollection] = useState([] as Array<object>);
-  const [fileAsInput, setFileAsInput] = useState<FileInput | null>(null);
+  const [fileCollection, setFileCollection] = useState([] as Array<FileCollectionItem>);
+  const [filesAsInput, setFilesAsInput] = useState([] as Array<FileInputItem>);
 
   return (
     <FileCollectionContext.Provider
       value={{
         fileCollection,
         setFileCollection,
-        fileAsInput,
-        setFileAsInput,
+        filesAsInput,
+        setFilesAsInput,
       }}
     >
       {props.children}

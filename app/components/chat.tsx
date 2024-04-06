@@ -10,7 +10,7 @@ import EmptyScreen from '../components/empty-screen';
 import MessageCard from '../components/message-card';
 
 export default function Chat() {
-  const { fileCollection, fileAsInput, setFileAsInput } = useContext(FileCollectionContext);
+  const { fileCollection, filesAsInput, setFilesAsInput } = useContext(FileCollectionContext);
   const { messages, setMessages, input, setInput, isLoading, handleInputChange, append } = useChat({
     initialMessages: [
       {
@@ -34,10 +34,6 @@ export default function Chat() {
       }
     ] as Message[],
   });
-  
-  useEffect(() => {
-    console.log('messages', messages);
-  }, [messages]);
 
   const [scrollUser, setScrollUser] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -70,6 +66,10 @@ export default function Chat() {
     }
   }, [messages, scrollUser]);
 
+  useEffect(() => {
+    console.log("messages: ", messages);
+  }, [messages]);
+
   const handleScrollToBottom = () => {
     // Scroll to the bottom of the messages container smoothly
     const current = messagesContainerRef.current;
@@ -96,7 +96,7 @@ export default function Chat() {
 
   const handleFormSubmit = () => async (event: React.FormEvent<HTMLFormElement>) => {
     setInput("");
-    if (!fileAsInput) {
+    if (filesAsInput.length === 0) {
       const newMessage = {
         id: uuidv4(),
         role: 'user',
@@ -104,13 +104,24 @@ export default function Chat() {
       } as Message;
       append(newMessage);
     } else {
+      // get the file data for each file in the filesAsInput array
+      const fileData = filesAsInput.map(file => {
+        const fileContent = fileCollection.find(fileObject => fileObject.fileId === file.fileId)?.fileContent;
+        return {
+          fileId: file.fileId,
+          fileName: file.fileName,
+          fileContent,
+        };
+      });
+      console.log(fileData);
       const fileMessages = [
         {
           id: uuidv4(),
           role: "user",
           content: input,
           data: {
-            file: fileCollection[fileCollection.length - 1]
+            // create a data object for each file including its file name
+            files: fileData.map(file => ({ fileId: file.fileId, fileName: file.fileName }))
           } 
         } as Message,
         {
@@ -119,14 +130,14 @@ export default function Chat() {
           content: `
           Analyze the following data 
           provided as a document as part of your answer to the users question: 
-          <fileData>${JSON.stringify(fileCollection[fileCollection.length - 1])}</fileData>
+          <fileData>${JSON.stringify(fileData)}</fileData>
           `,
         } as Message
         
       ] as Message[];
       const updatedMessages = [ ...messages, ...fileMessages ] as Message[];
       setMessages(updatedMessages);
-      setFileAsInput(null);
+      setFilesAsInput([]);
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
