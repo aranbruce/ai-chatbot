@@ -25,15 +25,14 @@ const exampleMessages = [
   }
 ]
 
-
-
 const EmptyScreen = ({handleExampleClick}:EmptyScreenProps) => {
   return (
     <div className="flex flex-col h-full min-h-fit justify-between gap-6">
-      <div className="bg-white dark:bg-zinc-900 flex flex-col gap-1 border-zinc-200 dark:border-zinc-800 rounded-lg border p-6">
-        <h1 className="text-lg font-semibold text-zinc-950 dark:text-zinc-100">Welcome to a demo AI chatbot with function calling!</h1>
+      {/* <div className="bg-white dark:bg-zinc-900 flex flex-col gap-1 border-zinc-200 dark:border-zinc-800 rounded-lg border p-6"> */}
+      <div className="flex flex-col gap-1 content-center h-full justify-center items-center text-center">
+        <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-100">Hi I'm Pal</h1>
         <p className="text-muted-foreground leading-normal text-zinc-500 dark:text-zinc-400">
-          This is an demo chatbot app template that helps answer your chatbot perform functions like searching the web.
+          How can I help today?
         </p>
       </div>
       <div className="mb-4 grid grid-cols-2 gap-2 px-4 sm:px-0">

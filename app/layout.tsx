@@ -1,14 +1,14 @@
-import './globals.css';
-import { Inter } from 'next/font/google';
-import Header from './components/header';
-import { Providers } from './providers';
+import "./globals.css";
+import { DM_Sans } from "next/font/google";
+import Header from "./components/header";
+import { Providers } from "./providers";
 
 
-const inter = Inter({ subsets: ['latin'] });
+const dmSans = DM_Sans({subsets: ["latin"]});
 
 export const metadata = {
-  title: 'AI Powered Chatbot Demo',
-  description: 'A demo chatbot app template that helps answer your chatbot perform functions like searching the web.',
+  title: "Pal | AI Chatbot",
+  description: "An AI chatbot that can perform functions like searching the web, getting the weather, and finding the latest news.",
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className + "bg-white dark:bg-zinc-950 flex h-svh"}>
+      <body className={dmSans.className + "bg-white dark:bg-zinc-950 flex h-svh"}>
         <Providers>
           <Header />
           {children}

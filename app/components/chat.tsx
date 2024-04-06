@@ -97,6 +97,7 @@ export default function Chat() {
   const handleFormSubmit = () => async (event: React.FormEvent<HTMLFormElement>) => {
     // append file to end of messages
     setInput("");
+    setIsResponseLoading(true);
     const newMessage = {
       id: uuidv4(),
       role: 'user',
@@ -144,6 +145,7 @@ export default function Chat() {
           ]);
         }
       }
+      setIsResponseLoading(false);
       setIsResponseLoading(false);
       return responseText;
     }

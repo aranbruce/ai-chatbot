@@ -7,39 +7,48 @@ interface ButtonProps {
   ariaLabel?: string;
   rounded?: boolean;
   openInNewTab?: boolean;
+  variant?: "primary" | "secondary";
 }
 
-const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInNewTab }:ButtonProps) => {
+const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInNewTab, variant = "primary" }:ButtonProps) => {
+  const primaryClassNames = `
+    text-white
+    font-semibold
+    dark:text-zinc-950
+    bg-zinc-950 
+    dark:bg-zinc-50
+    hover:bg-zinc-700
+    dark:hover:bg-zinc-300
+    active:bg-zinc-800
+    dark:active-bg-zinc-900  
+  `;
+
+  const secondaryClassNames = `
+    text-zinc-950
+    dark:text-zinc-50
+    bg-white 
+    dark:bg-zinc-900
+    border 
+    border-zinc-200
+    dark:border-zinc-800
+    hover:bg-zinc-100
+    dark:hover:bg-zinc-800
+    active:bg-zinc-200
+    dark:active-bg-zinc-700
+  `;
+
+  const baseClassNames = `
+  inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-md py-2"} px-3 gap-2
+  text-sm text-primary-foreground disabled:pointer-events-none disabled:opacity-50 disabled:bg-zinc-400
+  font-medium transition`;
+
+  const classNames = `${baseClassNames} ${variant === "primary" ? primaryClassNames : secondaryClassNames}`;
+
   return href ? (
     <a href={href} aria-disabled={disabled}
       target={openInNewTab ? "_blank" : "_self"}
       rel={openInNewTab ? "noopener noreferrer" : ""}
-      className={`
-        border border-zinc-300 dark:border-zinc-700 inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-md py-2"} px-3
-
-        text-sm
-        text-primary-foreground
-        text-zinc-950
-        dark:text-zinc-50
-        font-medium 
-        
-        transition
-        
-        focus-visible:border-zinc-400
-        focus-visible:ring-2
-        focus-visible:ring-zinc-200
-
-        disabled:pointer-events-none 
-        disabled:opacity-50
-        disabled:bg-zinc-400
-
-        bg-white 
-        dark:bg-zinc-950
-        hover:border-zinc-400
-        hover:shadow-md
-        active:bg-zinc-100
-        dark:active-bg-zinc-900
-        `}
+      className={classNames}
       >
       {children}
     </a>
@@ -47,35 +56,8 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
     <button 
       onClick={onClick} 
       disabled={disabled}
-      aria-label={ariaLabel} // Fixed the typo here
-      className={`
-        border border-zinc-300 dark:border-zinc-700 inline-flex items-center justify-center ${rounded ? "rounded-full py-3 shadow-md" : "rounded-md py-2"} px-3
-
-        text-sm
-        text-primary-foreground
-        text-zinc-950
-        dark:text-zinc-50
-        font-medium
-        
-        transition
-        
-        focus-visible:border-zinc-400
-        focus-visible:ring-2
-        focus-visible:ring-zinc-200
-        dark:focus-visible:ring-zinc-500  
-
-
-        disabled:pointer-events-none 
-        disabled:opacity-50
-        disabled:bg-zinc-400
-
-        bg-white 
-        dark:bg-zinc-950
-        hover:border-zinc-500
-        hover:shadow-md
-        active:bg-zinc-100
-        dark:active-bg-zinc-900
-      `}
+      aria-label={ariaLabel}
+      className={classNames}
       >
       {children}
     </button>
