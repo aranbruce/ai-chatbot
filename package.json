@@ -13,15 +13,16 @@
   "dependencies": {
     "@pinecone-database/pinecone": "^2.2.0",
     "@vercel/blob": "^0.22.1",
-    "ai": "3.0.13",
+    "ai": "^3.0.13",
     "next": "14.1.1",
-    "openai": "4.29.0",
+    "openai": "^4.29.0",
     "react": "18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
     "uuid": "^9.0.1",
-    "uuidv4": "^6.2.13"
+    "uuidv4": "^6.2.13",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^17.0.12",
