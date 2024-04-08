@@ -66,10 +66,6 @@ export default function Chat() {
     }
   }, [messages, scrollUser]);
 
-  useEffect(() => {
-    console.log("messages: ", messages);
-  }, [messages]);
-
   const handleScrollToBottom = () => {
     // Scroll to the bottom of the messages container smoothly
     const current = messagesContainerRef.current;

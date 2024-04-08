@@ -11,6 +11,7 @@
     "format:fix": "prettier --write --ignore-path .gitignore ."
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.1",
     "@pinecone-database/pinecone": "^2.2.0",
     "@vercel/blob": "^0.22.1",
     "ai": "^3.0.13",

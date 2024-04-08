@@ -1,15 +1,48 @@
 'use client'
  
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useUIState, useActions } from "ai/rsc";
 import type { AI } from '../action';
 import PromptForm from "../components/prompt-form";
-import { Message } from "ai";
+import MessageCard from "../components/message-card";
+import EmptyScreen from "../components/empty-screen";
  
 export default function Page() {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useUIState<typeof AI>();
   const { submitUserMessage } = useActions<typeof AI>();
+
+  const [scrollUser, setScrollUser] = useState(true);
+
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const current = messagesContainerRef.current;
+      if (current) {
+        const atBottom = current.scrollHeight - current.scrollTop === current.clientHeight;
+        setScrollUser(atBottom);
+      }
+    };
+    const current = messagesContainerRef.current;
+    if (current) {
+      current.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (current) {
+        current.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scrollUser) {
+      const current = messagesContainerRef.current;
+      if (current) {
+        current.scrollTop = current.scrollHeight;
+      }
+    }
+  }, [messages, scrollUser]);
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -19,7 +52,7 @@ export default function Page() {
       ...currentMessages,
       {
         id: Date.now(),
-        display: <div className="w-full">{inputValue}</div>,
+        display: <>{inputValue}</>,
         role: "user",
       },
     ]);
@@ -32,43 +65,65 @@ export default function Page() {
     ]);
   }
 
+  const handleExampleClick = async (example: string) => {
+    // Add user message to UI state
+    setMessages((currentMessages: any) => [
+      ...currentMessages,
+      {
+        id: Date.now(),
+        display: <>{example}</>,
+        role: "user",
+      },
+    ]);
+
+    // Submit and get response message
+    const responseMessage = await submitUserMessage(example);
+    setMessages((currentMessages: any[]) => [
+      ...currentMessages,
+      responseMessage,
+    ]);
+  }
+
+  const handleScrollToBottom = () => {
+    // Scroll to the bottom of the messages container smoothly
+    const current = messagesContainerRef.current;
+    if (current) {
+      current.scrollTo({
+        top: current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+    // once animation has finished, set scrollUser to true
+    setTimeout(() => {
+      setScrollUser(true);
+    }, 500);
+  }
+
+  useEffect(() => {
+    console.log(scrollUser);
+  }, [scrollUser]);
  
   return (
     <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
-      <div className="h-full w-full flex flex-col items-center gap-4 overflow-y-scroll pb-24">
-        <div className="flex flex-col gap-4 max-w-[460px] items-start w-full pt-8">
-          {
-            // View messages in UI state
-            messages.map((message: any) => (
-              <div className="w-full flex flex-row gap-2" key={message.id}>
-                <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-md text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                {message.role === "assistant" ? (
-                  <svg fill="currentColor" viewBox="0 0 256 256" role="img" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                    <path d="M197.58,129.06l-51.61-19-19-51.65a15.92,15.92,0,0,0-29.88,0L78.07,110l-51.65,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0l19-51.61,51.65-19a15.92,15.92,0,0,0,0-29.88ZM140.39,163a15.87,15.87,0,0,0-9.43,9.43l-19,51.46L93,172.39A15.87,15.87,0,0,0,83.61,163h0L32.15,144l51.46-19A15.87,15.87,0,0,0,93,115.61l19-51.46,19,51.46a15.87,15.87,0,0,0,9.43,9.43l51.46,19ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z">
-                    </path>
-                  </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" className="h-4 w-4">
-                      <path d="M230.92 212c-15.23-26.33-38.7-45.21-66.09-54.16a72 72 0 1 0-73.66 0c-27.39 8.94-50.86 27.82-66.09 54.16a8 8 0 1 0 13.85 8c18.84-32.56 52.14-52 89.07-52s70.23 19.44 89.07 52a8 8 0 1 0 13.85-8ZM72 96a56 56 0 1 1 56 56 56.06 56.06 0 0 1-56-56Z">
-                      </path>
-                    </svg>
-                  )}
-                  </div>
-                {message.display}
-              </div>
-            ))
-          }
-        </div>
+    <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
+      <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
+        {messages.filter(message => message.role === "user" || message.role === "assistant").length === 0 ? (
+          <EmptyScreen handleExampleClick={handleExampleClick}/>
+        ) : (
+          messages.map(message => (
+            <MessageCard key={message.id} id={JSON.stringify(message.id)} role={message.role} content={message.display} />
+          ))
+        )}
       </div>
-      
-      <PromptForm 
-        input={inputValue}
-        isLoading={false}
-        scrollUser={false}
-        handleInputChange={(event) => setInputValue(event.target.value)}
-        handleSubmit={handleFormSubmit}
-        handleScrollToBottom={() => {}}
-      />
     </div>
+    <PromptForm
+      input={inputValue}
+      isLoading={false}
+      scrollUser={scrollUser}
+      handleInputChange={(event) => setInputValue(event.target.value)}
+      handleSubmit={handleFormSubmit}
+      handleScrollToBottom={handleScrollToBottom}
+      />
+  </div>
   )
 }
