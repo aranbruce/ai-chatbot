@@ -1,7 +1,7 @@
 import Image from 'next/image'
 
 export type WeatherTypeProps = {
-  weather: "clear sky" | "few clouds" | "scattered clouds" | "overcast clouds" | "broken clouds" | "shower rain" | "light rain" | "rain" | "heavy intensity rain" | "thunderstorm" | "snow" | "mist"
+  weather: "Thunderstorm" | "Drizzle" | "Rain" | "Snow" |  "Mist" | "Smoke" | "Haze" | "Dust" | "Fog" | "Sand" | "Dust" | "Ash" | "Squall" | "Tornado" | "Clear" | "Clouds"
 }
 
 type WeatherImageProps = {
@@ -11,10 +11,9 @@ type WeatherImageProps = {
 }
 
 const WeatherImage: React.FC<WeatherImageProps> = ({ height, width, weather }) => {
-  const weatherWithHyphens = String(weather).replace(/\s/g, '-');
   return (
     <Image
-      src={`/weather/${weatherWithHyphens}.svg`}
+      src={`/weather/${weather}.svg`}
       alt={JSON.stringify(weather)}
       width={width}
       height={height}

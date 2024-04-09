@@ -107,9 +107,9 @@ async function submitUserMessage(userInput: string) {
           // Fetch the flight information from an external API.
           const response = await get_current_weather(location, units)
 
-          const weatherNow = response.current.weather[0].description;
+          const weatherNow = response.current.weather[0].main;
           const tempNow = response.current.temp;
-          const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].description } });
+          const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].main } });
           const currentHour = new Date().getHours();
           const currentDate = Date.now();
           const currentWeather = {
