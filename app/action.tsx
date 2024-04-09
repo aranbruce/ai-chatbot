@@ -13,7 +13,7 @@ const openai = new OpenAI({
 function Spinner() {
   return ( 
     <div className="flex flex-col items-center gap-2 w-full min-w-80">
-      <h5 className="text-xs font-medium text-zinc-400">Fetching the weather forecast</h5>
+      <div className="animate-spin rounded-full h-[18px] w-[18px] border-t-2 border-zinc-950 dark:border-zinc-100"></div>
     </div>
   )
 }
