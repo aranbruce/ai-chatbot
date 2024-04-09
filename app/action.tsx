@@ -72,7 +72,7 @@ async function submitUserMessage(userInput: string) {
   const ui = render({
     model: "gpt-4-0125-preview",
     provider: openai,
-    initial: <Spinner/>
+    initial: <Spinner/>,
     messages: [
       { role: "system", content: "You help people understand the weather forecast" },
       ...aiState.get()
