@@ -27,7 +27,7 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
     text-zinc-950
     dark:text-zinc-50
     bg-white 
-    dark:bg-zinc-900
+    dark:bg-zinc-800
     border 
     border-zinc-200
     dark:border-zinc-800
@@ -38,7 +38,7 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
   `;
 
   const baseClassNames = `
-  inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-md py-2"} px-3 gap-2
+  inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-xl py-2"} px-3 gap-2
   text-sm text-primary-foreground disabled:pointer-events-none disabled:opacity-50 disabled:bg-zinc-400
   font-medium transition`;
 

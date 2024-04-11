@@ -84,12 +84,7 @@ const UploadButton = () => {
         </div>
       ))}
       <input type="file" id="fileInput" ref={fileInputRef} accept=".pdf" className="hidden" onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleFileChange(event)} />
-      <button type="button" aria-label="attach file" className="flex p-2 items-center h-fit bottom-[0.4rem] left-[0.2rem] absolute text-zinc-900 dark:text-zinc-50" onClick={() => handleAddFileButtonClick()}
-        // disabled={
-        // // check if any file is uploading
-        // filesAsInput.some(file => file.isUploading)
-        // }
-        >
+      <button type="button" aria-label="attach file" className="flex bg-white dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-800 p-[0.375rem] items-center h-fit bottom-[0.75rem] left-[0.75rem] absolute text-zinc-900 dark:text-zinc-50" onClick={() => handleAddFileButtonClick()}>
         <svg width="18" height="18" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 2.75C8 2.47386 7.77614 2.25 7.5 2.25C7.22386 2.25 7 2.47386 7 2.75V7H2.75C2.47386 7 2.25 7.22386 2.25 7.5C2.25 7.77614 2.47386 8 2.75 8H7V12.25C7 12.5261 7.22386 12.75 7.5 12.75C7.77614 12.75 8 12.5261 8 12.25V8H12.25C12.5261 8 12.75 7.77614 12.75 7.5C12.75 7.22386 12.5261 7 12.25 7H8V2.75Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
       </button>
     </div>

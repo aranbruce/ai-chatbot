@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   // get the parameters from the query string of the request
   const location = request.nextUrl.searchParams.get('location')
   const units = request.nextUrl.searchParams.get('units')
-  const forecast_days = parseInt(request.nextUrl.searchParams.get('forecast_days') || '0');
+  let forecast_days = parseInt(request.nextUrl.searchParams.get('forecast_days') || '0');
 
   console.log('location:', location)
   console.log('units:', units)
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
   if (forecast_days < 1 || forecast_days > 21){
     return NextResponse.json({error: 'Invalid forecast_days parameter'}, { status: 400 })
   }
+  
     
   // Get the location from the query
   const getCoordinates = async (query: string) => {
