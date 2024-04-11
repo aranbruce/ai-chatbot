@@ -2,7 +2,7 @@
  
 import { useState, useRef, useEffect } from 'react';
 import { useUIState, useAIState, useActions } from "ai/rsc";
-import type { AI } from '../action';
+import type { AI } from '../actions';
 import PromptForm from "../components/prompt-form";
 import MessageCard from "../components/message-card";
 import EmptyScreen from "../components/empty-screen";

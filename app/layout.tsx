@@ -5,7 +5,7 @@ import { GeistSans } from "geist/font/sans";
 
 import Header from "./components/header";
 import { Providers } from "./providers";
-import { AI } from "./action";
+import { AI } from "./actions";
 
 export const metadata: Metadata = {
   title: "Pal | AI Chatbot",

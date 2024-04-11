@@ -1,3 +1,5 @@
+"use server"
+
 import { OpenAI } from "openai";
 import { createAI, getMutableAIState, render } from "ai/rsc";
 import { z } from "zod";
@@ -40,11 +42,8 @@ async function get_current_weather(location: string, units?: string) {
       params.append("units", units);
     }
     url.search = params.toString();
-    console.log("url: ", url);
     
     const response = await fetch(url, {method: "GET"});
-    // const data = await response.json();
-    // console.log("data: ", data);
     return await response.json();
   } catch (error) {
     console.error("error: ", error);
@@ -211,7 +210,6 @@ async function submitUserMessage(userInput: string) {
                    
           // Fetch the flight information from an external API.
           const response = await get_current_weather(location, units)
-          console.log("response: ", response.current);
           await new Promise((resolve) => setTimeout(resolve, 1500)); 
 
           const weatherNow = response.current.weather[0].main;
@@ -306,9 +304,6 @@ async function submitUserMessage(userInput: string) {
           // Fetch the flight information from an external API.
           const response = await get_news(query, country, freshness, units)
           const results = await response.results;
-
-          console.log("results: ", results);
-
           // await new Promise((resolve) => setTimeout(resolve, 1500)); 
 
           // Update the final AI state.
