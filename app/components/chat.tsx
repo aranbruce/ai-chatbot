@@ -35,7 +35,7 @@ export default function Chat() {
     ] as Message[],
   });
 
-  const [scrollUser, setScrollUser] = useState(true);
+  const [keepUserAtBottom, setKeepUserAtBottom] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Chat() {
       const current = messagesContainerRef.current;
       if (current) {
         const atBottom = current.scrollHeight - current.scrollTop === current.clientHeight;
-        setScrollUser(atBottom);
+        setKeepUserAtBottom(atBottom);
       }
     };
     const current = messagesContainerRef.current;
@@ -58,13 +58,13 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    if (scrollUser) {
+    if (keepUserAtBottom) {
       const current = messagesContainerRef.current;
       if (current) {
         current.scrollTop = current.scrollHeight;
       }
     }
-  }, [messages, scrollUser]);
+  }, [messages, keepUserAtBottom]);
 
   const handleScrollToBottom = () => {
     // Scroll to the bottom of the messages container smoothly
@@ -75,9 +75,9 @@ export default function Chat() {
         behavior: 'smooth'
       });
     }
-    // once animation has finished, set scrollUser to true
+    // once animation has finished, set keepUserAtBottom to true
     setTimeout(() => {
-      setScrollUser(true);
+      setKeepUserAtBottom(true);
     }, 500);
   }
 
@@ -180,7 +180,7 @@ export default function Chat() {
       <PromptForm
         input={input}
         isLoading={isLoading}
-        scrollUser={scrollUser}
+        keepUserAtBottom={keepUserAtBottom}
         handleInputChange={handleInputChange}
         handleSubmit={handleFormSubmit()}
         handleScrollToBottom={handleScrollToBottom}

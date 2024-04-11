@@ -1,13 +1,11 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+// import { DM_Sans } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+
 import Header from "./components/header";
 import { Providers } from "./providers";
 import { AI } from "./action";
-
-
-
-const dmSans = DM_Sans({subsets: ["latin"]});
 
 export const metadata: Metadata = {
   title: "Pal | AI Chatbot",
@@ -22,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={dmSans.className + "bg-white dark:bg-zinc-950 flex h-svh"}>
+      <body className={GeistSans.className}>
         <Providers>
           <AI>
             <Header />
