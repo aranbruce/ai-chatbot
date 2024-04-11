@@ -72,10 +72,10 @@ const UploadButton = () => {
     <div className={`display flex flex-wrap gap-1 items-start ${filesAsInput.length > 0 ? "p-2" : ""}`}>
       {filesAsInput && filesAsInput.map((file) => (
         <div key={file.fileId} className={"display flex flex-col gap-2 items-start transition"}>
-          <div className="flex flex-row relative  bg-white dark:bg-zinc-900 shadow-sm left-0 border border-zinc-200 dark:border-zinc-700 p-3 rounded-lg text-sm  text-zinc-500 dark:text-zinc-400 text gap-2">
+          <div className="flex flex-row relative  bg-white dark:bg-zinc-900 left-0 border border-zinc-200 dark:border-zinc-700 p-3 rounded-2xl text-sm  text-zinc-500 dark:text-zinc-400 text gap-2">
             {file.isUploading && <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-zinc-950 dark:border-zinc-100"></div>}
             {file.fileName.length > 30 ? `${file.fileName.substring(0, 30)}...` : file.fileName}
-            <button className="absolute top-[-12px] right-[-12px] rounded-full bg-zinc-100 dark:bg-zinc-700 p-[3px] border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50" onClick={() => handleRemoveFileButtonClick(file.fileId)}>
+            <button className="absolute top-[-8px] right-[-8px] rounded-full bg-zinc-100 dark:bg-zinc-700 p-[3px] border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50" onClick={() => handleRemoveFileButtonClick(file.fileId)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="icon-sm">
                 <path d="M6.34315 6.34338L17.6569 17.6571M17.6569 6.34338L6.34315 17.6571" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
               </svg>

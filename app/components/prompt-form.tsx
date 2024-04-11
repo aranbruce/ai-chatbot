@@ -76,7 +76,7 @@ const PromptForm = ({input, isLoading, keepUserAtBottom, handleInputChange, hand
             </Button>
           </div>
         </form>
-        <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">This chatbot can make mistakes. Consider checking important information.</p>
+        <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">This chatbot can make mistakes. Consider checking information.</p>
       </div>
     </div>
   )
