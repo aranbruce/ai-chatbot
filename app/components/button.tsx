@@ -40,7 +40,7 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
   const baseClassNames = `
   inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-xl py-2"} px-3 gap-2
   text-sm text-primary-foreground disabled:pointer-events-none disabled:opacity-50 disabled:bg-zinc-400
-  font-medium transition`;
+  font-medium transition focus:outline-none focus-visible:ring-[2px] ring-zinc-400 dark:ring-zinc-400`;
 
   const classNames = `${baseClassNames} ${variant === "primary" ? primaryClassNames : secondaryClassNames}`;
 
