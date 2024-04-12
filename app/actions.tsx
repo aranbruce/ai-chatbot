@@ -208,9 +208,8 @@ async function submitUserMessage(userInput: string) {
           // Show a skeleton on the client while we wait for the response.
           yield <CurrentWeatherCardSkeleton />;
                    
-          // Fetch the flight information from an external API.
+          // Fetch the current weather information from an external API.
           const response = await get_current_weather(location, units)
-          await new Promise((resolve) => setTimeout(resolve, 1500)); 
 
           const weatherNow = response.current.weather[0].main;
           const tempNow = response.current.temp;
@@ -253,9 +252,9 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
           // Show a skeleton on the client while we wait for the response.
-          yield <>Loading...</>;
+          yield <div>Loading...</div>;
                    
-          // Fetch the flight information from an external API.
+          // Fetch the search web information from an external API.
           const response = await search_the_web(query, country, freshness, units)
           // await new Promise((resolve) => setTimeout(resolve, 1500)); 
 
@@ -299,9 +298,9 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
           // Show a skeleton on the client while we wait for the response.
-          yield <>Loading...</>;
+          yield <div>Loading...</div>;
                    
-          // Fetch the flight information from an external API.
+          // Fetch the news information from an external API.
           const response = await get_news(query, country, freshness, units)
           const results = await response.results;
           // await new Promise((resolve) => setTimeout(resolve, 1500)); 
