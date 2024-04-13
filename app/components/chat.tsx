@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useContext } from 'react';
 import { useChat, Message } from 'ai/react';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { FileCollectionContext } from '../contexts/file-collection-context';
 
 import PromptForm from '../components/prompt-form';
@@ -109,7 +109,7 @@ export default function Chat() {
           fileContent,
         };
       });
-      console.log(fileData);
+      // console.log(fileData);
       const fileMessages = [
         {
           id: uuidv4(),
@@ -142,14 +142,18 @@ export default function Chat() {
         body: JSON.stringify({ messages: updatedMessages }),
       });
       const reader = response.body?.getReader();
-      let responseText = "";
+      const decoder = new TextDecoder()
+      let responseText = '';
       while (true) {
         if (reader) {
           const { done, value } = await reader.read();
           if (done) {
             break;
           }
-          responseText += new TextDecoder().decode(value);
+          const decodedValue = decoder.decode(value);
+          const sanitisedValue = decodedValue.replace(/0:"/g, "").replace(/\"\n/g, "").replace(/\\n/g, "\n");
+          responseText += sanitisedValue;
+          console.log(responseText);          
           setMessages([
             ...updatedMessages,
             {

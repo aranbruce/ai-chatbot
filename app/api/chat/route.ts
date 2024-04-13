@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { OpenAIStream, StreamingTextResponse } from 'ai';
+import { OpenAIStream, StreamingTextResponse, StreamData } from 'ai';
 import { functions, runFunction } from "./functions";
 import { Pinecone } from '@pinecone-database/pinecone';
 import { NextRequest, NextResponse } from "next/server";
@@ -28,13 +28,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const initialResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-0125",
+      model: "gpt-3.5-turbo",
       messages: messagesWithOnlyContentAndRole,
       stream: true,
       functions,
       function_call: "auto",
     });
 
+    const data = new StreamData();
     const stream = OpenAIStream(initialResponse, {
       experimental_onFunctionCall: async (
         { name, arguments: args },
@@ -43,17 +44,28 @@ export async function POST(request: NextRequest) {
         const result = await runFunction(name, args);
         const newMessages = createFunctionCallMessages(result);
         return openai.chat.completions.create({
-          model: "gpt-4-0125-preview",
+          model: "gpt-3.5-turbo",
           stream: true,
           messages: [...messagesWithOnlyContentAndRole, ...newMessages],
         });
       },
+      onCompletion(completion) {
+        // console.log('completion', completion);
+      },
+      onFinal() {
+        data.close();
+      },
     });
 
-    return new StreamingTextResponse(stream);
+    return new StreamingTextResponse(stream, {}, data);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({message: `Internal Server Error: ${error}`}, { status: 500 });
+    if (error instanceof OpenAI.APIError) {
+      const { name, status, headers, message } = error;
+      return NextResponse.json({ name, status, headers, message }, { status });
+    } else {
+      throw error;
+      // return NextResponse.json({message: `Internal Server Error: ${error}`}, { status: 500 });
+    }
   }
 
 }

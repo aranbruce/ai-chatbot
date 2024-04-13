@@ -17,7 +17,6 @@ export default function Page() {
   const [keepUserAtBottom, setKeepUserAtBottom] = useState(true);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const scrollAnchorRef = useRef<HTMLDivElement>(null);
 
   // Set loading to false when AI state is updated
   useEffect(() => {
