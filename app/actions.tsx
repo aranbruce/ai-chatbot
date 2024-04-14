@@ -330,7 +330,7 @@ async function submitUserMessage(userInput: string) {
           ]);
           // Return the flight card to the client.
           return (
-            <div className="flex flex-col gap-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-blue-400 dark:border-b-zinc-800">
+            <div className="flex flex-col gap-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-blue-400 dark:bg-zinc-900">
               <h4 className="text-xl text-white font-semibold">{weatherForecast.length} Days Weather Forecast</h4>
               {weatherForecast.map((day: any, index) => (
                 <WeatherForecastCard
