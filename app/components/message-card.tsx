@@ -32,7 +32,7 @@ const MessageCard = ({id, role, content, data}:MessageProps) => {
               }
             </div>
           </div>
-          <div className="flex gap-2 flex-col max-w-full">
+          <div className="flex gap-2 flex-col max-w-full w-full">
             <h5 className="text-md text-zinc-950 dark:text-zinc-300 font-semibold pt-1">{role === "user" ? "You" : "Chatbot"}</h5>
             {data && data.files && (
               data.files.map((file: any) => (
@@ -43,7 +43,7 @@ const MessageCard = ({id, role, content, data}:MessageProps) => {
                   <div className="font-medium text-sm">{file.fileName.length > 30 ? `${file.fileName.substring(0, 30)}...` : file.fileName}</div>
                 </div>
             )))}
-            <div className="text-zinc-950 dark:text-zinc-300 flex flex-col gap-4">
+            <div className="text-zinc-950 dark:text-zinc-300 flex flex-col gap-4 w-full">
               {typeof content === "string" ? (
                 <Markdown
                   children={content}

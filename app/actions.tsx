@@ -1,5 +1,7 @@
 "use server"
 
+import 'server-only'
+
 import { OpenAI } from "openai";
 import { createAI, getMutableAIState, render } from "ai/rsc";
 import { z } from "zod";
@@ -8,8 +10,14 @@ import {Prism as SyntaxHighlighter} from "react-syntax-highlighter"
 import {vscDarkPlus} from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { v4 as uuidv4 } from 'uuid';
 
-import CurrentWeatherCard from "./components/weather/current-weather-card";
-import CurrentWeatherCardSkeleton from "./components/weather/current-weather-card-skeleton";
+import CurrentWeatherCard from "./components/current-weather/current-weather-card";
+import CurrentWeatherCardSkeleton from "./components/current-weather/current-weather-card-skeleton";
+import Spinner from "./components/spinner";
+import NewsCardGroup from "./components/news-card/news-card-group";
+import NewsCardGroupSkeleton from "./components/news-card/news-card-group-skeleton";
+import WebResultGroup from "./components/web-results/web-result-group";
+import WebResultCardGroupSkeleton from "./components/web-results/web-result-group-skeleton";
+import WeatherForecastCard from "./components/weather-forecast/weather-forecast-card";
  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -51,6 +59,27 @@ async function get_current_weather(location: string, units?: string) {
   }
 }
 
+async function get_weather_forecast(location: string, units?: string, forecast_days?: number) {
+  try {
+    const url = new URL(`${process.env.URL}/api/weather-forecast`);
+    const params = new URLSearchParams({ location });
+    if (units) {
+      params.append("units", units);
+    }
+    if (forecast_days) {
+      params.append("forecast_days", forecast_days.toString());
+    }
+    url.search = params.toString();
+    
+    const response = await fetch(url, {method: "GET"});
+    return await response.json();
+  } catch (error) {
+    console.error("error: ", error);
+    return error;
+  }
+
+}
+
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
   try {
     let url = `${process.env.URL}/api/web-search?query=${query}`
@@ -90,7 +119,6 @@ async function get_news(query: string, country?: string, freshness?: string, uni
     return error;
   }
 }
-  
 
 async function submitUserMessage(userInput: string) {
   "use server";
@@ -109,9 +137,26 @@ async function submitUserMessage(userInput: string) {
   const ui = render({
     model: "gpt-4-0125-preview",
     provider: openai,
-    initial: <>Working on it...</>,
+    initial: <Spinner/>,
     messages: [
-      { role: "system", content: "You help people understand the weather forecast" },
+      { role: "system", 
+      content: `
+        You are an AI designed to help users with their queries. You can perform functions like searching the web.
+        You can help users find information from the web, get the weather or find out the latest news.
+        If someone asks you to search the web, you can use the function \`search_the_web\`.
+        If someone asks you to get the latest news, you can use the function \`get_news\`.
+        If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
+        If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
+        Make sure to confirm their location and the units they want the temperature in.
+        If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
+        If someone asks a question about movies, you can use the function \`search_for_movies\`.
+        If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
+        For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
+        For locations, try to provide a link to the location, a brief description of the location and a rating.
+        When asked to analyze a file make sure to look at the most recent file provided when appropriate.
+        If the user doesn't ask about the file, you can ignore it.
+      `
+      },
       ...aiState.get()
     ],
     // `text` is called when an AI returns a text response (as opposed to a tool call).
@@ -242,6 +287,65 @@ async function submitUserMessage(userInput: string) {
           return <CurrentWeatherCard currentWeather={currentWeather} />;
         }
       },
+      get_weather_forecast: {
+        description: "Get the weather forecast for a location",
+        parameters: z.object({
+          location: z.string().describe("The location to get the weather forecast for"),
+          units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
+          forecast_days: z.number().describe("The number of days to forecast the weather for"),
+        }).required(),
+        render: async function* ({ location, units, forecast_days }) {
+          // Show a skeleton on the client while we wait for the response.
+          yield <div>Loading...</div>;
+                   
+          // Fetch the current weather information from an external API.
+          const response = await get_weather_forecast(location, units, forecast_days)
+          const forecast = response.daily
+
+          console.log(forecast)
+
+          const weatherForecast: { title: string, url: string, description: string, date: string, author:string }[] = forecast.map((day: any, index: number) => {
+            return {
+              day: day.index,
+              temperature: day.temp.day,
+              minTemperature: day.temp.min,
+              maxTemperature: day.temp.max,
+              weather: day.weather[0].main,
+              units: units,
+            }
+          });
+
+          console.log(weatherForecast)
+            
+            
+          // Update the final AI state.
+          aiState.done([
+            ...aiState.get(),
+            {
+              role: "function",
+              name: "get_weather_forecast",
+              // Content can be any string to provide context to the LLM in the rest of the conversation.
+              content: JSON.stringify(weatherForecast),
+            }
+          ]);
+          // Return the flight card to the client.
+          return (
+            <div className="flex flex-col gap-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-blue-400 dark:border-b-zinc-800">
+              <h4 className="text-xl text-white font-semibold">{weatherForecast.length} Days Weather Forecast</h4>
+              {weatherForecast.map((day: any, index) => (
+                <WeatherForecastCard
+                  day={index}
+                  temperature={day.temperature}
+                  minTemperature={day.minTemperature}
+                  maxTemperature={day.maxTemperature}
+                  weather={day.weather}
+                  units={day.units}
+                />
+              ))}
+            </div>
+            );
+        }
+      },  
       search_the_web: {
         description: "Search the web for information on a given topic or for a specific query",
         parameters: z.object({
@@ -252,39 +356,35 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
           // Show a skeleton on the client while we wait for the response.
-          yield <div>Loading...</div>;
+          yield <WebResultCardGroupSkeleton/>;
                    
           // Fetch the search web information from an external API.
           const response = await search_the_web(query, country, freshness, units)
           // await new Promise((resolve) => setTimeout(resolve, 1500)); 
+
+          const results: { title: string, url: string, description: string, date: string, author:string }[] = response.map((result: any) => {
+            return {
+              title: result.title,
+              url: result.url,
+              description: result.description,
+              date: result.page_age,
+              author: result.profile.name,
+            }
+          });
 
           // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
-              name: "get_weather_forecast",
+              name: "search_the_web",
               // Content can be any string to provide context to the LLM in the rest of the conversation.
-              content: JSON.stringify(response),
+              content: JSON.stringify(results),
             }
           ]);
           // Get the title, url, description, page_age, thumbnail of each article in the response array and display it in a card
           return (
-            <div className="flex flex-col gap-2">
-              {response.map((result: any) => (
-                <div key={uuidv4()} className="flex flex-row gap-4 w-full">
-                  {result.thumbnail && (
-                  <img src={result.thumbnail.src} alt="thumbnail" className="h-24 w-24 rounded-xl"/>
-                  )}
-                  <div className="flex flex-col gap-2 w-full">
-                    <h3 className="text-lg font-semibold">{result.title}</h3>
-                    <p className="text-sm text-gray-500">{result.description}</p>
-                    <a href={result.url} target="_blank" className="text-sm text-blue-500 hover:underline">{result.url}</a>
-                    <p className="text-xs text-gray-500">{new Date(result.page_age).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <WebResultGroup results={results} />
           )
         }
       },
@@ -298,40 +398,35 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
           // Show a skeleton on the client while we wait for the response.
-          yield <div>Loading...</div>;
+          yield <NewsCardGroupSkeleton />;
                    
           // Fetch the news information from an external API.
           const response = await get_news(query, country, freshness, units)
-          const results = await response.results;
-          // await new Promise((resolve) => setTimeout(resolve, 1500)); 
-
+          const results = response.results
+          // allowed results: title, url, description, page_age as age, image as thumbnail.src
+          const news: { title: string, url: string, description: string, date: string, image: string }[] = results.map((result: any) => {
+            return {
+              title: result.title,
+              url: result.url,
+              description: result.description,
+              date: result.page_age,
+              image: result.thumbnail.src
+            }
+          });
+          
           // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
-              name: "get_weather_forecast",
+              name: "get_news",
               // Content can be any string to provide context to the LLM in the rest of the conversation.
               content: JSON.stringify(results),
             }
           ]);
           // Get the title, url, description, page_age, thumbnail of each article in the results array and display it in a card
           return (
-            <div className="flex flex-col gap-2">
-              {results.map((result: any) => (
-                <div key={uuidv4()} className="flex flex-row gap-4 w-full">
-                  {result.thumbnail && (
-                  <img src={result.thumbnail.src} alt="thumbnail" className="h-24 w-24 rounded-xl"/>
-                  )}
-                  <div className="flex flex-col gap-2 w-full">
-                    <h3 className="text-lg font-semibold">{result.title}</h3>
-                    <p className="text-sm text-gray-500">{result.description}</p>
-                    <a href={result.url} target="_blank" className="text-sm text-blue-500 hover:underline">{result.url}</a>
-                    <p className="text-xs text-gray-500">{new Date(result.page_age).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <NewsCardGroup news={news} />
           )
         }
       },
