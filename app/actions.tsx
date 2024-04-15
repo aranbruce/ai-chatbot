@@ -1,6 +1,4 @@
-"use server"
-
-import 'server-only'
+import "server-only"
 
 import { OpenAI } from "openai";
 import { createAI, getMutableAIState, render } from "ai/rsc";
@@ -44,6 +42,7 @@ export type UIState = {
 
 // An example of a function that fetches weather information from an external API.
 async function get_current_weather(location: string, units?: string) {
+  "use server"
   try {
     const url = new URL(`${process.env.URL}/api/current-weather`);
     const params = new URLSearchParams({ location });
@@ -61,6 +60,7 @@ async function get_current_weather(location: string, units?: string) {
 }
 
 async function get_weather_forecast(location: string, units?: string, forecast_days?: number) {
+  "use server"
   try {
     const url = new URL(`${process.env.URL}/api/weather-forecast`);
     const params = new URLSearchParams({ location });
@@ -82,6 +82,7 @@ async function get_weather_forecast(location: string, units?: string, forecast_d
 }
 
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
+  "use server"
   try {
     let url = `${process.env.URL}/api/web-search?query=${query}`
     if (country) {
@@ -102,6 +103,7 @@ async function search_the_web(query: string, country?: string, freshness?: strin
 }
 
 async function get_news(query: string, country?: string, freshness?: string, units?: string) {
+  "use server"
   try {
     let url = `${process.env.URL}/api/news-search?query=${query}`
     if (country) {
@@ -122,6 +124,7 @@ async function get_news(query: string, country?: string, freshness?: string, uni
 }
 
 async function search_for_locations(query: string, category?: string, currency?: string) {
+  "use server"
   try {
     let url = `${process.env.URL}/api/location-search?query=${query}`
     if (category) {
@@ -139,7 +142,7 @@ async function search_for_locations(query: string, category?: string, currency?:
 }
 
 async function submitUserMessage(userInput: string) {
-  "use server";
+  "use server"
  
   const aiState: any = getMutableAIState<typeof AI>();
   // Update the AI state with the new user message.
