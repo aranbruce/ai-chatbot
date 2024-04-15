@@ -9,6 +9,7 @@ import Markdown from "react-markdown"
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter"
 import {vscDarkPlus} from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { v4 as uuidv4 } from 'uuid';
+import Image from "next/image";
 
 import CurrentWeatherCard from "./components/current-weather/current-weather-card";
 import CurrentWeatherCardSkeleton from "./components/current-weather/current-weather-card-skeleton";
@@ -120,6 +121,23 @@ async function get_news(query: string, country?: string, freshness?: string, uni
   }
 }
 
+async function search_for_locations(query: string, category?: string, currency?: string) {
+  try {
+    let url = `${process.env.URL}/api/location-search?query=${query}`
+    if (category) {
+      url += `&category=${category}`
+    }
+    if (currency) {
+      url += `&currency=${currency}`
+    }
+    const response = await fetch(url, {method: 'GET'});
+    return await response.json();
+  } catch (error) {
+    console.error("error: ", error);
+    return error;
+  }
+}
+
 async function submitUserMessage(userInput: string) {
   "use server";
  
@@ -132,7 +150,7 @@ async function submitUserMessage(userInput: string) {
       content: userInput,
     },
   ]);
- 
+  
   // The `render()` creates a generated, streamable UI.
   const ui = render({
     model: "gpt-4-0125-preview",
@@ -430,6 +448,49 @@ async function submitUserMessage(userInput: string) {
           )
         }
       },
+      search_for_locations: {
+        description: "Search for locations or places to visit",
+        parameters: z.object({
+          query: z.string().describe("The search query or topic to search for locations on"),
+          category: z.enum(["hotels", "restaurants", "attractions", "geos"]).optional().describe("The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'."),
+          currency: z.string().optional().describe("he currency to be used for the location details. The currency string is limited to 3 character currency codes following ISO 4217."),
+        }).required(),
+        render: async function* ({ query, category, currency }) {
+          // Show a skeleton on the client while we wait for the response.
+          yield <>Loading </>;
+                   
+          // Fetch the news information from an external API.
+          const response = await search_for_locations(query, category, currency)
+          const results = response
+          
+          // Update the final AI state.
+          aiState.done([
+            ...aiState.get(),
+            {
+              role: "function",
+              name: "search_for_locations",
+              // Content can be any string to provide context to the LLM in the rest of the conversation.
+              content: JSON.stringify(results),
+            }
+          ]);
+          return (
+            <div className="flex flex-col gap-8">
+              {results.map((result: any, index: number) => (
+                <div className="flex flex-col gap-2 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
+                  <div className="flex flex-row gap-4 justify-between">
+                    <h3 className="text-zinc-950 dark:text-white font-semibold">{result.name}</h3>
+                    <Image src={result.rating_image_url} width={119} height={20} alt={result.rating} />
+                  </div>
+
+                  <p className="text-sm text-zinc-700 dark:text-zinc-400">{result.description}</p>
+                  <p>Price: {result.price_level}</p>
+                  <a className="text-sm font-semibold" href={result.web_url} target="_blank" rel="noopener noreferrer">See more</a>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      }
     }
   })
  
