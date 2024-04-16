@@ -7,7 +7,7 @@ import PromptForm from "../components/prompt-form";
 import MessageCard from "../components/message-card";
 import EmptyScreen from "../components/empty-screen";
 
-export default function Page() {
+export default function ChatWithFunctions() {
   const [inputValue, setInputValue] = useState("");
   const [aiState] = useAIState();
   const [messages, setMessages] = useUIState<typeof AI>();

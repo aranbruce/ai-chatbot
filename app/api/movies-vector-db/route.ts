@@ -62,8 +62,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log("Query results:", queryResults);
-
     if (!queryResults) {
       return NextResponse.json({message: "No results found"}, { status: 404 })
     }

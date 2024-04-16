@@ -141,6 +141,34 @@ async function search_for_locations(query: string, category?: string, currency?:
   }
 }
 
+async function search_for_movies(input: string, minimumIMDBRating?: number, minimumReleaseYear?: number, maximumReleaseYear?: number, director?: string, limit?: number) {
+  "use server"
+  try {
+    let url = `${process.env.URL}/api/movies-vector-db?input=${input}`;
+    if (minimumIMDBRating) {
+      url += `&minimumIMDBRating=${minimumIMDBRating}`
+    }
+    if (minimumReleaseYear) {
+      url += `&minimumReleaseYear=${minimumReleaseYear}`
+    }
+    if (maximumReleaseYear) {
+      url += `&maximumReleaseYear=${maximumReleaseYear}`
+    }
+    if (limit) {
+      url += `&limit=${limit}`
+    }
+    if (director) {
+      url += `&director=${director}`
+    }
+
+    const response = await fetch(url, {method: "GET"});
+    return await response.json();
+  } catch (error) {
+    console.error("error: ", error);
+    return error;
+  }
+}
+
 async function submitUserMessage(userInput: string) {
   "use server"
  
@@ -460,7 +488,7 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ query, category, currency }) {
           // Show a skeleton on the client while we wait for the response.
-          yield <>Loading </>;
+           yield <Spinner/>;
                    
           // Fetch the news information from an external API.
           const response = await search_for_locations(query, category, currency)
@@ -490,6 +518,72 @@ async function submitUserMessage(userInput: string) {
                   <a className="text-sm font-semibold" href={result.web_url} target="_blank" rel="noopener noreferrer">See more</a>
                 </div>
               ))}
+            </div>
+          )
+        }
+      },
+      search_for_movies: {
+        description: "Get movies from a database based on an input",
+        parameters: z.object({
+          input: z.string().describe("A description of the type of movies to search for"),
+          minimumIMDBRating: z.number().optional().describe("The minimum IMDB rating of the movies to search for"),
+          minimumReleaseYear: z.number().optional().describe("The minimum release year of the movies to search for"),
+          maximumReleaseYear: z.number().optional().describe("The maximum release year of the movies to search for"),
+          director: z.string().optional().describe("The director of the movies to search for"),
+          limit: z.number().optional().describe("The number of movies to return"),
+        }).required(),
+        render: async function* ({ input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit }) {
+          // Show a skeleton on the client while we wait for the response.
+          yield <Spinner/>;
+
+          // Fetch the news information from an external API.
+          const response = await search_for_movies(input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit)
+          const matches = response.matches
+          console.log(matches)
+          const movies = matches.map((match: any) => {
+            return {
+              title: match.metadata.title,
+              imdbRating: match.metadata.imdbRating,
+              genre: match.metadata.genre,
+              releaseYear: match.metadata.releaseYear,
+              director: match.metadata.director,
+              imageURL: match.metadata.imageURL,
+              description: match.metadata.description,
+              stars: [match.metadata.star1, match.metadata.star2, match.metadata.star3, match.metadata.star4]
+            }
+          })
+          aiState.done([
+            ...aiState.get(),
+            {
+              role: "function",
+              name: "search_for_movies",
+              content: JSON.stringify(movies),
+            }
+          ]);
+          return (
+            // display each movie in the movies array as a card
+            <div className="flex flex-col gap-8">
+              {movies.map((movie: any, index: number) => (
+                <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
+                  {movie.imageURL && (<Image className="rounded-md" src={movie.imageURL} width={80} height={117} alt={movie.title} />)}
+                  <div className="flex flex-col gap-4 justify-between">
+                    <h3 className="text-zinc-950 dark:text-white font-semibold">{movie.title}</h3>
+                    <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
+                      <p>{movie.description}</p>
+                      <p>IMDB Rating: {movie.imdbRating}</p>
+                      <p>Release Year: {movie.releaseYear}</p>
+                      <p>Director: {movie.director}</p>
+                      <p>Genre: {movie.genre}</p>
+                      <div className="flex flex-row gap-2">
+                        {/* add each movie star with a , between */}
+                        {movie.stars.map((star: string, index: number) => (
+                          <span key={index}>{star}{index < movie.stars.length - 1 && ", "}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            ))}
             </div>
           )
         }
