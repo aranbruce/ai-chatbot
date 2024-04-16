@@ -275,6 +275,7 @@ async function submitUserMessage(userInput: string) {
           yield <CurrentWeatherCardSkeleton />;
                    
           // Fetch the current weather information from an external API.
+          (async () => {
           const response = await get_current_weather(location, units)
 
           const weatherNow = response.current.weather[0].main;
@@ -303,7 +304,7 @@ async function submitUserMessage(userInput: string) {
             }
           ]);
           // show the weather forecast for the first object in weatherForecast array
-
+          })();
           // Return the flight card to the client.
           return <CurrentWeatherCard currentWeather={currentWeather} />;
         }
