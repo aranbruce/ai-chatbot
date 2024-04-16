@@ -6,7 +6,6 @@ import { z } from "zod";
 import Markdown from "react-markdown"
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter"
 import {vscDarkPlus} from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { v4 as uuidv4 } from 'uuid';
 import Image from "next/image";
 
 import CurrentWeatherCard from "./components/current-weather/current-weather-card";
@@ -173,7 +172,6 @@ async function submitUserMessage(userInput: string) {
   "use server"
  
   const aiState: any = getMutableAIState<typeof AI>();
-  // Update the AI state with the new user message.
   aiState.update([
     ...aiState.get(),
     {
@@ -182,7 +180,6 @@ async function submitUserMessage(userInput: string) {
     },
   ]);
   
-  // The `render()` creates a generated, streamable UI.
   const ui = render({
     model: "gpt-4-0125-preview",
     provider: openai,
@@ -208,9 +205,6 @@ async function submitUserMessage(userInput: string) {
       },
       ...aiState.get()
     ],
-    // `text` is called when an AI returns a text response (as opposed to a tool call).
-    // Its content is streamed from the LLM, so this function will be called
-    // multiple times with `content` being incremental.
     text: ({ content, done }) => {
       // When it"s the final content, mark the state as done and ready for the client to access.
       if (done) {
@@ -597,6 +591,153 @@ async function submitUserMessage(userInput: string) {
     role: "assistant"
   };
 }
+
+async function submitFile(filesAsInput: any, fileCollection: any, userInput?: string) {
+  "use server"
+  // console.log("File data received:", filesAsInput);
+
+  const fileData = filesAsInput.map((file: any) => {
+    const fileContent = fileCollection.find((fileObject: any) => fileObject.fileId === file.fileId)?.fileContent;
+    return {
+      fileId: file.fileId,
+      fileName: file.fileName,
+      fileContent,
+    };
+  });
+
+  // console.log("File data:", fileData);
+
+  const aiState: any = getMutableAIState<typeof AI>();
+  aiState.update([
+    ...aiState.get(),
+    {
+      role: "user",
+      // content: userInput,
+      content: "Tell me about this file."
+    },
+    {
+      role: "system",
+      content: `
+      Analyze the following data 
+      provided as a document as part of your answer to the users question: 
+      <fileData>${JSON.stringify(fileData)}</fileData>
+      `,
+    }
+  ]);
+
+  const ui = render({
+    model: "gpt-4-0125-preview",
+    provider: openai,
+    initial: <Spinner/>,
+    messages: [
+      { role: "system", 
+      content: `
+        You are an AI designed to help users with their queries. You can perform functions like searching the web.
+        You can help users find information from the web, get the weather or find out the latest news.
+        If someone asks you to search the web, you can use the function \`search_the_web\`.
+        If someone asks you to get the latest news, you can use the function \`get_news\`.
+        If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
+        If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
+        Make sure to confirm their location and the units they want the temperature in.
+        If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
+        If someone asks a question about movies, you can use the function \`search_for_movies\`.
+        If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
+        For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
+        For locations, try to provide a link to the location, a brief description of the location and a rating.
+        When asked to analyze a file make sure to look at the most recent file provided when appropriate.
+        If the user doesn't ask about the file, you can ignore it.
+      `
+      },
+      ...aiState.get()
+    ],
+    text: ({ content, done }) => {
+      // When it"s the final content, mark the state as done and ready for the client to access.
+      if (done) {
+        aiState.done([
+          ...aiState.get(),
+          {
+            role: "assistant",
+            content
+          }
+        ]);
+      }
+      return (
+        <Markdown
+          children={content}
+          components={{
+            // Map `h1` (`# heading`) to use `h2`s.
+            h1: "h2",
+            h2 (props) {
+              const {node, ...rest} = props
+              return <h2 className="text-xl font-semibold" {...rest} />
+            },
+            h3 (props) {
+              const {node, ...rest} = props
+              return <h3 className="text-lg font-semibold" {...rest} />
+            },
+            h4 (props) {
+              const {node, ...rest} = props
+              return <h4 className="text-md font-semibold" {...rest} />
+            },
+            ol(props) {
+              const {node, ...rest} = props
+              return <ol className="flex flex-col flex-wrap gap-4" {...rest} />
+            },
+            ul(props) {
+              const {node, ...rest} = props
+              return <ul className="flex flex-col flex-wrap gap-4" {...rest} />
+            },
+            li(props) {
+              const {node, ...rest} = props
+              return <li className="" {...rest} />
+            },
+            a(props) {
+              const {node, ...rest} = props
+              return <a target="_blank" rel="noopener noreferrer" className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2" {...rest} />
+            },
+            pre(props) {
+              const {node, ...rest} = props
+              return <pre className="grid w-full" {...rest} />
+            },
+            code(props) {
+              const {children, className, node, ...rest} = props
+              const match = /language-(\w+)/.exec(className || "")
+              const language = match ? match[1] : "text"
+              const capitalizedLanguage = language.charAt(0).toUpperCase() + language.slice(1).toLowerCase();
+              return match ? (
+                <div className="flex flex-col text-zinc-200 rounded-md overflow-hidden bg-zinc-900 border border-zinc-300 dark:border-zinc-800">
+                  <div className="flex justify-between relative bg-zinc-700 text-zinc:600 px-4 py-2 text-xs">
+                    <div>{capitalizedLanguage}</div>
+                    <button onClick={() => navigator.clipboard.writeText(String(children))}>
+                      Copy
+                    </button>
+                  </div>
+                  <SyntaxHighlighter
+                    PreTag="div"
+                    language={language} 
+                    style={vscDarkPlus}
+                    customStyle={{margin: "0", background: "none"}}
+                    children={String(children).replace(/\n$/, '')}
+                  />
+                </div>
+              ) : (
+                <code {...rest} className="text-sm font-semibold">
+                  {children}
+                </code>
+              )
+            },
+          }}
+        />
+      )
+    },
+  })
+  
+  return {
+    id: Date.now(),
+    display: ui,
+    role: "assistant"
+  };
+}
  
 // Define the initial state of the AI. It can be any JSON object.
 const initialAIState: {
@@ -616,7 +757,8 @@ const initialUIState: {
 // AI is a provider you wrap your application with so you can access AI and UI state in your components.
 export const AI = createAI({
   actions: {
-    submitUserMessage
+    submitUserMessage,
+    submitFile
   },
   // Each state can be any shape of object, but for chat applications
   // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }

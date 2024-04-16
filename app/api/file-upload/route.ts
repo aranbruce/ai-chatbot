@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 import { v4 as uuidv4 } from "uuid"; // To generate a unique filename
 import { NextRequest, NextResponse } from "next/server"; 
 
