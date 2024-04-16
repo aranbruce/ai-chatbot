@@ -1,4 +1,4 @@
-import parse from 'html-react-parser';
+import {decode} from 'html-entities';
 
 export interface WebResultProps {
   title: string
@@ -18,7 +18,7 @@ const WebResult = ({ title, description, url, date, author }: WebResultProps) =>
         <p className="text-sm text-zinc-500 dark:text-zinc-300">{new Date(date).toLocaleDateString()}</p>
       </div>
       <div className="text-sm text-zinc-500 dark:text-zinc-400">
-        {parse(description)}
+        {decode(description)}
       </div>
       <a href={url} target="_blank" className="text-sm text-zinc-950 dark:text-white font-semibold hover:text-zinc-700 dark:hover:text-zinc-200">Read more</a>
     </div>

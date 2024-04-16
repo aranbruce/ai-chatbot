@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
   }
 
   // call brave API
-  const url = `https://api.search.brave.com/res/v1/web/search?q=${query}` +
+  const url = `https://api.search.brave.com/res/v1/web/search?q=${query}&text_decorations=0` +
     `&count=${count}` +
     (country ? `&country=${country}` : '') +
     (freshness ? `&freshness=${freshness}` : '') +
