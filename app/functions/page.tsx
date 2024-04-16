@@ -1,7 +1,7 @@
-import ChatWithFunctions from "../components/chat-with-functions";
+import ChatWithoutActions from "../components/chat-without-actions";
  
 export const runtime = 'edge';
  
 export default function Page() {
-  return <ChatWithFunctions />;
+  return <ChatWithoutActions />;
 }

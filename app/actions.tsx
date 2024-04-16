@@ -612,8 +612,7 @@ async function submitFile(filesAsInput: any, fileCollection: any, userInput?: st
     ...aiState.get(),
     {
       role: "user",
-      // content: userInput,
-      content: "Tell me about this file."
+      content: userInput ? userInput : "User requested to analyze the file",
     },
     {
       role: "system",
