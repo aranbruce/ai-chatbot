@@ -29,9 +29,9 @@ const CurrentWeatherCard = ({ currentWeather }: { currentWeather: CurrentWeather
             <WeatherImage height={48} width={48} weather={currentWeather.weatherNow}/>
           </div>
         </div>
-        <div className="flex flex-row gap-4 w-full flex-wrap justify-start">
+        <div className="grid grid-cols-4 sm:grid-cols-7 auto-cols-min gap-4 w-full">
           {currentWeather.tempAndWeatherOverNextHours.slice(0, 7).map((hour: any, index: number) => (
-            <div className="flex flex-col gap-2 items-center basis-1/4 sm:basis-[12%]" key={index}>
+            <div className="flex flex-col gap-2 items-center w-8" key={index}>
               <h5 className="text-xs text-zinc-100">
                 {index === 0 ? "Now" : ((currentWeather.currentHour + index) % 24).toString().padStart(2, '0')}
               </h5>

@@ -16,6 +16,7 @@ import NewsCardGroupSkeleton from "./components/news-card/news-card-group-skelet
 import WebResultGroup from "./components/web-results/web-result-group";
 import WebResultCardGroupSkeleton from "./components/web-results/web-result-group-skeleton";
 import WeatherForecastCard from "./components/weather-forecast/weather-forecast-card";
+import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -293,10 +294,14 @@ async function submitUserMessage(userInput: string) {
           units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
         }).required(),
         render: async function* ({ location, units }) {
-          // Show a skeleton on the client while we wait for the response.
-          yield <CurrentWeatherCardSkeleton />;
+          yield (
+          <>
+            Getting the current weather for {location}...
+            <CurrentWeatherCardSkeleton />
+          </>
+          );
+
                    
-          // Fetch the current weather information from an external API.
           const response = await get_current_weather(location, units)
 
           const weatherNow = response.current.weather[0].main;
@@ -320,14 +325,18 @@ async function submitUserMessage(userInput: string) {
             {
               role: "function",
               name: "get_weather_forecast",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
               content: JSON.stringify(currentWeather),
             }
           ]);
-          // show the weather forecast for the first object in weatherForecast array
 
-          // Return the flight card to the client.
-          return <CurrentWeatherCard currentWeather={currentWeather} />;
+              
+          return (
+            <>
+              Here's the current weather for {location}:
+              <CurrentWeatherCard currentWeather={currentWeather} />
+            </>
+          )
+          
         }
       },
       get_weather_forecast: {
@@ -338,14 +347,15 @@ async function submitUserMessage(userInput: string) {
           forecast_days: z.number().describe("The number of days to forecast the weather for"),
         }).required(),
         render: async function* ({ location, units, forecast_days }) {
-          // Show a skeleton on the client while we wait for the response.
-          yield <div>Loading...</div>;
+          yield (
+            <>
+            Getting the weather forecast for {location}...
+            <WeatherForecastCardSkeleton/>
+            </>
+          );
                    
-          // Fetch the current weather information from an external API.
           const response = await get_weather_forecast(location, units, forecast_days)
           const forecast = response.daily
-
-          console.log(forecast)
 
           const weatherForecast: { title: string, url: string, description: string, date: string, author:string }[] = forecast.map((day: any, index: number) => {
             return {
@@ -357,35 +367,20 @@ async function submitUserMessage(userInput: string) {
               units: units,
             }
           });
-
-          console.log(weatherForecast)
             
-            
-          // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
               name: "get_weather_forecast",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
               content: JSON.stringify(weatherForecast),
             }
           ]);
-          // Return the flight card to the client.
           return (
-            <div className="flex flex-col gap-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-blue-400 dark:bg-zinc-900">
-              <h4 className="text-xl text-white font-semibold">{weatherForecast.length} Days Weather Forecast</h4>
-              {weatherForecast.map((day: any, index) => (
-                <WeatherForecastCard
-                  day={index}
-                  temperature={day.temperature}
-                  minTemperature={day.minTemperature}
-                  maxTemperature={day.maxTemperature}
-                  weather={day.weather}
-                  units={day.units}
-                />
-              ))}
-            </div>
+            <>
+              Here's the {forecast_days} day forecast for {location}:
+              <WeatherForecastCard weatherForecast={weatherForecast} />   
+            </>
             );
         }
       },  
@@ -398,12 +393,14 @@ async function submitUserMessage(userInput: string) {
           units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
-          // Show a skeleton on the client while we wait for the response.
-          yield <WebResultCardGroupSkeleton/>;
+          yield (
+            <>
+              Searching the web for {query}...
+              <WebResultCardGroupSkeleton/>;
+            </>
+          )
                    
-          // Fetch the search web information from an external API.
           const response = await search_the_web(query, country, freshness, units)
-          // await new Promise((resolve) => setTimeout(resolve, 1500)); 
 
           const results: { title: string, url: string, description: string, date: string, author:string }[] = response.map((result: any) => {
             return {
@@ -415,19 +412,19 @@ async function submitUserMessage(userInput: string) {
             }
           });
 
-          // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
               name: "search_the_web",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
               content: JSON.stringify(results),
             }
           ]);
-          // Get the title, url, description, page_age, thumbnail of each article in the response array and display it in a card
           return (
-            <WebResultGroup results={results} />
+            <>
+              Here are the search results for {query}:
+              <WebResultGroup results={results} />
+            </>
           )
         }
       },
@@ -440,13 +437,15 @@ async function submitUserMessage(userInput: string) {
           units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
-          // Show a skeleton on the client while we wait for the response.
-          yield <NewsCardGroupSkeleton />;
+          yield (
+            <>
+              Searching for news about {query}...
+              <NewsCardGroupSkeleton />
+            </>
+          );
                    
-          // Fetch the news information from an external API.
           const response = await get_news(query, country, freshness, units)
           const results = response.results
-          // allowed results: title, url, description, page_age as age, image as thumbnail.src
           const news: { title: string, url: string, description: string, date: string, image: string }[] = results.map((result: any) => {
             return {
               title: result.title,
@@ -457,19 +456,19 @@ async function submitUserMessage(userInput: string) {
             }
           });
           
-          // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
               name: "get_news",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
               content: JSON.stringify(results),
             }
           ]);
-          // Get the title, url, description, page_age, thumbnail of each article in the results array and display it in a card
           return (
-            <NewsCardGroup news={news} />
+            <>
+              Here are the latest news articles about {query}:
+              <NewsCardGroup news={news} />
+            </>
           )
         }
       },
@@ -481,38 +480,42 @@ async function submitUserMessage(userInput: string) {
           currency: z.string().optional().describe("he currency to be used for the location details. The currency string is limited to 3 character currency codes following ISO 4217."),
         }).required(),
         render: async function* ({ query, category, currency }) {
-          // Show a skeleton on the client while we wait for the response.
-           yield <Spinner/>;
+          yield (
+            <>
+              Searching for locations related to {query}...
+              <Spinner/>
+            </>
+          )
                    
-          // Fetch the news information from an external API.
           const response = await search_for_locations(query, category, currency)
           const results = response
           
-          // Update the final AI state.
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
               name: "search_for_locations",
-              // Content can be any string to provide context to the LLM in the rest of the conversation.
               content: JSON.stringify(results),
             }
           ]);
           return (
-            <div className="flex flex-col gap-8">
-              {results.map((result: any, index: number) => (
-                <div className="flex flex-col gap-2 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
-                  <div className="flex flex-row gap-4 justify-between">
-                    <h3 className="text-zinc-950 dark:text-white font-semibold">{result.name}</h3>
-                    <Image src={result.rating_image_url} width={119} height={20} alt={result.rating} />
-                  </div>
+            <>
+              Here are the search results for {query}:
+              <div className="flex flex-col gap-8">
+                {results.map((result: any, index: number) => (
+                  <div className="flex flex-col gap-2 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
+                    <div className="flex flex-row gap-4 justify-between">
+                      <h3 className="text-zinc-950 dark:text-white font-semibold">{result.name}</h3>
+                      <Image src={result.rating_image_url} width={119} height={20} alt={result.rating} />
+                    </div>
 
-                  <p className="text-sm text-zinc-700 dark:text-zinc-400">{result.description}</p>
-                  <p>Price: {result.price_level}</p>
-                  <a className="text-sm font-semibold" href={result.web_url} target="_blank" rel="noopener noreferrer">See more</a>
-                </div>
-              ))}
-            </div>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-400">{result.description}</p>
+                    <p>Price: {result.price_level}</p>
+                    <a className="text-sm font-semibold" href={result.web_url} target="_blank" rel="noopener noreferrer">See more</a>
+                  </div>
+                ))}
+              </div>
+            </>
           )
         }
       },
@@ -527,13 +530,10 @@ async function submitUserMessage(userInput: string) {
           limit: z.number().optional().describe("The number of movies to return"),
         }).required(),
         render: async function* ({ input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit }) {
-          // Show a skeleton on the client while we wait for the response.
           yield <Spinner/>;
 
-          // Fetch the news information from an external API.
           const response = await search_for_movies(input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit)
           const matches = response.matches
-          console.log(matches)
           const movies = matches.map((match: any) => {
             return {
               title: match.metadata.title,
@@ -555,7 +555,6 @@ async function submitUserMessage(userInput: string) {
             }
           ]);
           return (
-            // display each movie in the movies array as a card
             <div className="flex flex-col gap-8">
               {movies.map((movie: any, index: number) => (
                 <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
@@ -569,7 +568,6 @@ async function submitUserMessage(userInput: string) {
                       <p>Director: {movie.director}</p>
                       <p>Genre: {movie.genre}</p>
                       <div className="flex flex-row gap-2">
-                        {/* add each movie star with a , between */}
                         {movie.stars.map((star: string, index: number) => (
                           <span key={index}>{star}{index < movie.stars.length - 1 && ", "}</span>
                         ))}
@@ -594,7 +592,6 @@ async function submitUserMessage(userInput: string) {
 
 async function submitFile(filesAsInput: any, fileCollection: any, userInput?: string) {
   "use server"
-  // console.log("File data received:", filesAsInput);
 
   const fileData = filesAsInput.map((file: any) => {
     const fileContent = fileCollection.find((fileObject: any) => fileObject.fileId === file.fileId)?.fileContent;
@@ -604,8 +601,6 @@ async function submitFile(filesAsInput: any, fileCollection: any, userInput?: st
       fileContent,
     };
   });
-
-  // console.log("File data:", fileData);
 
   const aiState: any = getMutableAIState<typeof AI>();
   aiState.update([
@@ -650,7 +645,6 @@ async function submitFile(filesAsInput: any, fileCollection: any, userInput?: st
       ...aiState.get()
     ],
     text: ({ content, done }) => {
-      // When it"s the final content, mark the state as done and ready for the client to access.
       if (done) {
         aiState.done([
           ...aiState.get(),

@@ -8,11 +8,17 @@ import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from '../contexts/file-collection-context';
 
+type Message = {
+  id: number;
+  display: JSX.Element;
+  role: string;
+}
+
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [aiState] = useAIState();
-  const [messages, setMessages] = useUIState<typeof AI>();
-  const { submitUserMessage, submitFile } = useActions<typeof AI>();
+  const [messages, setMessages] = useUIState();
+  const { submitUserMessage, submitFile } = useActions();
   const [isLoading, setIsLoading] = useState(false);
   const { fileCollection, filesAsInput, setFilesAsInput } = useContext(FileCollectionContext);
 
@@ -74,10 +80,11 @@ export default function Chat() {
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+    setKeepUserAtBottom(true);
     setInputValue("");
     if (filesAsInput.length === 0) {
       // Add user message to UI state
-      setMessages((currentMessages: any) => [
+      setMessages((currentMessages: Message[]) => [
         ...currentMessages,
         {
           id: Date.now(),
@@ -87,13 +94,13 @@ export default function Chat() {
       ]);
       // Submit and get response message
       const responseMessage = await submitUserMessage(inputValue);
-      setMessages((currentMessages: any[]) => [
+      setMessages((currentMessages: Message[]) => [
         ...currentMessages,
         responseMessage,
       ]);
     } else {
       console.log("Files as input: ", filesAsInput);
-      setMessages((currentMessages: any) => [
+      setMessages((currentMessages: Message[]) => [
         ...currentMessages,
         {
           id: Date.now(),
@@ -152,10 +159,10 @@ export default function Chat() {
     <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
     <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
       <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
-        {messages.filter(message => message.role === "user" || message.role === "assistant").length === 0 ? (
+        {messages.filter((message: Message) => message.role === "user" || message.role === "assistant").length === 0 ? (
           <EmptyScreen handleExampleClick={handleExampleClick}/>
         ) : (
-          messages.map(message => (
+          messages.map((message: Message)  => (
             <MessageCard key={message.id} id={JSON.stringify(message.id)} role={message.role} content={message.display} />
           ))
         )}

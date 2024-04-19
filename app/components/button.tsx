@@ -1,7 +1,7 @@
 
 interface ButtonProps {
   onClick?: () => void;
-  children: any;
+  children: React.ReactNode;
   href?: string;
   disabled?: boolean;
   ariaLabel?: string;
