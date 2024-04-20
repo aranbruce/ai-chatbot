@@ -1,15 +1,16 @@
 'use client'
  
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, use } from 'react';
 import { useUIState, useAIState, useActions } from "ai/rsc";
-import type { AI } from '../actions';
+import { v4 as uuidv4 } from "uuid";
 import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from '../contexts/file-collection-context';
 
+
 type Message = {
-  id: number;
+  id: string;
   display: JSX.Element;
   role: string;
 }
@@ -21,11 +22,15 @@ export default function Chat() {
   const { submitUserMessage, submitFile } = useActions();
   const [isLoading, setIsLoading] = useState(false);
   const { fileCollection, filesAsInput, setFilesAsInput } = useContext(FileCollectionContext);
-
   
   const [keepUserAtBottom, setKeepUserAtBottom] = useState(true);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    console.log("Messages: ", messages);
+    console.log("aiState: ", aiState);
+  }, [messages, aiState]);
 
   // Set loading to false when AI state is updated
   useEffect(() => {
@@ -87,10 +92,10 @@ export default function Chat() {
       setMessages((currentMessages: Message[]) => [
         ...currentMessages,
         {
-          id: Date.now(),
+          id: uuidv4(),
           display: <>{inputValue}</>,
           role: "user",
-        },
+        } as Message,
       ]);
       // Submit and get response message
       const responseMessage = await submitUserMessage(inputValue);
@@ -99,11 +104,11 @@ export default function Chat() {
         responseMessage,
       ]);
     } else {
-      console.log("Files as input: ", filesAsInput);
+      // Add user message to UI state
       setMessages((currentMessages: Message[]) => [
         ...currentMessages,
         {
-          id: Date.now(),
+          id: uuidv4(),
           display: 
             <div className="flex flex-col gap-4">
               {inputValue}
@@ -121,11 +126,10 @@ export default function Chat() {
               )}
             </div>,
           role: "user",
-        },
+        } as Message,
       ]);
-
+      // Submit and get response message
       const responseMessage = await submitFile(filesAsInput, fileCollection, inputValue);
-      console.log("Response message: ", responseMessage);
       setMessages((currentMessages: any[]) => [
         ...currentMessages,
         responseMessage,
@@ -138,15 +142,14 @@ export default function Chat() {
   const handleExampleClick = async (example: string) => {
     // Add user message to UI state
     setIsLoading(true);
-    setMessages((currentMessages: any[]) => [
+    setMessages((currentMessages: Message[]) => [
       ...currentMessages,
       {
-        id: Date.now(),
+        id: uuidv4(),
         display: <>{example}</>,
         role: "user",
-      },
+      } as Message,
     ]);
-
     // Submit and get response message
     const responseMessage = await submitUserMessage(example);
     setMessages((currentMessages: any[]) => [

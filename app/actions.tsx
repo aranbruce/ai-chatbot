@@ -17,6 +17,7 @@ import WebResultGroup from "./components/web-results/web-result-group";
 import WebResultCardGroupSkeleton from "./components/web-results/web-result-group-skeleton";
 import WeatherForecastCard from "./components/weather-forecast/weather-forecast-card";
 import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
+import LocationCard from "./components/location-card/location-card";
  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -123,10 +124,10 @@ async function get_news(query: string, country?: string, freshness?: string, uni
   }
 }
 
-async function search_for_locations(query: string, category?: string, currency?: string) {
+async function search_for_locations(query: string, city: string, category?: string, currency?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/location-search?query=${query}`
+    let url = `${process.env.URL}/api/location-search?query=${query}&city=${city}`
     if (category) {
       url += `&category=${category}`
     }
@@ -300,10 +301,8 @@ async function submitUserMessage(userInput: string) {
             <CurrentWeatherCardSkeleton />
           </>
           );
-
                    
           const response = await get_current_weather(location, units)
-
           const weatherNow = response.current.weather[0].main;
           const tempNow = response.current.temp;
           const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].main } });
@@ -318,18 +317,15 @@ async function submitUserMessage(userInput: string) {
             units,
             tempAndWeatherOverNextHours
           }
- 
-          // Update the final AI state.
-          aiState.done([
+           aiState.done([
             ...aiState.get(),
             {
               role: "function",
-              name: "get_weather_forecast",
+              name: "get_current_weather",
               content: JSON.stringify(currentWeather),
             }
           ]);
 
-              
           return (
             <>
               Here's the current weather for {location}:
@@ -475,44 +471,48 @@ async function submitUserMessage(userInput: string) {
       search_for_locations: {
         description: "Search for locations or places to visit",
         parameters: z.object({
-          query: z.string().describe("The search query or topic to search for locations on"),
+          query: z.string().describe("The search query or topic to search for locations on."),
+          city: z.string().describe("The city to search for locations in. The can only be a city and cannot be part of a city. For example, 'London' is valid, but 'North London' is not."),
           category: z.enum(["hotels", "restaurants", "attractions", "geos"]).optional().describe("The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'."),
-          currency: z.string().optional().describe("he currency to be used for the location details. The currency string is limited to 3 character currency codes following ISO 4217."),
+          currency: z.string().optional().describe("The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217."),
         }).required(),
-        render: async function* ({ query, category, currency }) {
+        render: async function* ({ query, city, category, currency }) {
           yield (
             <>
-              Searching for locations related to {query}...
+              Searching for locations related to {query} in {city}...
               <Spinner/>
             </>
           )
                    
-          const response = await search_for_locations(query, category, currency)
-          const results = response
+          const response = await search_for_locations(query, city, category, currency)
+          const locations: { name: string, description: string, web_url: string, rating: string, rating_image_url: string, num_reviews: string, price_level: string, address_obj: object, photoUrls: string[] }[] = response.map((location: any) => {
+            return {
+              name: location.name,
+              description: location.description,
+              tripadvisor_url: location.web_url,
+              rating: location.rating,
+              ratingImageURL: location.rating_image_url,
+              reviewCount: location.num_reviews,
+              priceLevel: location.price_level,
+              address: location.address_obj.address_string,
+              photoUrls: location.photoUrls
+            }
+          });
           
           aiState.done([
             ...aiState.get(),
             {
               role: "function",
               name: "search_for_locations",
-              content: JSON.stringify(results),
+              content: JSON.stringify(locations),
             }
           ]);
           return (
             <>
-              Here are the search results for {query}:
+              Here are the search results for {query} in {city}:
               <div className="flex flex-col gap-8">
-                {results.map((result: any, index: number) => (
-                  <div className="flex flex-col gap-2 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
-                    <div className="flex flex-row gap-4 justify-between">
-                      <h3 className="text-zinc-950 dark:text-white font-semibold">{result.name}</h3>
-                      <Image src={result.rating_image_url} width={119} height={20} alt={result.rating} />
-                    </div>
-
-                    <p className="text-sm text-zinc-700 dark:text-zinc-400">{result.description}</p>
-                    <p>Price: {result.price_level}</p>
-                    <a className="text-sm font-semibold" href={result.web_url} target="_blank" rel="noopener noreferrer">See more</a>
-                  </div>
+                {locations.map((location: any, index: number) => (
+                  <LocationCard key={index} location={location}/>
                 ))}
               </div>
             </>
@@ -579,7 +579,7 @@ async function submitUserMessage(userInput: string) {
             </div>
           )
         }
-      }
+      },
     }
   })
  

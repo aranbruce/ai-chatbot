@@ -109,7 +109,6 @@ export default function ChatWithoutActions() {
           fileContent,
         };
       });
-      // console.log(fileData);
       const fileMessages = [
         {
           id: uuidv4(),
@@ -153,7 +152,6 @@ export default function ChatWithoutActions() {
           const decodedValue = decoder.decode(value);
           const sanitisedValue = decodedValue.replace(/0:"/g, "").replace(/\"\n/g, "").replace(/\\n/g, "\n");
           responseText += sanitisedValue;
-          console.log(responseText);          
           setMessages([
             ...updatedMessages,
             {

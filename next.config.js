@@ -11,6 +11,12 @@ module.exports = {
         port: '',
         pathname: '/images/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'media-cdn.tripadvisor.com',
+        port: '',
+        pathname: '/media/**',
+      }
     ],
   },
 }
