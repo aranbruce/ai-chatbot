@@ -295,44 +295,61 @@ async function submitUserMessage(userInput: string) {
           units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
         }).required(),
         render: async function* ({ location, units }) {
-          yield (
-          <>
-            Getting the current weather for {location}...
-            <CurrentWeatherCardSkeleton />
-          </>
-          );
-                   
-          const response = await get_current_weather(location, units)
-          const weatherNow = response.current.weather[0].main;
-          const tempNow = response.current.temp;
-          const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].main } });
-          const currentHour = new Date().getHours();
-          const currentDate = Date.now();
-          const currentWeather = {
-            location,
-            currentHour,
-            currentDate,
-            weatherNow,
-            tempNow,
-            units,
-            tempAndWeatherOverNextHours
-          }
-           aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "get_current_weather",
-              content: JSON.stringify(currentWeather),
-            }
-          ]);
-
-          return (
+          try {
+            yield (
             <>
-              Here's the current weather for {location}:
-              <CurrentWeatherCard currentWeather={currentWeather} />
+              Getting the current weather for {location}...
+              <CurrentWeatherCardSkeleton />
             </>
-          )
-          
+            );
+            const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+            );
+            const response = await Promise.race([get_current_weather(location, units), timeout]);
+            const weatherNow = response.current.weather[0].main;
+            const tempNow = response.current.temp;
+            const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].main } });
+            const currentHour = new Date().getHours();
+            const currentDate = Date.now();
+            const currentWeather = {
+              location,
+              currentHour,
+              currentDate,
+              weatherNow,
+              tempNow,
+              units,
+              tempAndWeatherOverNextHours
+            }
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "get_current_weather",
+                content: JSON.stringify(currentWeather),
+              }
+            ]);
+
+            return (
+              <>
+                Here's the current weather for {location}:
+                <CurrentWeatherCard currentWeather={currentWeather} />
+              </>
+            )
+          } catch (error: any) {
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "get_current_weather",
+                content: JSON.stringify({ error: error.message }),
+              }
+            ]);
+            return (
+              <>
+                Sorry, there was an error getting the current weather for {location}
+              </>
+            )
+          }
         }
       },
       get_weather_forecast: {
@@ -343,41 +360,59 @@ async function submitUserMessage(userInput: string) {
           forecast_days: z.number().describe("The number of days to forecast the weather for"),
         }).required(),
         render: async function* ({ location, units, forecast_days }) {
-          yield (
-            <>
-            Getting the weather forecast for {location}...
-            <WeatherForecastCardSkeleton/>
-            </>
-          );
-                   
-          const response = await get_weather_forecast(location, units, forecast_days)
-          const forecast = response.daily
-
-          const weatherForecast: { title: string, url: string, description: string, date: string, author:string }[] = forecast.map((day: any, index: number) => {
-            return {
-              day: day.index,
-              temperature: day.temp.day,
-              minTemperature: day.temp.min,
-              maxTemperature: day.temp.max,
-              weather: day.weather[0].main,
-              units: units,
-            }
-          });
-            
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "get_weather_forecast",
-              content: JSON.stringify(weatherForecast),
-            }
-          ]);
-          return (
-            <>
-              Here's the {forecast_days} day forecast for {location}:
-              <WeatherForecastCard weatherForecast={weatherForecast} />   
-            </>
+          try {
+            yield (
+              <>
+              Getting the weather forecast for {location}...
+              <WeatherForecastCardSkeleton/>
+              </>
             );
+            const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+            );
+            const response = await Promise.race([get_weather_forecast(location, units, forecast_days), timeout]);
+            const forecast = response.daily
+
+            const weatherForecast: { title: string, url: string, description: string, date: string, author:string }[] = forecast.map((day: any, index: number) => {
+              return {
+                day: day.index,
+                temperature: day.temp.day,
+                minTemperature: day.temp.min,
+                maxTemperature: day.temp.max,
+                weather: day.weather[0].main,
+                units: units,
+              }
+            });
+            
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "get_weather_forecast",
+                content: JSON.stringify(weatherForecast),
+              }
+            ]);
+            return (
+              <>
+                Here's the {forecast_days} day forecast for {location}:
+                <WeatherForecastCard weatherForecast={weatherForecast} />   
+              </>
+            );
+          } catch (error: any) {
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "get_weather_forecast",
+                content: JSON.stringify({ error: error.message }),
+              }
+            ]);
+            return (
+              <>
+                Sorry, there was an error getting the weather forecast for {location}
+              </>
+            )
+          }
         }
       },  
       search_the_web: {
@@ -389,39 +424,58 @@ async function submitUserMessage(userInput: string) {
           units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
-          yield (
-            <>
-              Searching the web for {query}...
-              <WebResultCardGroupSkeleton/>;
-            </>
-          )
-                   
-          const response = await search_the_web(query, country, freshness, units)
+          try {
+            yield (
+              <>
+                Searching the web for {query}...
+                <WebResultCardGroupSkeleton/>;
+              </>
+            )
+            
+            const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+            );
+            const response = await Promise.race([search_the_web(query, country, freshness, units), timeout]);
 
-          const results: { title: string, url: string, description: string, date: string, author:string }[] = response.map((result: any) => {
-            return {
-              title: result.title,
-              url: result.url,
-              description: result.description,
-              date: result.page_age,
-              author: result.profile.name,
-            }
-          });
+            const results: { title: string, url: string, description: string, date: string, author:string }[] = response.map((result: any) => {
+              return {
+                title: result.title,
+                url: result.url,
+                description: result.description,
+                date: result.page_age,
+                author: result.profile.name,
+              }
+            });
 
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "search_the_web",
-              content: JSON.stringify(results),
-            }
-          ]);
-          return (
-            <>
-              Here are the search results for {query}:
-              <WebResultGroup results={results} />
-            </>
-          )
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "search_the_web",
+                content: JSON.stringify(results),
+              }
+            ]);
+            return (
+              <>
+                Here are the search results for {query}:
+                <WebResultGroup results={results} />
+              </>
+            )
+          } catch (error: any) {
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "search_the_web",
+                content: JSON.stringify({ error: error.message }),
+              }
+            ]);
+            return (
+              <>
+                Sorry, there was an error searching the web for {query}
+              </>
+            )
+          }
         }
       },
       get_news: {
@@ -433,39 +487,58 @@ async function submitUserMessage(userInput: string) {
           units: z.enum(["metric", "imperial"]).optional().describe("The units to display the temperature in. Can be 'metric' or 'imperial'"),
         }).required(),
         render: async function* ({ query, country, freshness, units }) {
-          yield (
-            <>
-              Searching for news about {query}...
-              <NewsCardGroupSkeleton />
-            </>
-          );
-                   
-          const response = await get_news(query, country, freshness, units)
-          const results = response.results
-          const news: { title: string, url: string, description: string, date: string, image: string }[] = results.map((result: any) => {
-            return {
-              title: result.title,
-              url: result.url,
-              description: result.description,
-              date: result.page_age,
-              image: result.thumbnail.src
-            }
-          });
+          try {
+            yield (
+              <>
+                Searching for news about {query}...
+                <NewsCardGroupSkeleton />
+              </>
+            );
+            
+            const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+            );
+            const response = await Promise.race([get_news(query, country, freshness, units), timeout]);
+            const results = response.results
+            const news: { title: string, url: string, description: string, date: string, image: string }[] = results.map((result: any) => {
+              return {
+                title: result.title,
+                url: result.url,
+                description: result.description,
+                date: result.page_age,
+                image: result.thumbnail.src
+              }
+            });
           
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "get_news",
-              content: JSON.stringify(results),
-            }
-          ]);
-          return (
-            <>
-              Here are the latest news articles about {query}:
-              <NewsCardGroup news={news} />
-            </>
-          )
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "get_news",
+                content: JSON.stringify(results),
+              }
+            ]);
+            return (
+              <>
+                Here are the latest news articles about {query}:
+                <NewsCardGroup news={news} />
+              </>
+            )
+          } catch (error: any) {
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "get_news",
+                content: JSON.stringify({ error: error.message }),
+              }
+            ]);
+            return (
+              <>
+                Sorry, there was an error searching for news about {query}
+              </>
+            )
+          }
         }
       },
       search_for_locations: {
@@ -477,46 +550,66 @@ async function submitUserMessage(userInput: string) {
           currency: z.string().optional().describe("The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217."),
         }).required(),
         render: async function* ({ query, city, category, currency }) {
-          yield (
-            <>
-              Searching for locations related to {query} in {city}...
-              <Spinner/>
-            </>
-          )
-                   
-          const response = await search_for_locations(query, city, category, currency)
-          const locations: { name: string, description: string, web_url: string, rating: string, rating_image_url: string, num_reviews: string, price_level: string, address_obj: object, photoUrls: string[] }[] = response.map((location: any) => {
-            return {
-              name: location.name,
-              description: location.description,
-              tripadvisor_url: location.web_url,
-              rating: location.rating,
-              ratingImageURL: location.rating_image_url,
-              reviewCount: location.num_reviews,
-              priceLevel: location.price_level,
-              address: location.address_obj.address_string,
-              photoUrls: location.photoUrls
-            }
-          });
-          
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "search_for_locations",
-              content: JSON.stringify(locations),
-            }
-          ]);
-          return (
-            <>
-              Here are the search results for {query} in {city}:
-              <div className="flex flex-col gap-8">
-                {locations.map((location: any, index: number) => (
-                  <LocationCard key={index} location={location}/>
-                ))}
-              </div>
-            </>
-          )
+          try {
+            yield (
+              <>
+                Searching for locations related to {query} in {city}...
+                <Spinner/>
+              </>
+            )
+
+            const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+            );
+            const response = await Promise.race([search_for_locations(query, city, category, currency), timeout]);
+            const locations: { name: string, description: string, web_url: string, rating: string, rating_image_url: string, num_reviews: string, price_level: string, address_obj: object, photoUrls: string[] }[] = response.map((location: any) => {
+              return {
+                name: location.name,
+                description: location.description,
+                tripadvisor_url: location.web_url,
+                rating: location.rating,
+                ratingImageURL: location.rating_image_url,
+                reviewCount: location.num_reviews,
+                priceLevel: location.price_level,
+                address: location.address_obj.address_string,
+                photoUrls: location.photoUrls
+              }
+            });
+
+            
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "search_for_locations",
+                content: JSON.stringify(locations),
+              }
+            ]);
+            return (
+              <>
+                Here are the search results for {query} in {city}:
+                <div className="flex flex-col gap-8">
+                  {locations.map((location: any, index: number) => (
+                    <LocationCard key={index} location={location}/>
+                  ))}
+                </div>
+              </>
+            )
+          } catch (error: any) {
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "search_for_locations",
+                content: JSON.stringify({ error: error.message }),
+              }
+            ]);
+            return (
+              <>
+                Sorry, there was an error searching for locations related to {query} in {city}
+              </>
+            )
+          }
         }
       },
       search_for_movies: {
@@ -530,54 +623,73 @@ async function submitUserMessage(userInput: string) {
           limit: z.number().optional().describe("The number of movies to return"),
         }).required(),
         render: async function* ({ input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit }) {
-          yield <Spinner/>;
-
-          const response = await search_for_movies(input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit)
-          const matches = response.matches
-          const movies = matches.map((match: any) => {
-            return {
-              title: match.metadata.title,
-              imdbRating: match.metadata.imdbRating,
-              genre: match.metadata.genre,
-              releaseYear: match.metadata.releaseYear,
-              director: match.metadata.director,
-              imageURL: match.metadata.imageURL,
-              description: match.metadata.description,
-              stars: [match.metadata.star1, match.metadata.star2, match.metadata.star3, match.metadata.star4]
-            }
-          })
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: "function",
-              name: "search_for_movies",
-              content: JSON.stringify(movies),
-            }
-          ]);
-          return (
-            <div className="flex flex-col gap-8">
-              {movies.map((movie: any, index: number) => (
-                <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
-                  {movie.imageURL && (<Image className="rounded-md" src={movie.imageURL} width={80} height={117} alt={movie.title} />)}
-                  <div className="flex flex-col gap-4 justify-between">
-                    <h3 className="text-zinc-950 dark:text-white font-semibold">{movie.title}</h3>
-                    <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
-                      <p>{movie.description}</p>
-                      <p>IMDB Rating: {movie.imdbRating}</p>
-                      <p>Release Year: {movie.releaseYear}</p>
-                      <p>Director: {movie.director}</p>
-                      <p>Genre: {movie.genre}</p>
-                      <div className="flex flex-row gap-2">
-                        {movie.stars.map((star: string, index: number) => (
-                          <span key={index}>{star}{index < movie.stars.length - 1 && ", "}</span>
-                        ))}
+          try {
+            yield <Spinner/>;
+            
+            const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+            );
+            const response = await Promise.race([search_for_movies(input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit), timeout]);
+            const matches = response.matches
+            const movies = matches.map((match: any) => {
+              return {
+                title: match.metadata.title,
+                imdbRating: match.metadata.imdbRating,
+                genre: match.metadata.genre,
+                releaseYear: match.metadata.releaseYear,
+                director: match.metadata.director,
+                imageURL: match.metadata.imageURL,
+                description: match.metadata.description,
+                stars: [match.metadata.star1, match.metadata.star2, match.metadata.star3, match.metadata.star4]
+              }
+            })
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "search_for_movies",
+                content: JSON.stringify(movies),
+              }
+            ]);
+            return (
+              <div className="flex flex-col gap-8">
+                {movies.map((movie: any, index: number) => (
+                  <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
+                    {movie.imageURL && (<Image className="rounded-md" src={movie.imageURL} width={80} height={117} alt={movie.title} />)}
+                    <div className="flex flex-col gap-4 justify-between">
+                      <h3 className="text-zinc-950 dark:text-white font-semibold">{movie.title}</h3>
+                      <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
+                        <p>{movie.description}</p>
+                        <p>IMDB Rating: {movie.imdbRating}</p>
+                        <p>Release Year: {movie.releaseYear}</p>
+                        <p>Director: {movie.director}</p>
+                        <p>Genre: {movie.genre}</p>
+                        <div className="flex flex-row gap-2">
+                          {movie.stars.map((star: string, index: number) => (
+                            <span key={index}>{star}{index < movie.stars.length - 1 && ", "}</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-            ))}
-            </div>
-          )
+              ))}
+              </div>
+            )
+          } catch (error: any) {
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: "function",
+                name: "search_for_movies",
+                content: JSON.stringify({ error: error.message }),
+              }
+            ]);
+            return (
+              <>
+                Sorry, there was an error searching for movies related to {input}
+              </>
+            )
+          }
         }
       },
     }
