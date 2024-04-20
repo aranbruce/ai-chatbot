@@ -27,11 +27,6 @@ export default function Chat() {
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    console.log("Messages: ", messages);
-    console.log("aiState: ", aiState);
-  }, [messages, aiState]);
-
   // Set loading to false when AI state is updated
   useEffect(() => {
     if (aiState) {

@@ -40,7 +40,7 @@ const LocationCard = ({location}: {location: LocationCardProps}) => {
           <h3 className="font-semibold">{location.name}</h3>
           <h5 className="font-medium">{location.rating}</h5>
         </div>
-        <div className="flex flex-row gap-4 text-xs text-zinc-600">
+        <div className="flex flex-row gap-4 text-xs text-zinc-600 dark:text-zinc-400">
           <p>{location.address}</p>
           <p className="shrink-0">Price: {location.priceLevel}</p>
         </div>
