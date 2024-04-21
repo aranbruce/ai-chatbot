@@ -1,13 +1,13 @@
-'use client'
+"use client"
  
-import { useState, useRef, useEffect, useContext, use } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
 import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from '../contexts/file-collection-context';
-
+import { useScrollAnchor } from "./useScrollAnchor"
 
 type Message = {
   id: string;
@@ -23,10 +23,6 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const { fileCollection, filesAsInput, setFilesAsInput } = useContext(FileCollectionContext);
   
-  const [keepUserAtBottom, setKeepUserAtBottom] = useState(true);
-
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-
   // Set loading to false when AI state is updated
   useEffect(() => {
     if (aiState) {
@@ -34,53 +30,11 @@ export default function Chat() {
     }
   }, [aiState]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const current = messagesContainerRef.current;
-      if (current) {
-        const atBottom = current.scrollHeight - current.scrollTop === current.clientHeight;
-        setKeepUserAtBottom(atBottom);
-      }
-    };
-    const current = messagesContainerRef.current;
-    if (current) {
-      current.addEventListener('scroll', handleScroll);
-    }
-    return () => {
-      if (current) {
-        current.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (keepUserAtBottom) {
-      const current = messagesContainerRef.current;
-      if (current) {
-        current.scrollTop = current.scrollHeight;
-      }
-    }
-  }, [messages, keepUserAtBottom]);
-
-  const handleScrollToBottom = () => {
-    // Scroll to the bottom of the messages container smoothly
-    const current = messagesContainerRef.current;
-    if (current) {
-      current.scrollTo({
-        top: current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-    // once animation has finished, set keepUserAtBottom to true
-    setTimeout(() => {
-      setKeepUserAtBottom(true);
-    }, 500);
-  }
+  const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } = useScrollAnchor()
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    setKeepUserAtBottom(true);
     setInputValue("");
     if (filesAsInput.length === 0) {
       // Add user message to UI state
@@ -134,6 +88,10 @@ export default function Chat() {
     }
   }
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const handleExampleClick = async (example: string) => {
     // Add user message to UI state
     setIsLoading(true);
@@ -155,25 +113,29 @@ export default function Chat() {
  
   return (
     <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
-    <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
-      <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
+    <div ref={scrollRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
+      <div className="flex flex-col max-w-2xl w-full h-full pt-12 mx-auto stretch break-words">
+        
         {messages.filter((message: Message) => message.role === "user" || message.role === "assistant").length === 0 ? (
           <EmptyScreen handleExampleClick={handleExampleClick}/>
         ) : (
-          messages.map((message: Message)  => (
-            <MessageCard key={message.id} id={JSON.stringify(message.id)} role={message.role} content={message.display} />
-          ))
+          <div ref={messagesRef} className="flex flex-col pb-10 w-full gap-y-10">
+            {messages.map((message: Message)  => (
+              <MessageCard key={message.id} id={JSON.stringify(message.id)} role={message.role} content={message.display} />
+            ))}
+            <div className="h-px w-full" ref={visibilityRef} />
+          </div>
         )}
       </div>
     </div>
     <PromptForm
       input={inputValue}
       isLoading={isLoading}
-      keepUserAtBottom={keepUserAtBottom}
+      isAtBottom={isAtBottom}
       handleInputChange={(event) => setInputValue(event.target.value)}
       handleSubmit={handleFormSubmit}
-      handleScrollToBottom={handleScrollToBottom}
-      />
+      scrollToBottom={scrollToBottom}
+    />
   </div>
   )
 }

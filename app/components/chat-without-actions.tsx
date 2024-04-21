@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { useChat, Message } from 'ai/react';
 import { v4 as uuidv4 } from "uuid";
 import { FileCollectionContext } from '../contexts/file-collection-context';
+import { useScrollAnchor } from "./useScrollAnchor"
 
 import PromptForm from './prompt-form';
 import EmptyScreen from './empty-screen';
@@ -35,52 +36,9 @@ export default function ChatWithoutActions() {
     ] as Message[],
   });
 
-  const [keepUserAtBottom, setKeepUserAtBottom] = useState(true);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } = useScrollAnchor();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const current = messagesContainerRef.current;
-      if (current) {
-        const atBottom = current.scrollHeight - current.scrollTop === current.clientHeight;
-        setKeepUserAtBottom(atBottom);
-      }
-    };
-    const current = messagesContainerRef.current;
-    if (current) {
-      current.addEventListener('scroll', handleScroll);
-    }
-    return () => {
-      if (current) {
-        current.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (keepUserAtBottom) {
-      const current = messagesContainerRef.current;
-      if (current) {
-        current.scrollTop = current.scrollHeight;
-      }
-    }
-  }, [messages, keepUserAtBottom]);
-
-  const handleScrollToBottom = () => {
-    // Scroll to the bottom of the messages container smoothly
-    const current = messagesContainerRef.current;
-    if (current) {
-      current.scrollTo({
-        top: current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-    // once animation has finished, set keepUserAtBottom to true
-    setTimeout(() => {
-      setKeepUserAtBottom(true);
-    }, 500);
-  }
-
+ 
   const handleExampleClick = async (suggestion: string) => {
     const userMessage = {
       id: uuidv4(),
@@ -168,25 +126,28 @@ export default function ChatWithoutActions() {
   
   return (
     <div className="bg-white dark:bg-zinc-950 flex flex-col justify-start grow items-center w-full min-h-1  mx-auto stretch">
-      <div ref={messagesContainerRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
-        <div className="flex flex-col max-w-2xl gap-y-10 w-full h-full pt-12 mx-auto stretch break-words">
-          {messages.filter(message => message.role === "user" || message.role === "assistant").length === 0 ? (
-            <EmptyScreen handleExampleClick={handleExampleClick}/>
-          ) : (
-            messages.map(message => (
-              <MessageCard key={message.id} id={message.id} role={message.role} content={message.content} data={message.data} />
-            ))
-          )}
+      <div ref={scrollRef} className="flex flex-col h-full w-full overflow-y-scroll px-5">
+        <div className="flex flex-col max-w-2xl w-full h-full pt-12 mx-auto stretch break-words">
+        {messages.filter((message: Message) => message.role === "user" || message.role === "assistant").length === 0 ? (
+          <EmptyScreen handleExampleClick={handleExampleClick}/>
+        ) : (
+          <div ref={messagesRef} className="flex flex-col pb-10 w-full gap-y-10">
+            {messages.map((message: Message)  => (
+              <MessageCard key={message.id} id={JSON.stringify(message.id)} role={message.role} content={message.content} />
+            ))}
+            <div className="h-px w-full" ref={visibilityRef} />
+          </div>
+        )}
         </div>
       </div>
       <PromptForm
         input={input}
         isLoading={isLoading}
-        keepUserAtBottom={keepUserAtBottom}
+        isAtBottom={isAtBottom}
         handleInputChange={handleInputChange}
         handleSubmit={handleFormSubmit()}
-        handleScrollToBottom={handleScrollToBottom}
-      />
+        scrollToBottom={scrollToBottom}
+        />
     </div>
   )
 }
