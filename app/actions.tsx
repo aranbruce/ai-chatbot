@@ -4,8 +4,6 @@ import { OpenAI } from "openai";
 import { createAI, getMutableAIState, render } from "ai/rsc";
 import { z } from "zod";
 import Markdown from "react-markdown"
-import {Prism as SyntaxHighlighter} from "react-syntax-highlighter"
-import {vscDarkPlus} from 'react-syntax-highlighter/dist/esm/styles/prism'
 import Image from "next/image";
 
 import CurrentWeatherCard from "./components/current-weather/current-weather-card";
@@ -18,6 +16,7 @@ import WebResultCardGroupSkeleton from "./components/web-results/web-result-grou
 import WeatherForecastCard from "./components/weather-forecast/weather-forecast-card";
 import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
 import LocationCard from "./components/location-card/location-card";
+import CodeContainer from "./components/code-container";
  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -208,7 +207,6 @@ async function submitUserMessage(userInput: string) {
       ...aiState.get()
     ],
     text: ({ content, done }) => {
-      // When it"s the final content, mark the state as done and ready for the client to access.
       if (done) {
         aiState.done([
           ...aiState.get(),
@@ -262,21 +260,7 @@ async function submitUserMessage(userInput: string) {
               const language = match ? match[1] : "text"
               const capitalizedLanguage = language.charAt(0).toUpperCase() + language.slice(1).toLowerCase();
               return match ? (
-                <div className="flex flex-col text-zinc-200 rounded-md overflow-hidden bg-zinc-900 border border-zinc-300 dark:border-zinc-800">
-                  <div className="flex justify-between relative bg-zinc-700 text-zinc:600 px-4 py-2 text-xs">
-                    <div>{capitalizedLanguage}</div>
-                    <button onClick={() => navigator.clipboard.writeText(String(children))}>
-                      Copy
-                    </button>
-                  </div>
-                  <SyntaxHighlighter
-                    PreTag="div"
-                    language={language} 
-                    style={vscDarkPlus}
-                    customStyle={{margin: "0", background: "none"}}
-                    children={String(children).replace(/\n$/, '')}
-                  />
-                </div>
+                <CodeContainer capitalizedLanguage={capitalizedLanguage} language={language} children={children} />
               ) : (
                 <code {...rest} className="text-sm font-semibold">
                   {children}
@@ -810,21 +794,7 @@ async function submitFile(filesAsInput: any, fileCollection: any, userInput?: st
               const language = match ? match[1] : "text"
               const capitalizedLanguage = language.charAt(0).toUpperCase() + language.slice(1).toLowerCase();
               return match ? (
-                <div className="flex flex-col text-zinc-200 rounded-md overflow-hidden bg-zinc-900 border border-zinc-300 dark:border-zinc-800">
-                  <div className="flex justify-between relative bg-zinc-700 text-zinc:600 px-4 py-2 text-xs">
-                    <div>{capitalizedLanguage}</div>
-                    <button onClick={() => navigator.clipboard.writeText(String(children))}>
-                      Copy
-                    </button>
-                  </div>
-                  <SyntaxHighlighter
-                    PreTag="div"
-                    language={language} 
-                    style={vscDarkPlus}
-                    customStyle={{margin: "0", background: "none"}}
-                    children={String(children).replace(/\n$/, '')}
-                  />
-                </div>
+                <CodeContainer capitalizedLanguage={capitalizedLanguage} language={language} children={children} />
               ) : (
                 <code {...rest} className="text-sm font-semibold">
                   {children}
