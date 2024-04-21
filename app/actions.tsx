@@ -559,7 +559,7 @@ async function submitUserMessage(userInput: string) {
             )
 
             const timeout = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+              setTimeout(() => reject(new Error('Request timed out')), 10000) // 10 seconds timeout
             );
             const response = await Promise.race([search_for_locations(query, city, category, currency), timeout]);
             const locations: { name: string, description: string, web_url: string, rating: string, rating_image_url: string, num_reviews: string, price_level: string, address_obj: object, photoUrls: string[] }[] = response.map((location: any) => {
