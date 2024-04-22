@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const useScrollAnchor = () => {
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -42,7 +42,7 @@ export const useScrollAnchor = () => {
     if (current) {
       const handleScroll = (event: Event) => {
         const target = event.target as HTMLDivElement
-        const offset = 128
+        const offset = 64
         const isAtBottom =
           target.scrollTop + target.clientHeight >= target.scrollHeight - offset
 
