@@ -11,7 +11,7 @@ interface LocationCardProps {
   rating_image_url: string;
   description: string;
   priceLevel: string;
-  tripadvisor_url: string;
+  tripadvisorUrl: string;
   address: string;
   photoUrls: string[];
 }
@@ -79,16 +79,9 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
               style={{ objectFit: "cover" }}
             />
           ))}
-        {/* <Image className="rounded-lg" style={{objectFit:"cover"}} src={location.photoUrls[0]} width={100} height={80} alt="Location Image" />
-        <Image className="rounded-lg" src={location.photoUrls[1]} width={100} height={80} alt="Location Image" />
-        <Image className="rounded-lg" src={location.photoUrls[2]} width={100} height={80} alt="Location Image" /> */}
       </div>
       <div className="flex w-fit px-4">
-        <Button
-          href={location.tripadvisor_url}
-          openInNewTab
-          variant="secondary"
-        >
+        <Button href={location.tripadvisorUrl} openInNewTab variant="secondary">
           View on TripAdvisor
         </Button>
       </div>

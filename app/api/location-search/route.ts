@@ -206,7 +206,7 @@ export async function GET(request: NextRequest) {
         rating_image_url: location.rating_image_url,
         description: location.description,
         priceLevel: location.price_level,
-        tripadvisor_url: location.tripadvisor_url,
+        tripadvisorUrl: location.web_url,
         address: location.address_obj.address_string,
         photoUrls: location.photoUrls,
       };
