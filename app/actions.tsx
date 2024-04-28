@@ -17,6 +17,7 @@ import WeatherForecastCard, { WeatherForecastProps } from "./components/weather-
 import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
 import LocationCard from "./components/location-card/location-card";
 import CodeContainer from "./components/code-container";
+import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -558,54 +559,40 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit }) {
           try {
-            yield <Spinner/>;
-            
+            yield (
+              <>
+                Searching for {input} movies...
+                <Spinner/>
+              </>
+            )
+
             const timeout = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
             );
             const response = await Promise.race([search_for_movies(input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit), timeout]);
-            const matches = response.matches
-            const movies = matches.map((match: any) => {
-              return {
-                title: match.metadata.title,
-                imdbRating: match.metadata.imdbRating,
-                genre: match.metadata.genre,
-                releaseYear: match.metadata.releaseYear,
-                director: match.metadata.director,
-                imageURL: match.metadata.imageURL,
-                description: match.metadata.description,
-                stars: [match.metadata.star1, match.metadata.star2, match.metadata.star3, match.metadata.star4]
-              }
-            })
+            
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "search_for_movies",
-                content: JSON.stringify(movies),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <div className="flex flex-col gap-8">
-                {movies.map((movie: any, index: number) => (
-                  <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
-                    {movie.imageURL && (<Image className="rounded-md" src={movie.imageURL} width={80} height={117} alt={movie.title} />)}
-                    <div className="flex flex-col gap-4 justify-between">
-                      <h3 className="text-zinc-950 dark:text-white font-semibold">{movie.title}</h3>
-                      <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
-                        <p>{movie.description}</p>
-                        <p>IMDB Rating: {movie.imdbRating}</p>
-                        <p>Release Year: {movie.releaseYear}</p>
-                        <p>Director: {movie.director}</p>
-                        <p>Genre: {movie.genre}</p>
-                        <div className="flex flex-row gap-2">
-                          {movie.stars.map((star: string, index: number) => (
-                            <span key={index}>{star}{index < movie.stars.length - 1 && ", "}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {response.map((movie: MovieCardProps, index: number) => (
+                  <MovieCard 
+                    title={movie.title}
+                    description={movie.description}
+                    imdbRating={movie.imdbRating} 
+                    releaseYear={movie.releaseYear}
+                    director={movie.director}
+                    genre={movie.genre}
+                    stars={movie.stars}
+                    imageURL={movie.imageURL}
+                    key={index}
+                  />
               ))}
               </div>
             )
