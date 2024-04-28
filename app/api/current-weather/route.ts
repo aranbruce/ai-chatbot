@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({error: 'Invalid location'}, { status: 400 });
     }
 
-    let url = `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}`;
+    let url = `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}&exclude=minutely,daily,alerts`;
     
     if (units) {
       url += `&units=${units}`;
@@ -73,7 +73,22 @@ export async function GET(request: NextRequest) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const response = await res.json();
-    return NextResponse.json(response, { status: 200 });
+
+    const transformedResponse = {
+      location: location,
+      currentHour: new Date().getHours(),
+      currentDate: new Date().getTime(),
+      units: units,
+      current: {
+        temp: Math.round(response.current.temp),
+        weather: response.current.weather[0].main,
+      },
+      hourly: response.hourly.map((hour: any) => ({
+        temp: Math.round(hour.temp),
+        weather: hour.weather[0].main,
+      }))
+    }
+    return NextResponse.json(transformedResponse, { status: 200 });
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });

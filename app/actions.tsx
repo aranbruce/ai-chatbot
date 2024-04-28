@@ -1,7 +1,7 @@
 import "server-only"
 
 import { OpenAI } from "openai";
-import { createAI, getMutableAIState, render } from "ai/rsc";
+import { createAI, createStreamableUI, getMutableAIState, render } from "ai/rsc";
 import { z } from "zod";
 import Markdown from "react-markdown"
 import Image from "next/image";
@@ -13,7 +13,7 @@ import NewsCardGroup from "./components/news-card/news-card-group";
 import NewsCardGroupSkeleton from "./components/news-card/news-card-group-skeleton";
 import WebResultGroup from "./components/web-results/web-result-group";
 import WebResultCardGroupSkeleton from "./components/web-results/web-result-group-skeleton";
-import WeatherForecastCard from "./components/weather-forecast/weather-forecast-card";
+import WeatherForecastCard, { WeatherForecastProps } from "./components/weather-forecast/weather-forecast-card";
 import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
 import LocationCard from "./components/location-card/location-card";
 import CodeContainer from "./components/code-container";
@@ -40,7 +40,6 @@ export type UIState = {
   display: React.ReactNode
 }[]
 
-// An example of a function that fetches weather information from an external API.
 async function get_current_weather(location: string, units?: string) {
   "use server"
   try {
@@ -78,7 +77,6 @@ async function get_weather_forecast(location: string, units?: string, forecast_d
     console.error("error: ", error);
     return error;
   }
-
 }
 
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
@@ -290,33 +288,20 @@ async function submitUserMessage(userInput: string) {
               setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
             );
             const response = await Promise.race([get_current_weather(location, units), timeout]);
-            const weatherNow = response.current.weather[0].main;
-            const tempNow = response.current.temp;
-            const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].main } });
-            const currentHour = new Date().getHours();
-            const currentDate = Date.now();
-            const currentWeather = {
-              location,
-              currentHour,
-              currentDate,
-              weatherNow,
-              tempNow,
-              units,
-              tempAndWeatherOverNextHours
-            }
+            
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "get_current_weather",
-                content: JSON.stringify(currentWeather),
+                content: JSON.stringify(response),
               }
             ]);
 
             return (
               <>
                 Here's the current weather for {location}:
-                <CurrentWeatherCard currentWeather={currentWeather} />
+                <CurrentWeatherCard currentWeather={response} />
               </>
             )
           } catch (error: any) {
@@ -354,32 +339,20 @@ async function submitUserMessage(userInput: string) {
             const timeout = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
             );
-            const response = await Promise.race([get_weather_forecast(location, units, forecast_days), timeout]);
-            const forecast = response.daily
-
-            const weatherForecast: { title: string, url: string, description: string, date: string, author:string }[] = forecast.map((day: any, index: number) => {
-              return {
-                day: day.index,
-                temperature: day.temp.day,
-                minTemperature: day.temp.min,
-                maxTemperature: day.temp.max,
-                weather: day.weather[0].main,
-                units: units,
-              }
-            });
+            const response = await Promise.race([get_weather_forecast(location, units, forecast_days), timeout]) as WeatherForecastProps;
             
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "get_weather_forecast",
-                content: JSON.stringify(weatherForecast),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here's the {forecast_days} day forecast for {location}:
-                <WeatherForecastCard weatherForecast={weatherForecast} />   
+                <WeatherForecastCard weatherForecast={response} />
               </>
             );
           } catch (error: any) {
@@ -813,6 +786,53 @@ async function submitFile(filesAsInput: any, fileCollection: any, userInput?: st
     role: "assistant"
   };
 }
+
+async function submitRequestToGetWeatherForecast(location: string, units?: string, forecast_days?: number) {
+  "use server";
+  
+  const aiState = getMutableAIState<typeof AI>();
+  aiState.update([
+    ...aiState.get(),
+    {
+      role: "user",
+      content: `Get the weather forecast for ${location} in ${units} units for ${forecast_days} days.`,
+    },
+  ]);
+
+  const uiStream = createStreamableUI(
+    <>
+      Getting the weather forecast for {location}...
+      <WeatherForecastCardSkeleton/>
+    </>
+  );
+
+  (async () => {
+    // get the response from the callAPI function
+    const response = await get_weather_forecast(location, units, forecast_days);
+  
+    uiStream.done(
+      <>
+        Here's the {forecast_days} day forecast for {location}:
+        <WeatherForecastCard weatherForecast={response} />
+      </>
+    );
+
+    aiState.done([
+      ...aiState.get(),
+      {
+        role: "function",
+        name: "get_weather_forecast",
+        content: JSON.stringify(response),
+      }
+    ]);
+  })();
+ 
+  return {
+    id: Date.now(),
+    display: uiStream.value,
+    role: "assistant"
+  }
+}
  
 // Define the initial state of the AI. It can be any JSON object.
 const initialAIState: {
@@ -833,7 +853,8 @@ const initialUIState: {
 export const AI = createAI({
   actions: {
     submitUserMessage,
-    submitFile
+    submitFile,
+    submitRequestToGetWeatherForecast,
   },
   // Each state can be any shape of object, but for chat applications
   // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }
