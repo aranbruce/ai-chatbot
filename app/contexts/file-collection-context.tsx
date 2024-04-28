@@ -1,4 +1,4 @@
-import { createContext, useState } from 'react';
+import { createContext, useState } from "react";
 
 export interface FileInputItem {
   fileId: string;
@@ -14,9 +14,11 @@ export interface FileCollectionItem {
 
 export interface FileCollectionContextProps {
   fileCollection: Array<FileCollectionItem>; // Specify the type argument for the Array type
-  setFileCollection: React.Dispatch<React.SetStateAction<Array<FileCollectionItem>>>;
+  setFileCollection: React.Dispatch<
+    React.SetStateAction<Array<FileCollectionItem>>
+  >;
   filesAsInput: Array<FileInputItem>;
-  setFilesAsInput: React.Dispatch<React.SetStateAction< Array<FileInputItem>>>;
+  setFilesAsInput: React.Dispatch<React.SetStateAction<Array<FileInputItem>>>;
 }
 
 export const FileCollectionContext = createContext<FileCollectionContextProps>({
@@ -27,7 +29,9 @@ export const FileCollectionContext = createContext<FileCollectionContextProps>({
 });
 
 export const FileCollectionContextProvider = (props: any) => {
-  const [fileCollection, setFileCollection] = useState([] as Array<FileCollectionItem>);
+  const [fileCollection, setFileCollection] = useState(
+    [] as Array<FileCollectionItem>
+  );
   const [filesAsInput, setFilesAsInput] = useState([] as Array<FileInputItem>);
 
   return (

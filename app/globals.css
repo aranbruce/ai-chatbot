@@ -9,16 +9,4 @@
   * {
     @apply focus-visible:outline-none;
   }
-
-  /* .messages a {
-    @apply text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2;
-  } */
-
-  /* .messages pre {
-    @apply bg-zinc-800 dark:bg-zinc-900 text-zinc-100 border border-zinc-200 dark:border-zinc-800 p-4 rounded-lg max-w-full overflow-x-auto whitespace-pre-wrap text-wrap text-sm;
-  }
-
-  .messages > code {
-    @apply contents;
-  } */
 }

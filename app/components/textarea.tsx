@@ -1,4 +1,4 @@
-import {useRef, useEffect, ChangeEvent, FC} from "react";
+import { useRef, useEffect, ChangeEvent, FC } from "react";
 
 interface TextareaProps {
   placeholder: string;
@@ -14,19 +14,35 @@ interface TextareaProps {
   required: boolean;
 }
 
-const Textarea: FC<TextareaProps>  = ({placeholder, value, onChange, onKeyDown, tabIndex, autoFocus, spellCheck, autoComplete, autoCorrect, ariaLabel, required }) => {
+const Textarea: FC<TextareaProps> = ({
+  placeholder,
+  value,
+  onChange,
+  onKeyDown,
+  tabIndex,
+  autoFocus,
+  spellCheck,
+  autoComplete,
+  autoCorrect,
+  ariaLabel,
+  required,
+}) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      let lineHeight = parseFloat(getComputedStyle(textareaRef.current).lineHeight);
+      let lineHeight = parseFloat(
+        getComputedStyle(textareaRef.current).lineHeight
+      );
       if (isNaN(lineHeight)) {
         // Fallback value when lineHeight is "normal"
-        lineHeight = parseFloat(getComputedStyle(textareaRef.current).fontSize) * 1.2;
+        lineHeight =
+          parseFloat(getComputedStyle(textareaRef.current).fontSize) * 1.2;
       }
       const maxHeight = lineHeight * 5;
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxHeight) + "px";
+      textareaRef.current.style.height =
+        Math.min(textareaRef.current.scrollHeight, maxHeight) + "px";
     }
   }, [value]);
 

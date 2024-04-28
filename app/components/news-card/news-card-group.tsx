@@ -1,11 +1,11 @@
 import NewsCard from "./news-card";
 import { NewsCardProps } from "./news-card";
 
-const NewsCardGroup = ({news}:{news: NewsCardProps[]} ) => {
+const NewsCardGroup = ({ news }: { news: NewsCardProps[] }) => {
   return (
     <div className="flex flex-col gap-8 w-full">
       {news.map((newsItem, index) => (
-        <NewsCard 
+        <NewsCard
           key={index}
           title={newsItem.title}
           description={newsItem.description}
@@ -15,7 +15,7 @@ const NewsCardGroup = ({news}:{news: NewsCardProps[]} ) => {
         />
       ))}
     </div>
-  )
-}
+  );
+};
 
 export default NewsCardGroup;
