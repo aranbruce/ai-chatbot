@@ -48,7 +48,7 @@ const PromptForm = ({input, isLoading, isAtBottom, handleInputChange, handleSubm
       }
       <div className="md:mx-5 md:max-w-2xl px-4 w-full space-y-4 pb-4 pt-2 bg-white dark:bg-zinc-950">
         <form ref={formRef} onSubmit={handleFormSubmit} className="relative">
-          <div className="flex flex-col relative pr-1 overflow-hidden w-full grow rounded-[1.75rem] bg-zinc-100 dark:bg-zinc-900 focus-within:ring-[2px] ring-slate-950/20 dark:ring-slate-400 ring-offset-0 transition has-[button:focus]:ring-0">
+          <div className="flex flex-col relative pr-1 overflow-hidden w-full grow rounded-[1.75rem] bg-zinc-100 dark:bg-zinc-900 focus-within:ring-[3px] ring-slate-950/20 dark:ring-white/40 ring-offset-0 transition has-[button:focus]:ring-0 border border-zinc-200/50 dark:border-zinc-200/10">
             <UploadButton/>
             <Textarea
               placeholder="Send a message..."

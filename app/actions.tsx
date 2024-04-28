@@ -82,16 +82,19 @@ async function get_weather_forecast(location: string, units?: string, forecast_d
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/web-search?query=${query}`
+    const url = new URL(`${process.env.URL}/api/web-search`)
+    const params = new URLSearchParams({ query });
     if (country) {
-      url += `&country=${country}`
+      params.append("country", country);
     }
     if (freshness) {
-      url += `&freshness=${freshness}`
+      params.append("freshness", freshness);
     }
     if (units) {
-      url += `&units=${units}`
+      params.append("units", units);
     }
+    url.search = params.toString();
+
     const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
@@ -103,18 +106,21 @@ async function search_the_web(query: string, country?: string, freshness?: strin
 async function get_news(query: string, country?: string, freshness?: string, units?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/news-search?query=${query}`
+    const url = new URL(`${process.env.URL}/api/news-search`)
+    const params = new URLSearchParams({ query });
     if (country) {
-      url += `&country=${country}`
+      params.append("country", country);
     }
     if (freshness) {
-      url += `&freshness=${freshness}`
+      params.append("freshness", freshness);
     }
     if (units) {
-      url += `&units=${units}`
+      params.append("units", units);
     }
+    url.search = params.toString();
     const response = await fetch(url, {method: 'GET'});
-    return await response.json();
+    const responseJson = await response.json();
+    return responseJson;
   } catch (error) {
     console.error("error: ", error);
     return error;
@@ -124,13 +130,16 @@ async function get_news(query: string, country?: string, freshness?: string, uni
 async function search_for_locations(query: string, city: string, category?: string, currency?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/location-search?query=${query}&city=${city}`
+    const url = new URL(`${process.env.URL}/api/location-search`)
+    const params = new URLSearchParams({ query, city });
     if (category) {
-      url += `&category=${category}`
+      params.append("category", category);
     }
     if (currency) {
-      url += `&currency=${currency}`
+      params.append("currency", currency);
     }
+    url.search = params.toString();
+
     const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
@@ -142,22 +151,24 @@ async function search_for_locations(query: string, city: string, category?: stri
 async function search_for_movies(input: string, minimumIMDBRating?: number, minimumReleaseYear?: number, maximumReleaseYear?: number, director?: string, limit?: number) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/movies-vector-db?input=${input}`;
+    const url = new URL(`${process.env.URL}/api/movies-vector-db`)
+    const params = new URLSearchParams({ input });
     if (minimumIMDBRating) {
-      url += `&minimumIMDBRating=${minimumIMDBRating}`
+      params.append("minimumIMDBRating", minimumIMDBRating.toString());
     }
     if (minimumReleaseYear) {
-      url += `&minimumReleaseYear=${minimumReleaseYear}`
+      params.append("minimumReleaseYear", minimumReleaseYear.toString());
     }
     if (maximumReleaseYear) {
-      url += `&maximumReleaseYear=${maximumReleaseYear}`
-    }
-    if (limit) {
-      url += `&limit=${limit}`
+      params.append("maximumReleaseYear", maximumReleaseYear.toString());
     }
     if (director) {
-      url += `&director=${director}`
+      params.append("director", director);
     }
+    if (limit) {
+      params.append("limit", limit.toString());
+    }
+    url.search = params.toString();
 
     const response = await fetch(url, {method: "GET"});
     return await response.json();
@@ -385,7 +396,7 @@ async function submitUserMessage(userInput: string) {
             yield (
               <>
                 Searching the web for {query}...
-                <WebResultCardGroupSkeleton/>;
+                <WebResultCardGroupSkeleton/>
               </>
             )
             
@@ -394,28 +405,18 @@ async function submitUserMessage(userInput: string) {
             );
             const response = await Promise.race([search_the_web(query, country, freshness, units), timeout]);
 
-            const results: { title: string, url: string, description: string, date: string, author:string }[] = response.map((result: any) => {
-              return {
-                title: result.title,
-                url: result.url,
-                description: result.description,
-                date: result.page_age,
-                author: result.profile.name,
-              }
-            });
-
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "search_the_web",
-                content: JSON.stringify(results),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here are the search results for {query}:
-                <WebResultGroup results={results} />
+                <WebResultGroup results={response} />
               </>
             )
           } catch (error: any) {
@@ -453,32 +454,22 @@ async function submitUserMessage(userInput: string) {
             );
             
             const timeout = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+              setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
             );
             const response = await Promise.race([get_news(query, country, freshness, units), timeout]);
-            const results = response.results
-            const news: { title: string, url: string, description: string, date: string, image: string }[] = results.map((result: any) => {
-              return {
-                title: result.title,
-                url: result.url,
-                description: result.description,
-                date: result.page_age,
-                image: result.thumbnail.src
-              }
-            });
           
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "get_news",
-                content: JSON.stringify(results),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here are the latest news articles about {query}:
-                <NewsCardGroup news={news} />
+                <NewsCardGroup news={response} />
               </>
             )
           } catch (error: any) {

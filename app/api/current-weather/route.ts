@@ -65,30 +65,30 @@ export async function GET(request: NextRequest) {
       "Accept-Encoding": "gzip",
     };
 
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: "GET",
       headers: headers
     });
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const response = await res.json();
+    let responseJson = await response.json();
 
-    const transformedResponse = {
+    responseJson = {
       location: location,
       currentHour: new Date().getHours(),
       currentDate: new Date().getTime(),
       units: units,
       current: {
-        temp: Math.round(response.current.temp),
-        weather: response.current.weather[0].main,
+        temp: Math.round(responseJson.current.temp),
+        weather: responseJson.current.weather[0].main,
       },
-      hourly: response.hourly.map((hour: any) => ({
+      hourly: responseJson.hourly.map((hour: any) => ({
         temp: Math.round(hour.temp),
         weather: hour.weather[0].main,
       }))
     }
-    return NextResponse.json(transformedResponse, { status: 200 });
+    return NextResponse.json(responseJson, { status: 200 });
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });
