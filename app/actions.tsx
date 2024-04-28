@@ -510,34 +510,20 @@ async function submitUserMessage(userInput: string) {
               setTimeout(() => reject(new Error('Request timed out')), 10000) // 10 seconds timeout
             );
             const response = await Promise.race([search_for_locations(query, city, category, currency), timeout]);
-            const locations: { name: string, description: string, web_url: string, rating: string, rating_image_url: string, num_reviews: string, price_level: string, address_obj: object, photoUrls: string[] }[] = response.map((location: any) => {
-              return {
-                name: location.name,
-                description: location.description,
-                tripadvisor_url: location.web_url,
-                rating: location.rating,
-                ratingImageURL: location.rating_image_url,
-                reviewCount: location.num_reviews,
-                priceLevel: location.price_level,
-                address: location.address_obj.address_string,
-                photoUrls: location.photoUrls
-              }
-            });
-
             
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "search_for_locations",
-                content: JSON.stringify(locations),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here are the search results for {query} in {city}:
                 <div className="flex flex-col gap-8">
-                  {locations.map((location: any, index: number) => (
+                  {response.map((location: any, index: number) => (
                     <LocationCard key={index} location={location}/>
                   ))}
                 </div>
