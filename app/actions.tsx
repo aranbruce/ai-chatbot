@@ -771,7 +771,6 @@ async function submitRequestToGetWeatherForecast(location: string, units?: strin
   );
 
   (async () => {
-    // get the response from the callAPI function
     const response = await get_weather_forecast(location, units, forecast_days);
   
     uiStream.done(
@@ -786,6 +785,53 @@ async function submitRequestToGetWeatherForecast(location: string, units?: strin
       {
         role: "function",
         name: "get_weather_forecast",
+        content: JSON.stringify(response),
+      }
+    ]);
+  })();
+ 
+  return {
+    id: Date.now(),
+    display: uiStream.value,
+    role: "assistant"
+  }
+}
+
+async function submitRequestToGetCurrentWeather(location: string, units?: string) {
+  "use server";
+  console.log("submitRequestToGetCurrentWeather")
+  
+  const aiState = getMutableAIState<typeof AI>();
+  aiState.update([
+    ...aiState.get(),
+    {
+      role: "user",
+      content: `Get the current weather forecast for ${location} in ${units} units.`,
+    },
+  ]);
+
+  const uiStream = createStreamableUI(
+    <>
+      Getting the current weather for {location}...
+      <CurrentWeatherCardSkeleton />
+    </>
+  );
+
+  (async () => {
+    
+    const response = await get_current_weather(location, units);
+  
+    uiStream.done(
+      <>
+        Here's the current weather for {location}:
+        <CurrentWeatherCard currentWeather={response} />
+      </>
+    );
+    aiState.done([
+      ...aiState.get(),
+      {
+        role: "function",
+        name: "get_current_weather",
         content: JSON.stringify(response),
       }
     ]);
@@ -819,6 +865,7 @@ export const AI = createAI({
     submitUserMessage,
     submitFile,
     submitRequestToGetWeatherForecast,
+    submitRequestToGetCurrentWeather,
   },
   // Each state can be any shape of object, but for chat applications
   // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }

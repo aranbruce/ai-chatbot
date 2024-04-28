@@ -8,14 +8,6 @@ export const useScrollAnchor = () => {
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [isVisible, setIsVisible] = useState(false)
 
-  useEffect(() => {
-    console.log("isAtBottom: ", isAtBottom)
-  }, [isAtBottom])
-
-  useEffect(() => {
-    console.log("isVisible: ", isVisible)
-  }, [isVisible])
-
   const scrollToBottom = useCallback(() => {
     if (messagesRef.current) {
       messagesRef.current.scrollIntoView({
