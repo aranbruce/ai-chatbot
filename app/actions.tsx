@@ -741,8 +741,7 @@ async function submitUserMessage(userInput: string) {
             return (
               <>
                 Here are the search results for {query} in {city}:
-                {/* <LocationCardGroup locations={response} /> */}
-                <LocationCardGroupSkeleton />
+                <LocationCardGroup locations={response} />
               </>
             );
           } catch (error: any) {
