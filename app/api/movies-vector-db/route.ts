@@ -48,12 +48,10 @@ export async function GET(request: NextRequest) {
     const embedding = embeddingResponse.data[0].embedding;
 
     // Query the Pinecone index with the embedding
-    const queryResults = await index.namespace("movie-descriptions").query({
+    let queryResults = await index.namespace("movie-descriptions").query({
       topK: limit ? parseInt(limit) : 10,
       vector: embedding,
-      // includeValues: true,
       includeMetadata: true,
-      // filter: { genre: { "$eq": "action" }}
       filter: { 
         ...(minimumIMDBRating && {imdbRating: { "$gte": parseFloat(minimumIMDBRating) } }),
         ...(minimumReleaseYear && { releaseYear: { "$gte": parseInt(minimumReleaseYear) } }),
@@ -66,7 +64,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({message: "No results found"}, { status: 404 })
     }
 
-    return NextResponse.json(queryResults, { status: 200 });
+    let results = await queryResults.matches
+    results = results.map((result: any) => {
+      return {
+        id: result.id,
+        values: result.values,
+        title: result.metadata.title,
+        imdbRating: result.metadata.imdbRating,
+        genre: result.metadata.genre,
+        releaseYear: result.metadata.releaseYear,
+        director: result.metadata.director,
+        imageURL: result.metadata.imageURL,
+        description: result.metadata.description,
+        stars: [result.metadata.star1, result.metadata.star2, result.metadata.star3, result.metadata.star4]
+      }
+    });
+
+    return NextResponse.json(results, { status: 200 });
   }
   catch (error) {
     console.error("Error:", error);

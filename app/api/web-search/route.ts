@@ -112,7 +112,17 @@ export async function GET(request: NextRequest) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.json();
-    const results = data.web.results
+    let results = data.web.results
+
+    results = results.map((result: any) => ({
+      title: result.title,
+      url: result.url,
+      description: result.description,
+      date: result.page_age,
+      author: result.profile?.name,
+      imageURL: result.thumbnail?.src,
+    }));
+
     return NextResponse.json(results, { status: 200 });
   } catch (error) {
     console.error('Error:', error);

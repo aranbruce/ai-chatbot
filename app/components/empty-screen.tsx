@@ -38,7 +38,7 @@ const EmptyScreen = ({handleExampleClick}:EmptyScreenProps) => {
         {exampleMessages.map((example, index) => (
           <button
             key={example.heading}
-            className={`transition cursor-pointer rounded-xl bg-zinc-100 dark:bg-zinc-900 p-4 hover:dark:border-zinc-800 hover:bg-zinc-200 hover:dark:bg-zinc-800 active:border-zinc-900 focus-visible:ring-2 focus-visible:ring-zinc-200 focus-visible:border-zinc-400
+            className={`transition cursor-pointer rounded-xl bg-zinc-100 dark:bg-zinc-900 p-4 hover:dark:border-zinc-800 hover:bg-zinc-200 hover:dark:bg-zinc-800 active:border-zinc-900 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 focus-visible:border-zinc-400 dark:focus-visible:ring-white/40
             text-left ${
               index > 1 && "hidden md:block"
             }`}

@@ -29,23 +29,20 @@ export async function GET(request: NextRequest) {
   // Get the location from the query
   const getCoordinates = async (query: string) => {
     try {
-      let url = `http://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`;
-      const headers = {
-        "Accept": "application/json",
-        "Accept-Encoding": "gzip",
-      };
+      const url = new URL(`http://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`);
+
       const response = await fetch(url, {
         method: "GET",
-        headers: headers
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      const latitude: number = data[0].lat;
-      const longitude: number = data[0].lon;
+      const responseJson = await response.json();
+      const latitude: number = responseJson[0].lat;
+      const longitude: number = responseJson[0].lon;
+      
       return { 
         latitude: latitude,
         longitude: longitude 
@@ -65,58 +62,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({error: 'Invalid location'}, { status: 400 });
     }
     
-    // let baseUrl = `https://api.openweathermap.org/data/3.0/onecall/day_summary?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}`;
-    let baseUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&exclude=current,minutely,hourly,alerts&appid=${process.env.OPENWEATHER_API_KEY}`;
+    let url = new URL(`https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&exclude=current,minutely,hourly,alerts&appid=${process.env.OPENWEATHER_API_KEY}`);
 
-    // https://api.openweathermap.org/data/3.0/onecall?lat=33.44&lon=-94.04&exclude=hourly,daily&appid={API key}
     if (units) {
-      baseUrl += `&units=${units}`;
+      url.searchParams.append('units', units);
     }
-    // Call the OpenWeather API to get the weather forecast for each day in the forecast_days
-    // let forecast = [];
-
-    const url = baseUrl;
-    const headers = {
-      "Accept": "application/json",
-      "Accept-Encoding": "gzip",
-    };
-    const res = await fetch(url, {
+  
+    const response = await fetch(url, {
       method: "GET",
-      headers: headers
     });
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const response = await res.json();
+    let responseJson = await response.json();
     // make the response array the same length as the forecast_days
-    response.daily = response.daily.slice(0, forecast_days);
+    responseJson.daily = responseJson.daily.slice(0, forecast_days);
 
+    responseJson = {
+      lat: responseJson.lat,
+      lon: responseJson.lon,
+      timezone: responseJson.timezone,
+      timezone_offset: responseJson.timezone_offset,
+      location: location,
+      daily: responseJson.daily.map((day: any, index: number) => ({
+        dayIndex: index,
+        temperatureMain: day.temp.day,
+        temperatureMin: day.temp.min,
+        temperatureMax: day.temp.max,
+        weather: day.weather[0].main,
+        units: units,
+      })),
+    };
 
-    // for (let i = 0; i < forecast_days; i++) {
-    //   const today = new Date();
-    //   // increment the date by i days
-    //   const date = new Date(today);
-    //   date.setDate(date.getDate() + i);
-    //   const url = baseUrl + `&date=${date.toISOString().split('T')[0]}`
-
-    //   const headers = {
-    //     "Accept": "application/json",
-    //     "Accept-Encoding": "gzip",
-    //   };
-    //   const res = await fetch(url, {
-    //     method: "GET",
-    //     headers: headers
-    //   });
-    //   if (!res.ok) {
-    //     throw new Error(`HTTP error! status: ${res.status}`);
-    //   }
-    //   const response = await res.json();
-    //   // add the day number to the response
-    //   response.day = i + 1;
-    //   // add response to forecast array
-    //   forecast.push(response);
-    // }
-    return NextResponse.json(response, { status: 200 });
+    return Response.json(responseJson, { status: 200 });
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });

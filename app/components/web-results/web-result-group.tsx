@@ -12,6 +12,7 @@ const WebResultGroup = ({results}:{results: WebResultProps[]} ) => {
           url={result.url}
           date={result.date}
           author={result.author}
+          imageURL={result.imageURL}
         />
       ))}
     </div>

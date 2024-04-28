@@ -8,6 +8,7 @@ import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from '../contexts/file-collection-context';
 import { useScrollAnchor } from "./useScrollAnchor"
+import { UIState } from "../actions";
 
 type Message = {
   id: string;
@@ -29,6 +30,10 @@ export default function Chat() {
       setIsLoading(false);
     }
   }, [aiState]);
+
+  useEffect(() => {
+    console.log("messages: ", messages)
+  }, [messages])
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } = useScrollAnchor()
 
@@ -79,7 +84,7 @@ export default function Chat() {
       ]);
       // Submit and get response message
       const responseMessage = await submitFile(filesAsInput, fileCollection, inputValue);
-      setMessages((currentMessages: any[]) => [
+      setMessages((currentMessages: UIState[]) => [
         ...currentMessages,
         responseMessage,
       ]);
@@ -95,7 +100,7 @@ export default function Chat() {
   const handleExampleClick = async (example: string) => {
     // Add user message to UI state
     setIsLoading(true);
-    setMessages((currentMessages: Message[]) => [
+    setMessages((currentMessages: UIState[]) => [
       ...currentMessages,
       {
         id: uuidv4(),
@@ -105,7 +110,7 @@ export default function Chat() {
     ]);
     // Submit and get response message
     const responseMessage = await submitUserMessage(example);
-    setMessages((currentMessages: any[]) => [
+    setMessages((currentMessages: UIState[]) => [
       ...currentMessages,
       responseMessage,
     ]);

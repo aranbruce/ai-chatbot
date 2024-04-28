@@ -1,4 +1,5 @@
 import {decode} from 'html-entities';
+import Image from 'next/image';
 
 export interface WebResultProps {
   title: string
@@ -6,12 +7,14 @@ export interface WebResultProps {
   url: string
   date: string
   author: string
+  imageURL?: string
 }
 
-const WebResult = ({ title, description, url, date, author }: WebResultProps) => {
+const WebResult = ({ title, description, url, date, author, imageURL }: WebResultProps) => {
   return (
   <div className="flex flex-row gap-4 w-full">
     <div className="flex flex-col gap-2 w-full">
+      {imageURL && <Image src={imageURL} alt={title} width={80} height={80} className="rounded-lg" />}
       <h3 className="text-md font-semibold text-zinc-950 dark:text-white">{title}</h3>
       <div className="flex flex-row gap-2 w-full">
         <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{author}</p>

@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"; 
 
 export async function GET(request: NextRequest) {
-  console.log('GET request received for news-search route')
+  console.log("GET request received for news-search route")
 
   // get the parameters from the query string of the request
-  const query = request.nextUrl.searchParams.get('query')
-  const country = request.nextUrl.searchParams.get('country')
-  let freshness = request.nextUrl.searchParams.get('freshness')
-  const units = request.nextUrl.searchParams.get('units')
+  const query = request.nextUrl.searchParams.get("query")
+  const country = request.nextUrl.searchParams.get("country")
+  let freshness = request.nextUrl.searchParams.get("freshness")
+  const units = request.nextUrl.searchParams.get("units")
   const count = 5
 
-  console.log('query:', query)
-  console.log('country:', country)
-  console.log('freshness:', freshness)
-  console.log('units:', units)
+  console.log("query:", query)
+  console.log("country:", country)
+  console.log("freshness:", freshness)
+  console.log("units:", units)
 
   const countriesOptions = [
     "AR",
@@ -68,53 +68,71 @@ export async function GET(request: NextRequest) {
   ]
 
   if (!query) {
-    return NextResponse.json({error:'A search query is required'}, { status: 400 })
+    return NextResponse.json({error:"A search query is required"}, { status: 400 })
   }
 
   if (country && !countriesOptions.includes(country)) {
-    return NextResponse.json({error:'Invalid country code'}, { status: 400 })
+    return NextResponse.json({error:"Invalid country code"}, { status: 400 })
   }
 
   if (freshness && !freshnessOptions.includes(freshness)) {
-    return NextResponse.json({error:'Invalid freshness option'}, { status: 400 })
-  } else if (freshness === 'past-day') {
-    freshness = 'pd'
-  } else if (freshness === 'past-week') {
-    freshness = 'pw'
-  } else if (freshness === 'past-month') {
-    freshness = 'pm'
-  } else if (freshness === 'past-year') {
-    freshness = 'py'
+    return NextResponse.json({error:"Invalid freshness option"}, { status: 400 })
+  } else if (freshness === "past-day") {
+    freshness = "pd"
+  } else if (freshness === "past-week") {
+    freshness = "pw"
+  } else if (freshness === "past-month") {
+    freshness = "pm"
+  } else if (freshness === "past-year") {
+    freshness = "py"
   }
 
   if (units && !unitsOptions.includes(units)) {
-    return NextResponse.json({error: 'Invalid units option'}, { status: 400 })
+    return NextResponse.json({error: "Invalid units option"}, { status: 400 })
   }
 
   // call brave API
-  const url = `https://api.search.brave.com/res/v1/news/search?q=${query}` +
-    `&count=${count}` +
-    (country ? `&country=${country}` : '') +
-    (freshness ? `&freshness=${freshness}` : '') +
-    (units ? `&units=${units}` : '');
-  const headers = {
-    "Accept": "application/json",
-    "Accept-Encoding": "gzip",
-    "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY || '',
-  };
+  const url = new URL("https://api.search.brave.com/res/v1/news/search")
+  const params = new URLSearchParams({ count: count.toString(), q: query,  })
+  if (country) {
+    params.append("country", country)
+  }
+  if (freshness) {
+    params.append("freshness", freshness)
+  }
+  if (units) {
+    params.append("units", units)
+  }
+  url.search = params.toString()
+  console.log("url:", url)
 
   try {
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: "GET",
-      headers: headers
+      headers: {
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+        "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY || "",
+      }
     });
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await res.json();
-    return NextResponse.json(data, { status: 200 });
+    const responseJson = await response.json();
+    let results = responseJson.results
+
+    // transform the results to the format expected by the client by only returning title, description, url, date, author, and imageURL
+    results = results.map((result: any) => ({
+      title: result.title,
+      url: result.url,
+      description: result.description,
+      date: result.page_age,
+      imageURL: result.thumbnail?.src,
+    }));
+
+    return NextResponse.json(results, { status: 200 });
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json({error: `Error occurred: ${error}`}, { status: 500 });
   }
 }

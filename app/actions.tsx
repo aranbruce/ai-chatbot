@@ -1,7 +1,7 @@
 import "server-only"
 
 import { OpenAI } from "openai";
-import { createAI, getMutableAIState, render } from "ai/rsc";
+import { createAI, createStreamableUI, getMutableAIState, render } from "ai/rsc";
 import { z } from "zod";
 import Markdown from "react-markdown"
 import Image from "next/image";
@@ -13,10 +13,11 @@ import NewsCardGroup from "./components/news-card/news-card-group";
 import NewsCardGroupSkeleton from "./components/news-card/news-card-group-skeleton";
 import WebResultGroup from "./components/web-results/web-result-group";
 import WebResultCardGroupSkeleton from "./components/web-results/web-result-group-skeleton";
-import WeatherForecastCard from "./components/weather-forecast/weather-forecast-card";
+import WeatherForecastCard, { WeatherForecastProps } from "./components/weather-forecast/weather-forecast-card";
 import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
 import LocationCard from "./components/location-card/location-card";
 import CodeContainer from "./components/code-container";
+import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -40,7 +41,6 @@ export type UIState = {
   display: React.ReactNode
 }[]
 
-// An example of a function that fetches weather information from an external API.
 async function get_current_weather(location: string, units?: string) {
   "use server"
   try {
@@ -78,22 +78,24 @@ async function get_weather_forecast(location: string, units?: string, forecast_d
     console.error("error: ", error);
     return error;
   }
-
 }
 
 async function search_the_web(query: string, country?: string, freshness?: string, units?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/web-search?query=${query}`
+    const url = new URL(`${process.env.URL}/api/web-search`)
+    const params = new URLSearchParams({ query });
     if (country) {
-      url += `&country=${country}`
+      params.append("country", country);
     }
     if (freshness) {
-      url += `&freshness=${freshness}`
+      params.append("freshness", freshness);
     }
     if (units) {
-      url += `&units=${units}`
+      params.append("units", units);
     }
+    url.search = params.toString();
+
     const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
@@ -105,18 +107,21 @@ async function search_the_web(query: string, country?: string, freshness?: strin
 async function get_news(query: string, country?: string, freshness?: string, units?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/news-search?query=${query}`
+    const url = new URL(`${process.env.URL}/api/news-search`)
+    const params = new URLSearchParams({ query });
     if (country) {
-      url += `&country=${country}`
+      params.append("country", country);
     }
     if (freshness) {
-      url += `&freshness=${freshness}`
+      params.append("freshness", freshness);
     }
     if (units) {
-      url += `&units=${units}`
+      params.append("units", units);
     }
+    url.search = params.toString();
     const response = await fetch(url, {method: 'GET'});
-    return await response.json();
+    const responseJson = await response.json();
+    return responseJson;
   } catch (error) {
     console.error("error: ", error);
     return error;
@@ -126,13 +131,16 @@ async function get_news(query: string, country?: string, freshness?: string, uni
 async function search_for_locations(query: string, city: string, category?: string, currency?: string) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/location-search?query=${query}&city=${city}`
+    const url = new URL(`${process.env.URL}/api/location-search`)
+    const params = new URLSearchParams({ query, city });
     if (category) {
-      url += `&category=${category}`
+      params.append("category", category);
     }
     if (currency) {
-      url += `&currency=${currency}`
+      params.append("currency", currency);
     }
+    url.search = params.toString();
+
     const response = await fetch(url, {method: 'GET'});
     return await response.json();
   } catch (error) {
@@ -144,22 +152,24 @@ async function search_for_locations(query: string, city: string, category?: stri
 async function search_for_movies(input: string, minimumIMDBRating?: number, minimumReleaseYear?: number, maximumReleaseYear?: number, director?: string, limit?: number) {
   "use server"
   try {
-    let url = `${process.env.URL}/api/movies-vector-db?input=${input}`;
+    const url = new URL(`${process.env.URL}/api/movies-vector-db`)
+    const params = new URLSearchParams({ input });
     if (minimumIMDBRating) {
-      url += `&minimumIMDBRating=${minimumIMDBRating}`
+      params.append("minimumIMDBRating", minimumIMDBRating.toString());
     }
     if (minimumReleaseYear) {
-      url += `&minimumReleaseYear=${minimumReleaseYear}`
+      params.append("minimumReleaseYear", minimumReleaseYear.toString());
     }
     if (maximumReleaseYear) {
-      url += `&maximumReleaseYear=${maximumReleaseYear}`
-    }
-    if (limit) {
-      url += `&limit=${limit}`
+      params.append("maximumReleaseYear", maximumReleaseYear.toString());
     }
     if (director) {
-      url += `&director=${director}`
+      params.append("director", director);
     }
+    if (limit) {
+      params.append("limit", limit.toString());
+    }
+    url.search = params.toString();
 
     const response = await fetch(url, {method: "GET"});
     return await response.json();
@@ -290,33 +300,20 @@ async function submitUserMessage(userInput: string) {
               setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
             );
             const response = await Promise.race([get_current_weather(location, units), timeout]);
-            const weatherNow = response.current.weather[0].main;
-            const tempNow = response.current.temp;
-            const tempAndWeatherOverNextHours = response.hourly.map((hour: any) => { return { temp: hour.temp, weather: hour.weather[0].main } });
-            const currentHour = new Date().getHours();
-            const currentDate = Date.now();
-            const currentWeather = {
-              location,
-              currentHour,
-              currentDate,
-              weatherNow,
-              tempNow,
-              units,
-              tempAndWeatherOverNextHours
-            }
+            
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "get_current_weather",
-                content: JSON.stringify(currentWeather),
+                content: JSON.stringify(response),
               }
             ]);
 
             return (
               <>
                 Here's the current weather for {location}:
-                <CurrentWeatherCard currentWeather={currentWeather} />
+                <CurrentWeatherCard currentWeather={response} />
               </>
             )
           } catch (error: any) {
@@ -354,32 +351,20 @@ async function submitUserMessage(userInput: string) {
             const timeout = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
             );
-            const response = await Promise.race([get_weather_forecast(location, units, forecast_days), timeout]);
-            const forecast = response.daily
-
-            const weatherForecast: { title: string, url: string, description: string, date: string, author:string }[] = forecast.map((day: any, index: number) => {
-              return {
-                day: day.index,
-                temperature: day.temp.day,
-                minTemperature: day.temp.min,
-                maxTemperature: day.temp.max,
-                weather: day.weather[0].main,
-                units: units,
-              }
-            });
+            const response = await Promise.race([get_weather_forecast(location, units, forecast_days), timeout]) as WeatherForecastProps;
             
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "get_weather_forecast",
-                content: JSON.stringify(weatherForecast),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here's the {forecast_days} day forecast for {location}:
-                <WeatherForecastCard weatherForecast={weatherForecast} />   
+                <WeatherForecastCard weatherForecast={response} />
               </>
             );
           } catch (error: any) {
@@ -412,7 +397,7 @@ async function submitUserMessage(userInput: string) {
             yield (
               <>
                 Searching the web for {query}...
-                <WebResultCardGroupSkeleton/>;
+                <WebResultCardGroupSkeleton/>
               </>
             )
             
@@ -421,28 +406,18 @@ async function submitUserMessage(userInput: string) {
             );
             const response = await Promise.race([search_the_web(query, country, freshness, units), timeout]);
 
-            const results: { title: string, url: string, description: string, date: string, author:string }[] = response.map((result: any) => {
-              return {
-                title: result.title,
-                url: result.url,
-                description: result.description,
-                date: result.page_age,
-                author: result.profile.name,
-              }
-            });
-
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "search_the_web",
-                content: JSON.stringify(results),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here are the search results for {query}:
-                <WebResultGroup results={results} />
+                <WebResultGroup results={response} />
               </>
             )
           } catch (error: any) {
@@ -480,32 +455,22 @@ async function submitUserMessage(userInput: string) {
             );
             
             const timeout = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
+              setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
             );
             const response = await Promise.race([get_news(query, country, freshness, units), timeout]);
-            const results = response.results
-            const news: { title: string, url: string, description: string, date: string, image: string }[] = results.map((result: any) => {
-              return {
-                title: result.title,
-                url: result.url,
-                description: result.description,
-                date: result.page_age,
-                image: result.thumbnail.src
-              }
-            });
           
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "get_news",
-                content: JSON.stringify(results),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here are the latest news articles about {query}:
-                <NewsCardGroup news={news} />
+                <NewsCardGroup news={response} />
               </>
             )
           } catch (error: any) {
@@ -546,34 +511,20 @@ async function submitUserMessage(userInput: string) {
               setTimeout(() => reject(new Error('Request timed out')), 10000) // 10 seconds timeout
             );
             const response = await Promise.race([search_for_locations(query, city, category, currency), timeout]);
-            const locations: { name: string, description: string, web_url: string, rating: string, rating_image_url: string, num_reviews: string, price_level: string, address_obj: object, photoUrls: string[] }[] = response.map((location: any) => {
-              return {
-                name: location.name,
-                description: location.description,
-                tripadvisor_url: location.web_url,
-                rating: location.rating,
-                ratingImageURL: location.rating_image_url,
-                reviewCount: location.num_reviews,
-                priceLevel: location.price_level,
-                address: location.address_obj.address_string,
-                photoUrls: location.photoUrls
-              }
-            });
-
             
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "search_for_locations",
-                content: JSON.stringify(locations),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <>
                 Here are the search results for {query} in {city}:
                 <div className="flex flex-col gap-8">
-                  {locations.map((location: any, index: number) => (
+                  {response.map((location: any, index: number) => (
                     <LocationCard key={index} location={location}/>
                   ))}
                 </div>
@@ -608,54 +559,40 @@ async function submitUserMessage(userInput: string) {
         }).required(),
         render: async function* ({ input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit }) {
           try {
-            yield <Spinner/>;
-            
+            yield (
+              <>
+                Searching for {input} movies...
+                <Spinner/>
+              </>
+            )
+
             const timeout = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Request timed out')), 5000) // 5 seconds timeout
             );
             const response = await Promise.race([search_for_movies(input, minimumIMDBRating, minimumReleaseYear, maximumReleaseYear, director, limit), timeout]);
-            const matches = response.matches
-            const movies = matches.map((match: any) => {
-              return {
-                title: match.metadata.title,
-                imdbRating: match.metadata.imdbRating,
-                genre: match.metadata.genre,
-                releaseYear: match.metadata.releaseYear,
-                director: match.metadata.director,
-                imageURL: match.metadata.imageURL,
-                description: match.metadata.description,
-                stars: [match.metadata.star1, match.metadata.star2, match.metadata.star3, match.metadata.star4]
-              }
-            })
+            
             aiState.done([
               ...aiState.get(),
               {
                 role: "function",
                 name: "search_for_movies",
-                content: JSON.stringify(movies),
+                content: JSON.stringify(response),
               }
             ]);
             return (
               <div className="flex flex-col gap-8">
-                {movies.map((movie: any, index: number) => (
-                  <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg" key={index}>
-                    {movie.imageURL && (<Image className="rounded-md" src={movie.imageURL} width={80} height={117} alt={movie.title} />)}
-                    <div className="flex flex-col gap-4 justify-between">
-                      <h3 className="text-zinc-950 dark:text-white font-semibold">{movie.title}</h3>
-                      <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
-                        <p>{movie.description}</p>
-                        <p>IMDB Rating: {movie.imdbRating}</p>
-                        <p>Release Year: {movie.releaseYear}</p>
-                        <p>Director: {movie.director}</p>
-                        <p>Genre: {movie.genre}</p>
-                        <div className="flex flex-row gap-2">
-                          {movie.stars.map((star: string, index: number) => (
-                            <span key={index}>{star}{index < movie.stars.length - 1 && ", "}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {response.map((movie: MovieCardProps, index: number) => (
+                  <MovieCard 
+                    title={movie.title}
+                    description={movie.description}
+                    imdbRating={movie.imdbRating} 
+                    releaseYear={movie.releaseYear}
+                    director={movie.director}
+                    genre={movie.genre}
+                    stars={movie.stars}
+                    imageURL={movie.imageURL}
+                    key={index}
+                  />
               ))}
               </div>
             )
@@ -813,6 +750,99 @@ async function submitFile(filesAsInput: any, fileCollection: any, userInput?: st
     role: "assistant"
   };
 }
+
+async function submitRequestToGetWeatherForecast(location: string, units?: string, forecast_days?: number) {
+  "use server";
+  
+  const aiState = getMutableAIState<typeof AI>();
+  aiState.update([
+    ...aiState.get(),
+    {
+      role: "user",
+      content: `Get the weather forecast for ${location} in ${units} units for ${forecast_days} days.`,
+    },
+  ]);
+
+  const uiStream = createStreamableUI(
+    <>
+      Getting the weather forecast for {location}...
+      <WeatherForecastCardSkeleton/>
+    </>
+  );
+
+  (async () => {
+    const response = await get_weather_forecast(location, units, forecast_days);
+  
+    uiStream.done(
+      <>
+        Here's the {forecast_days} day forecast for {location}:
+        <WeatherForecastCard weatherForecast={response} />
+      </>
+    );
+
+    aiState.done([
+      ...aiState.get(),
+      {
+        role: "function",
+        name: "get_weather_forecast",
+        content: JSON.stringify(response),
+      }
+    ]);
+  })();
+ 
+  return {
+    id: Date.now(),
+    display: uiStream.value,
+    role: "assistant"
+  }
+}
+
+async function submitRequestToGetCurrentWeather(location: string, units?: string) {
+  "use server";
+  console.log("submitRequestToGetCurrentWeather")
+  
+  const aiState = getMutableAIState<typeof AI>();
+  aiState.update([
+    ...aiState.get(),
+    {
+      role: "user",
+      content: `Get the current weather forecast for ${location} in ${units} units.`,
+    },
+  ]);
+
+  const uiStream = createStreamableUI(
+    <>
+      Getting the current weather for {location}...
+      <CurrentWeatherCardSkeleton />
+    </>
+  );
+
+  (async () => {
+    
+    const response = await get_current_weather(location, units);
+  
+    uiStream.done(
+      <>
+        Here's the current weather for {location}:
+        <CurrentWeatherCard currentWeather={response} />
+      </>
+    );
+    aiState.done([
+      ...aiState.get(),
+      {
+        role: "function",
+        name: "get_current_weather",
+        content: JSON.stringify(response),
+      }
+    ]);
+  })();
+ 
+  return {
+    id: Date.now(),
+    display: uiStream.value,
+    role: "assistant"
+  }
+}
  
 // Define the initial state of the AI. It can be any JSON object.
 const initialAIState: {
@@ -833,7 +863,9 @@ const initialUIState: {
 export const AI = createAI({
   actions: {
     submitUserMessage,
-    submitFile
+    submitFile,
+    submitRequestToGetWeatherForecast,
+    submitRequestToGetCurrentWeather,
   },
   // Each state can be any shape of object, but for chat applications
   // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }
