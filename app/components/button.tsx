@@ -1,4 +1,3 @@
-
 interface ButtonProps {
   onClick?: () => void;
   children: React.ReactNode;
@@ -10,7 +9,16 @@ interface ButtonProps {
   variant?: "primary" | "secondary";
 }
 
-const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInNewTab, variant = "primary" }:ButtonProps) => {
+const Button = ({
+  onClick,
+  children,
+  href,
+  disabled,
+  ariaLabel,
+  rounded,
+  openInNewTab,
+  variant = "primary",
+}: ButtonProps) => {
   const primaryClassNames = `
     text-white
     font-semibold
@@ -38,27 +46,33 @@ const Button = ({ onClick, children, href, disabled, ariaLabel, rounded, openInN
   `;
 
   const baseClassNames = `
-  inline-flex items-center justify-center ${rounded ? "rounded-full py-3" : "rounded-xl py-2"} px-3 gap-2
+  inline-flex items-center justify-center ${
+    rounded ? "rounded-full py-3" : "rounded-xl py-2"
+  } px-3 gap-2
   text-sm text-primary-foreground disabled:pointer-events-none disabled:text-zinc-300 dark:disabled:text-zinc-600
   font-medium transition focus:outline-none focus-visible:ring-[3px] ring-slate-950/20 dark:ring-white/40`;
 
-  const classNames = `${baseClassNames} ${variant === "primary" ? primaryClassNames : secondaryClassNames}`;
+  const classNames = `${baseClassNames} ${
+    variant === "primary" ? primaryClassNames : secondaryClassNames
+  }`;
 
   return href ? (
-    <a href={href} aria-disabled={disabled}
+    <a
+      href={href}
+      aria-disabled={disabled}
       target={openInNewTab ? "_blank" : "_self"}
       rel={openInNewTab ? "noopener noreferrer" : ""}
       className={classNames}
-      >
+    >
       {children}
     </a>
   ) : (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
       className={classNames}
-      >
+    >
       {children}
     </button>
   );

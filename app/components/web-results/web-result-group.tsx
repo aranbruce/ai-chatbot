@@ -1,7 +1,7 @@
 import WebResult from "./web-result";
 import { WebResultProps } from "./web-result";
 
-const WebResultGroup = ({results}:{results: WebResultProps[]} ) => {
+const WebResultGroup = ({ results }: { results: WebResultProps[] }) => {
   return (
     <div className="flex flex-col gap-10 w-full">
       {results.map((result, index) => (
@@ -16,7 +16,7 @@ const WebResultGroup = ({results}:{results: WebResultProps[]} ) => {
         />
       ))}
     </div>
-  )
-}
+  );
+};
 
 export default WebResultGroup;

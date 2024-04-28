@@ -15,6 +15,6 @@ const Spinner = () => {
       </svg>
     </div>
   );
-}
+};
 
 export default Spinner;
