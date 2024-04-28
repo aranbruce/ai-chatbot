@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 
 import Button from "../button";
 
-interface LocationCardProps {
+export interface LocationCardProps {
   name: string;
   rating: string;
   rating_image_url: string;
@@ -33,11 +33,11 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
   }, [location.description]);
 
   return (
-    <div className="flex flex-col gap-4 py-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg">
+    <div className="flex flex-col gap-4 py-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
       <div className="flex flex-col px-4 gap-2">
         <div className="flex flex-row gap-4 justify-between text-zinc-950 dark:text-white ">
           <h3 className="font-semibold">{location.name}</h3>
-          <h5 className="font-medium">{location.rating}</h5>
+          <h5 className="font-medium">{location.rating} ⭐️</h5>
         </div>
         <div className="flex flex-row gap-4 text-xs text-zinc-600 dark:text-zinc-400">
           <p>{location.address}</p>
@@ -65,8 +65,6 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
         </div>
       )}
       <div className="flex flex-row gap-4 px-4 items-center overflow-x-scroll ">
-        {/* {JSON.stringify(location.photoUrls)} */}
-        {/* show an image for each item in the location.photoUrls array */}
         {Array.isArray(location.photoUrls) &&
           location.photoUrls.map((url, index) => (
             <Image
@@ -85,7 +83,6 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
           View on TripAdvisor
         </Button>
       </div>
-      {/* {JSON.stringify(location)} */}
     </div>
   );
 };

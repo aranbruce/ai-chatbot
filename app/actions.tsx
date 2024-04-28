@@ -9,11 +9,11 @@ import {
 } from "ai/rsc";
 import { z } from "zod";
 import Markdown from "react-markdown";
-import Image from "next/image";
 
 import CurrentWeatherCard from "./components/current-weather/current-weather-card";
 import CurrentWeatherCardSkeleton from "./components/current-weather/current-weather-card-skeleton";
 import Spinner from "./components/spinner";
+import CodeContainer from "./components/code-container";
 import NewsCardGroup from "./components/news-card/news-card-group";
 import NewsCardGroupSkeleton from "./components/news-card/news-card-group-skeleton";
 import WebResultGroup from "./components/web-results/web-result-group";
@@ -22,9 +22,9 @@ import WeatherForecastCard, {
   WeatherForecastProps,
 } from "./components/weather-forecast/weather-forecast-card";
 import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
-import LocationCard from "./components/location-card/location-card";
-import CodeContainer from "./components/code-container";
 import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
+import LocationCardGroup from "./components/location-card/location-card-group";
+import LocationCardGroupSkeleton from "./components/location-card/location-card-group-skeleton";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -717,7 +717,7 @@ async function submitUserMessage(userInput: string) {
             yield (
               <>
                 Searching for locations related to {query} in {city}...
-                <Spinner />
+                <LocationCardGroupSkeleton />
               </>
             );
 
@@ -741,11 +741,8 @@ async function submitUserMessage(userInput: string) {
             return (
               <>
                 Here are the search results for {query} in {city}:
-                <div className="flex flex-col gap-8">
-                  {response.map((location: any, index: number) => (
-                    <LocationCard key={index} location={location} />
-                  ))}
-                </div>
+                {/* <LocationCardGroup locations={response} /> */}
+                <LocationCardGroupSkeleton />
               </>
             );
           } catch (error: any) {

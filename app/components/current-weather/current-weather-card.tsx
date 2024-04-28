@@ -111,7 +111,7 @@ const CurrentWeatherCard = ({
           </div>
         </div>
       </div>
-      <div className="flex flex-row gap-2 items-center">
+      <div className="flex flex-row gap-2 items-center flex-wrap">
         <button
           className="flex flex-row gap-2 items-center text-sm text-zinc-600 px-2 py-1 bg-zinc-100 rounded-xl w-fit border border-zinc-200/50"
           onClick={() =>
