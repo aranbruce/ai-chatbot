@@ -225,7 +225,7 @@ async function submitUserMessage(userInput: string) {
   ]);
 
   const ui = render({
-    model: "gpt-4-0125-preview",
+    model: "gpt-3.5-turbo",
     provider: openai,
     initial: <Spinner />,
     messages: [
