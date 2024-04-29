@@ -21,12 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={GeistSans.className}>
-        <Providers>
-          <AI>
+        <AI>
+          <Providers>
             <Header />
             {children}
-          </AI>
-        </Providers>
+          </Providers>
+        </AI>
       </body>
     </html>
   );

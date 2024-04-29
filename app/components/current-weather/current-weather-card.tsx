@@ -24,7 +24,7 @@ const CurrentWeatherCard = ({
 }: {
   currentWeather: CurrentWeatherProps;
 }) => {
-  const [messages, setMessages] = useUIState<typeof AI>();
+  const [, setMessages] = useUIState<typeof AI>();
 
   const {
     submitRequestToGetWeatherForecast,

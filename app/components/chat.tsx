@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
+import type { AI } from "../actions";
+
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
 import PromptForm from "./prompt-form";
@@ -8,7 +10,6 @@ import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from "../contexts/file-collection-context";
 import { useScrollAnchor } from "./useScrollAnchor";
-import { UIState } from "../actions";
 
 type Message = {
   id: string;
@@ -19,8 +20,8 @@ type Message = {
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [aiState] = useAIState();
-  const [messages, setMessages] = useUIState();
-  const { submitUserMessage, submitFile } = useActions();
+  const [messages, setMessages] = useUIState<typeof AI>();
+  const { submitUserMessage, submitFile } = useActions<typeof AI>();
   const [isLoading, setIsLoading] = useState(false);
   const { fileCollection, filesAsInput, setFilesAsInput } = useContext(
     FileCollectionContext
@@ -46,23 +47,23 @@ export default function Chat() {
     setInputValue("");
     if (filesAsInput.length === 0) {
       // Add user message to UI state
-      setMessages((currentMessages: Message[]) => [
+      setMessages((currentMessages: any[]) => [
         ...currentMessages,
         {
           id: uuidv4(),
           display: <>{inputValue}</>,
           role: "user",
-        } as Message,
+        },
       ]);
       // Submit and get response message
       const responseMessage = await submitUserMessage(inputValue);
-      setMessages((currentMessages: Message[]) => [
+      setMessages((currentMessages: any[]) => [
         ...currentMessages,
         responseMessage,
       ]);
     } else {
       // Add user message to UI state
-      setMessages((currentMessages: Message[]) => [
+      setMessages((currentMessages: any[]) => [
         ...currentMessages,
         {
           id: uuidv4(),
@@ -112,7 +113,7 @@ export default function Chat() {
         fileCollection,
         inputValue
       );
-      setMessages((currentMessages: UIState[]) => [
+      setMessages((currentMessages: any[]) => [
         ...currentMessages,
         responseMessage,
       ]);
@@ -128,7 +129,7 @@ export default function Chat() {
   const handleExampleClick = async (example: string) => {
     // Add user message to UI state
     setIsLoading(true);
-    setMessages((currentMessages: UIState[]) => [
+    setMessages((currentMessages: any[]) => [
       ...currentMessages,
       {
         id: uuidv4(),
@@ -138,7 +139,7 @@ export default function Chat() {
     ]);
     // Submit and get response message
     const responseMessage = await submitUserMessage(example);
-    setMessages((currentMessages: UIState[]) => [
+    setMessages((currentMessages: any[]) => [
       ...currentMessages,
       responseMessage,
     ]);
@@ -152,8 +153,7 @@ export default function Chat() {
       >
         <div className="flex flex-col max-w-2xl w-full h-full pt-12 mx-auto stretch break-words">
           {messages.filter(
-            (message: Message) =>
-              message.role === "user" || message.role === "assistant"
+            (message) => message.role === "user" || message.role === "assistant"
           ).length === 0 ? (
             <EmptyScreen handleExampleClick={handleExampleClick} />
           ) : (
@@ -161,7 +161,7 @@ export default function Chat() {
               ref={messagesRef}
               className="flex flex-col pb-10 w-full gap-y-10"
             >
-              {messages.map((message: Message) => (
+              {messages.map((message) => (
                 <MessageCard
                   key={message.id}
                   id={JSON.stringify(message.id)}
