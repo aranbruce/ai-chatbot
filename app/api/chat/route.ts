@@ -1,8 +1,10 @@
-import OpenAI from 'openai';
-import { OpenAIStream, StreamingTextResponse, StreamData } from 'ai';
+import OpenAI from "openai";
+import { OpenAIStream, StreamingTextResponse, StreamData } from "ai";
 import { functions, runFunction } from "./functions";
-import { Pinecone } from '@pinecone-database/pinecone';
+import { Pinecone } from "@pinecone-database/pinecone";
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 // Create an OpenAI API client (that's edge friendly!)
 const openai = new OpenAI({
@@ -10,21 +12,26 @@ const openai = new OpenAI({
 });
 
 const pc = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || ""
+  apiKey: process.env.PINECONE_API_KEY || "",
 });
 
-const index = pc.index("sample-movies")
+const index = pc.index("sample-movies");
 
 // IMPORTANT! Set the runtime to edge
-export const runtime = 'edge';
+export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
-  console.log('POST request received for chat route')
+  console.log("POST request received for chat route");
   // Customise your system messages here
   const { messages } = await request.json();
 
   // remove ids and createdAt from messages
-  const messagesWithOnlyContentAndRole = messages.map(({ content, role }: { content: string, role: string }) => ({ content, role }));
+  const messagesWithOnlyContentAndRole = messages.map(
+    ({ content, role }: { content: string; role: string }) => ({
+      content,
+      role,
+    })
+  );
 
   try {
     const initialResponse = await openai.chat.completions.create({
@@ -39,7 +46,7 @@ export async function POST(request: NextRequest) {
     const stream = OpenAIStream(initialResponse, {
       experimental_onFunctionCall: async (
         { name, arguments: args },
-        createFunctionCallMessages,
+        createFunctionCallMessages
       ) => {
         const result = await runFunction(name, args);
         const newMessages = createFunctionCallMessages(result);
@@ -67,5 +74,4 @@ export async function POST(request: NextRequest) {
       // return NextResponse.json({message: `Internal Server Error: ${error}`}, { status: 500 });
     }
   }
-
 }

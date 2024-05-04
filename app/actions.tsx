@@ -1,12 +1,15 @@
 import "server-only";
 
-import { OpenAI } from "openai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { v4 as uuidv4 } from "uuid"; // To generate a unique filename
+
 import {
   createAI,
   createStreamableUI,
   getMutableAIState,
-  render,
+  streamUI,
 } from "ai/rsc";
+
 import { z } from "zod";
 import Markdown from "react-markdown";
 
@@ -26,27 +29,20 @@ import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
 import LocationCardGroup from "./components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "./components/location-card/location-card-group-skeleton";
 
-const openai = new OpenAI({
+export interface ServerMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ClientMessage {
+  id: string;
+  role: "user" | "assistant";
+  display: React.ReactNode;
+}
+
+const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-export type Message = {
-  role: "user" | "assistant" | "system" | "function" | "data" | "tool";
-  content: string;
-  id: string;
-  name?: string;
-};
-
-export type AIState = {
-  chatId: string;
-  messages: Message[];
-};
-
-export type UIState = {
-  id: string;
-  role: "user" | "assistant" | "system" | "function" | "data" | "tool";
-  display: React.ReactNode;
-}[];
 
 async function get_current_weather(location: string, units?: string) {
   "use server";
@@ -212,52 +208,41 @@ async function search_for_movies(
   }
 }
 
-async function submitUserMessage(userInput: string) {
+async function submitUserMessage(userInput: string): Promise<ClientMessage> {
   "use server";
 
-  const aiState: any = getMutableAIState<typeof AI>();
-  aiState.update([
-    ...aiState.get(),
-    {
-      role: "user",
-      content: userInput,
-    },
+  // const aiState: any = getMutableAIState<typeof AI>();
+  const history = getMutableAIState();
+
+  history.update((messages: ServerMessage[]) => [
+    ...messages,
+    { role: "user", content: userInput },
   ]);
 
-  const ui = render({
-    model: "gpt-3.5-turbo",
-    provider: openai,
+  const result = await streamUI({
+    model: openai("gpt-3.5-turbo"),
     initial: <Spinner />,
-    messages: [
-      {
-        role: "system",
-        content: `
-        You are an AI designed to help users with their queries. You can perform functions like searching the web.
-        You can help users find information from the web, get the weather or find out the latest news.
-        If someone asks you to search the web, you can use the function \`search_the_web\`.
-        If someone asks you to get the latest news, you can use the function \`get_news\`.
-        If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
-        If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
-        Make sure to confirm their location and the units they want the temperature in.
-        If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
-        If someone asks a question about movies, you can use the function \`search_for_movies\`.
-        If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
-        For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
-        For locations, try to provide a link to the location, a brief description of the location and a rating.
-        When asked to analyze a file make sure to look at the most recent file provided when appropriate.
-        If the user doesn't ask about the file, you can ignore it.
-      `,
-      },
-      ...aiState.get(),
-    ],
+    system: `
+      You are an AI designed to help users with their queries. You can perform functions like searching the web.
+      You can help users find information from the web, get the weather or find out the latest news.
+      If someone asks you to search the web, you can use the function \`search_the_web\`.
+      If someone asks you to get the latest news, you can use the function \`get_news\`.
+      If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
+      If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
+      Make sure to confirm their location and the units they want the temperature in.
+      If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
+      If someone asks a question about movies, you can use the function \`search_for_movies\`.
+      If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
+      For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
+      For locations, try to provide a link to the location, a brief description of the location and a rating.
+      When asked to analyze a file make sure to look at the most recent file provided when appropriate.
+      If the user doesn't ask about the file, you can ignore it.`,
+    messages: [...history.get(), { role: "user", content: userInput }],
     text: ({ content, done }) => {
       if (done) {
-        aiState.done([
-          ...aiState.get(),
-          {
-            role: "assistant",
-            content,
-          },
+        history.done((messages: ServerMessage[]) => [
+          ...messages,
+          { role: "assistant", content },
         ]);
       }
       return (
@@ -344,14 +329,29 @@ async function submitUserMessage(userInput: string) {
               ),
           })
           .required(),
-        render: async function* ({ location, units }) {
+        generate: async function* ({ location, units }) {
+          const toolCallId = uuidv4();
+          history.update((messages: ServerMessage[]) => [
+            ...messages,
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "tool-call",
+                  toolCallId: toolCallId,
+                  toolName: "get_current_weather",
+                  args: { location, units },
+                },
+              ],
+            },
+          ]);
+          yield (
+            <>
+              Getting the current weather for {location}...
+              <CurrentWeatherCardSkeleton />
+            </>
+          );
           try {
-            yield (
-              <>
-                Getting the current weather for {location}...
-                <CurrentWeatherCardSkeleton />
-              </>
-            );
             const timeout = new Promise(
               (_, reject) =>
                 setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
@@ -360,16 +360,24 @@ async function submitUserMessage(userInput: string) {
               get_current_weather(location, units),
               timeout,
             ]);
-
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "get_current_weather",
-                content: JSON.stringify(response),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_current_weather",
+                    result: {
+                      ...response,
+                      location,
+                      units,
+                    },
+                  },
+                ],
               },
             ]);
-
             return (
               <>
                 Here's the current weather for {location}:
@@ -377,12 +385,18 @@ async function submitUserMessage(userInput: string) {
               </>
             );
           } catch (error: any) {
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "get_current_weather",
-                content: JSON.stringify({ error: error.message }),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_current_weather",
+                    result: { error: error.message },
+                  },
+                ],
               },
             ]);
             return (
@@ -412,14 +426,29 @@ async function submitUserMessage(userInput: string) {
               .describe("The number of days to forecast the weather for"),
           })
           .required(),
-        render: async function* ({ location, units, forecast_days }) {
+        generate: async function* ({ location, units, forecast_days }) {
+          const toolCallId = uuidv4();
+          history.update((messages: ServerMessage[]) => [
+            ...messages,
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "tool-call",
+                  toolCallId: toolCallId,
+                  toolName: "get_weather_forecast",
+                  args: { location, units, forecast_days },
+                },
+              ],
+            },
+          ]);
+          yield (
+            <>
+              Getting the weather forecast for {location}...
+              <WeatherForecastCardSkeleton />
+            </>
+          );
           try {
-            yield (
-              <>
-                Getting the weather forecast for {location}...
-                <WeatherForecastCardSkeleton />
-              </>
-            );
             const timeout = new Promise(
               (_, reject) =>
                 setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
@@ -428,15 +457,26 @@ async function submitUserMessage(userInput: string) {
               get_weather_forecast(location, units, forecast_days),
               timeout,
             ])) as WeatherForecastProps;
-
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "get_weather_forecast",
-                content: JSON.stringify(response),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_weather_forecast",
+                    result: {
+                      ...response,
+                      location,
+                      units,
+                      forecast_days,
+                    },
+                  },
+                ],
               },
             ]);
+
             return (
               <>
                 Here's the {forecast_days} day forecast for {location}:
@@ -444,12 +484,18 @@ async function submitUserMessage(userInput: string) {
               </>
             );
           } catch (error: any) {
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "get_weather_forecast",
-                content: JSON.stringify({ error: error.message }),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_weather_forecast",
+                    result: { error: error.message },
+                  },
+                ],
               },
             ]);
             return (
@@ -527,15 +573,29 @@ async function submitUserMessage(userInput: string) {
               ),
           })
           .required(),
-        render: async function* ({ query, country, freshness, units }) {
+        generate: async function* ({ query, country, freshness, units }) {
+          const toolCallId = uuidv4();
+          history.update((messages: ServerMessage[]) => [
+            ...messages,
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "tool-call",
+                  toolCallId: toolCallId,
+                  toolName: "search_the_web",
+                  args: { query, country, freshness, units },
+                },
+              ],
+            },
+          ]);
+          yield (
+            <>
+              Searching the web for {query}...
+              <WebResultCardGroupSkeleton />
+            </>
+          );
           try {
-            yield (
-              <>
-                Searching the web for {query}...
-                <WebResultCardGroupSkeleton />
-              </>
-            );
-
             const timeout = new Promise(
               (_, reject) =>
                 setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
@@ -545,12 +605,24 @@ async function submitUserMessage(userInput: string) {
               timeout,
             ]);
 
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "search_the_web",
-                content: JSON.stringify(response),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_web",
+                    result: {
+                      ...response,
+                      query,
+                      country,
+                      freshness,
+                      units,
+                    },
+                  },
+                ],
               },
             ]);
             return (
@@ -560,12 +632,18 @@ async function submitUserMessage(userInput: string) {
               </>
             );
           } catch (error: any) {
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "search_the_web",
-                content: JSON.stringify({ error: error.message }),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_web",
+                    result: { error: error.message },
+                  },
+                ],
               },
             ]);
             return <>Sorry, there was an error searching the web for {query}</>;
@@ -637,15 +715,29 @@ async function submitUserMessage(userInput: string) {
               ),
           })
           .required(),
-        render: async function* ({ query, country, freshness, units }) {
+        generate: async function* ({ query, country, freshness, units }) {
+          const toolCallId = uuidv4();
+          history.update((messages: ServerMessage[]) => [
+            ...messages,
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "tool-call",
+                  toolCallId: toolCallId,
+                  toolName: "get_news",
+                  args: { query, country, freshness, units },
+                },
+              ],
+            },
+          ]);
+          yield (
+            <>
+              Searching for news about {query}...
+              <NewsCardGroupSkeleton />
+            </>
+          );
           try {
-            yield (
-              <>
-                Searching for news about {query}...
-                <NewsCardGroupSkeleton />
-              </>
-            );
-
             const timeout = new Promise(
               (_, reject) =>
                 setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
@@ -655,12 +747,24 @@ async function submitUserMessage(userInput: string) {
               timeout,
             ]);
 
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "get_news",
-                content: JSON.stringify(response),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_news",
+                    result: {
+                      ...response,
+                      query,
+                      country,
+                      freshness,
+                      units,
+                    },
+                  },
+                ],
               },
             ]);
             return (
@@ -670,12 +774,18 @@ async function submitUserMessage(userInput: string) {
               </>
             );
           } catch (error: any) {
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "get_news",
-                content: JSON.stringify({ error: error.message }),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_news",
+                    result: { error: error.message },
+                  },
+                ],
               },
             ]);
             return (
@@ -712,15 +822,29 @@ async function submitUserMessage(userInput: string) {
               ),
           })
           .required(),
-        render: async function* ({ query, city, category, currency }) {
+        generate: async function* ({ query, city, category, currency }) {
+          const toolCallId = uuidv4();
+          history.update((messages: ServerMessage[]) => [
+            ...messages,
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "tool-call",
+                  toolCallId: toolCallId,
+                  toolName: "search_for_locations",
+                  args: { query, city, category, currency },
+                },
+              ],
+            },
+          ]);
+          yield (
+            <>
+              Searching for locations related to {query} in {city}...
+              <LocationCardGroupSkeleton />
+            </>
+          );
           try {
-            yield (
-              <>
-                Searching for locations related to {query} in {city}...
-                <LocationCardGroupSkeleton />
-              </>
-            );
-
             const timeout = new Promise(
               (_, reject) =>
                 setTimeout(() => reject(new Error("Request timed out")), 10000) // 10 seconds timeout
@@ -730,12 +854,24 @@ async function submitUserMessage(userInput: string) {
               timeout,
             ]);
 
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "search_for_locations",
-                content: JSON.stringify(response),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_locations",
+                    result: {
+                      ...response,
+                      query,
+                      city,
+                      category,
+                      currency,
+                    },
+                  },
+                ],
               },
             ]);
             return (
@@ -745,12 +881,18 @@ async function submitUserMessage(userInput: string) {
               </>
             );
           } catch (error: any) {
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "search_for_locations",
-                content: JSON.stringify({ error: error.message }),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_locations",
+                    result: { error: error.message },
+                  },
+                ],
               },
             ]);
             return (
@@ -791,7 +933,7 @@ async function submitUserMessage(userInput: string) {
               .describe("The number of movies to return"),
           })
           .required(),
-        render: async function* ({
+        generate: async function* ({
           input,
           minimumIMDBRating,
           minimumReleaseYear,
@@ -799,14 +941,35 @@ async function submitUserMessage(userInput: string) {
           director,
           limit,
         }) {
+          const toolCallId = uuidv4();
+          history.update((messages: ServerMessage[]) => [
+            ...messages,
+            {
+              role: "assistant",
+              content: [
+                {
+                  type: "tool-call",
+                  toolCallId: toolCallId,
+                  toolName: "search_for_movies",
+                  args: {
+                    input,
+                    minimumIMDBRating,
+                    minimumReleaseYear,
+                    maximumReleaseYear,
+                    director,
+                    limit,
+                  },
+                },
+              ],
+            },
+          ]);
+          yield (
+            <>
+              Searching for {input} movies...
+              <Spinner />
+            </>
+          );
           try {
-            yield (
-              <>
-                Searching for {input} movies...
-                <Spinner />
-              </>
-            );
-
             const timeout = new Promise(
               (_, reject) =>
                 setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
@@ -823,12 +986,26 @@ async function submitUserMessage(userInput: string) {
               timeout,
             ]);
 
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "search_for_movies",
-                content: JSON.stringify(response),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_movies",
+                    result: {
+                      ...response,
+                      input,
+                      minimumIMDBRating,
+                      minimumReleaseYear,
+                      maximumReleaseYear,
+                      director,
+                      limit,
+                    },
+                  },
+                ],
               },
             ]);
             return (
@@ -849,12 +1026,18 @@ async function submitUserMessage(userInput: string) {
               </div>
             );
           } catch (error: any) {
-            aiState.done([
-              ...aiState.get(),
+            history.done([
+              ...history.get(),
               {
-                role: "function",
-                name: "search_for_movies",
-                content: JSON.stringify({ error: error.message }),
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_movies",
+                    result: { error: error.message },
+                  },
+                ],
               },
             ]);
             return (
@@ -870,8 +1053,8 @@ async function submitUserMessage(userInput: string) {
   });
 
   return {
-    id: Date.now(),
-    display: ui,
+    id: Date.now().toString(),
+    display: result.value,
     role: "assistant",
   };
 }
@@ -894,57 +1077,30 @@ async function submitFile(
     };
   });
 
-  const aiState: any = getMutableAIState<typeof AI>();
-  aiState.update([
-    ...aiState.get(),
+  const history = getMutableAIState();
+
+  history.update((messages: ServerMessage[]) => [
+    ...messages,
     {
       role: "user",
       content: userInput ? userInput : "User requested to analyze the file",
     },
-    {
-      role: "system",
-      content: `
-      Analyze the following data 
-      provided as a document as part of your answer to the users question: 
-      <fileData>${JSON.stringify(fileData)}</fileData>
-      `,
-    },
   ]);
 
-  const ui = render({
-    model: "gpt-4-0125-preview",
-    provider: openai,
+  const result = await streamUI({
+    model: openai("gpt-3.5-turbo"),
     initial: <Spinner />,
-    messages: [
-      {
-        role: "system",
-        content: `
-        You are an AI designed to help users with their queries. You can perform functions like searching the web.
-        You can help users find information from the web, get the weather or find out the latest news.
-        If someone asks you to search the web, you can use the function \`search_the_web\`.
-        If someone asks you to get the latest news, you can use the function \`get_news\`.
-        If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
-        If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
-        Make sure to confirm their location and the units they want the temperature in.
-        If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
-        If someone asks a question about movies, you can use the function \`search_for_movies\`.
-        If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
-        For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
-        For locations, try to provide a link to the location, a brief description of the location and a rating.
-        When asked to analyze a file make sure to look at the most recent file provided when appropriate.
-        If the user doesn't ask about the file, you can ignore it.
-      `,
-      },
-      ...aiState.get(),
-    ],
+    system: `
+    Analyze the following data
+    provided as a document as part of your answer to the users question:
+    <fileData>${JSON.stringify(fileData)}</fileData>
+    `,
+    messages: [...history.get(), { role: "user", content: userInput }],
     text: ({ content, done }) => {
       if (done) {
-        aiState.done([
-          ...aiState.get(),
-          {
-            role: "assistant",
-            content,
-          },
+        history.done((messages: ServerMessage[]) => [
+          ...messages,
+          { role: "assistant", content },
         ]);
       }
       return (
@@ -1019,7 +1175,7 @@ async function submitFile(
 
   return {
     id: Date.now(),
-    display: ui,
+    display: result.value,
     role: "assistant",
   };
 }
@@ -1031,12 +1187,25 @@ async function submitRequestToGetWeatherForecast(
 ) {
   "use server";
 
-  const aiState = getMutableAIState<typeof AI>();
-  aiState.update([
-    ...aiState.get(),
+  const history = getMutableAIState();
+  const toolCallId = uuidv4();
+
+  history.update([
+    ...history.get(),
     {
       role: "user",
       content: `Get the weather forecast for ${location} in ${units} units for ${forecast_days} days.`,
+    },
+    {
+      role: "assistant",
+      content: [
+        {
+          type: "tool-call",
+          toolCallId: toolCallId,
+          toolName: "get_weather_forecast",
+          args: { location, units, forecast_days },
+        },
+      ],
     },
   ]);
 
@@ -1049,22 +1218,31 @@ async function submitRequestToGetWeatherForecast(
 
   (async () => {
     const response = await get_weather_forecast(location, units, forecast_days);
-
+    history.done([
+      ...history.get(),
+      {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: toolCallId,
+            toolName: "get_weather_forecast",
+            result: {
+              ...response,
+              location,
+              units,
+              forecast_days,
+            },
+          },
+        ],
+      },
+    ]);
     uiStream.done(
       <>
         Here's the {forecast_days} day forecast for {location}:
         <WeatherForecastCard weatherForecast={response} />
       </>
     );
-
-    aiState.done([
-      ...aiState.get(),
-      {
-        role: "function",
-        name: "get_weather_forecast",
-        content: JSON.stringify(response),
-      },
-    ]);
   })();
 
   return {
@@ -1079,14 +1257,26 @@ async function submitRequestToGetCurrentWeather(
   units?: string
 ) {
   "use server";
-  console.log("submitRequestToGetCurrentWeather");
 
-  const aiState = getMutableAIState<typeof AI>();
-  aiState.update([
-    ...aiState.get(),
+  const history = getMutableAIState();
+  const toolCallId = uuidv4();
+
+  history.update([
+    ...history.get(),
     {
       role: "user",
       content: `Get the current weather forecast for ${location} in ${units} units.`,
+    },
+    {
+      role: "assistant",
+      content: [
+        {
+          type: "tool-call",
+          toolCallId: toolCallId,
+          toolName: "get_current_weather",
+          args: { location, units },
+        },
+      ],
     },
   ]);
 
@@ -1099,6 +1289,24 @@ async function submitRequestToGetCurrentWeather(
 
   (async () => {
     const response = await get_current_weather(location, units);
+    history.update([
+      ...history.get(),
+      {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: toolCallId,
+            toolName: "get_current_weather",
+            result: {
+              ...response,
+              location,
+              units,
+            },
+          },
+        ],
+      },
+    ]);
 
     uiStream.done(
       <>
@@ -1106,14 +1314,6 @@ async function submitRequestToGetCurrentWeather(
         <CurrentWeatherCard currentWeather={response} />
       </>
     );
-    aiState.done([
-      ...aiState.get(),
-      {
-        role: "function",
-        name: "get_current_weather",
-        content: JSON.stringify(response),
-      },
-    ]);
   })();
 
   return {
@@ -1123,31 +1323,13 @@ async function submitRequestToGetCurrentWeather(
   };
 }
 
-// Define the initial state of the AI. It can be any JSON object.
-const initialAIState: {
-  role: "user" | "assistant" | "system" | "function";
-  content: string;
-  id?: string;
-  name?: string;
-}[] = [];
-
-// The initial UI state that the client will keep track of, which contains the message IDs and their UI nodes.
-const initialUIState: {
-  id: string;
-  display: React.ReactNode;
-  role: "user" | "assistant" | "system" | "function" | "data" | "tool";
-}[] = [];
-
-// AI is a provider you wrap your application with so you can access AI and UI state in your components.
-export const AI = createAI({
+export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     submitUserMessage,
     submitFile,
     submitRequestToGetWeatherForecast,
     submitRequestToGetCurrentWeather,
   },
-  // Each state can be any shape of object, but for chat applications
-  // it makes sense to have an array of messages. Or you may prefer something like { id: number, messages: Message[] }
-  initialUIState,
-  initialAIState,
+  initialAIState: [],
+  initialUIState: [],
 });
