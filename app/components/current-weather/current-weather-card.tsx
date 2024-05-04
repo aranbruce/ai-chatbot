@@ -1,6 +1,5 @@
 "use client";
 
-import type { AI } from "../../actions";
 import { useActions, useUIState } from "ai/rsc";
 
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
@@ -24,7 +23,7 @@ const CurrentWeatherCard = ({
 }: {
   currentWeather: CurrentWeatherProps;
 }) => {
-  const [, setMessages] = useUIState<typeof AI>();
+  const [, setMessages] = useUIState();
 
   const {
     submitRequestToGetWeatherForecast,

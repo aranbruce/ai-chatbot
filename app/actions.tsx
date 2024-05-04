@@ -211,7 +211,6 @@ async function search_for_movies(
 async function submitUserMessage(userInput: string): Promise<ClientMessage> {
   "use server";
 
-  // const aiState: any = getMutableAIState<typeof AI>();
   const history = getMutableAIState();
 
   history.update((messages: ServerMessage[]) => [

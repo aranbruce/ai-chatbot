@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import type { AI, ClientMessage } from "../actions";
+import type { ClientMessage } from "../actions";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";

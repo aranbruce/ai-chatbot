@@ -3,8 +3,6 @@
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 import { useActions, useUIState } from "ai/rsc";
 
-import type { AI } from "../../actions";
-
 export interface WeatherForecastProps {
   location: string;
   daily: WeatherForecastDayProps[];
@@ -24,8 +22,8 @@ const WeatherForecastCard = ({
 }: {
   weatherForecast: WeatherForecastProps;
 }) => {
-  const [, setMessages] = useUIState<typeof AI>();
-  const { submitRequestToGetCurrentWeather } = useActions<typeof AI>();
+  const [, setMessages] = useUIState();
+  const { submitRequestToGetCurrentWeather } = useActions();
 
   // take the day and return the day of the week based on today"s date. If the day is 0, it will return today"s day of the week
   const getDayOfWeek = (day: number) => {
