@@ -1,7 +1,8 @@
 import "server-only";
 
-import { createOpenAI } from "@ai-sdk/openai";
-import { v4 as uuidv4 } from "uuid"; // To generate a unique filename
+import { openai } from "@ai-sdk/openai";
+import { mistral } from "@ai-sdk/mistral";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   createAI,
@@ -40,9 +41,8 @@ export interface ClientMessage {
   display: React.ReactNode;
 }
 
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const model = openai("gpt-3.5-turbo");
+// const model = mistral("mistral-large-latest");
 
 async function get_current_weather(location: string, units?: string) {
   "use server";
@@ -219,7 +219,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
   ]);
 
   const result = await streamUI({
-    model: openai("gpt-3.5-turbo"),
+    model,
     initial: <Spinner />,
     system: `
       You are an AI designed to help users with their queries. You can perform functions like searching the web.
@@ -330,20 +330,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           .required(),
         generate: async function* ({ location, units }) {
           const toolCallId = uuidv4();
-          history.update((messages: ServerMessage[]) => [
-            ...messages,
-            {
-              role: "assistant",
-              content: [
-                {
-                  type: "tool-call",
-                  toolCallId: toolCallId,
-                  toolName: "get_current_weather",
-                  args: { location, units },
-                },
-              ],
-            },
-          ]);
           yield (
             <>
               Getting the current weather for {location}...
@@ -361,6 +347,17 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             ]);
             history.done([
               ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_current_weather",
+                    args: { location, units },
+                  },
+                ],
+              },
               {
                 role: "tool",
                 content: [
@@ -384,20 +381,9 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            history.done([
-              ...history.get(),
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_current_weather",
-                    result: { error: error.message },
-                  },
-                ],
-              },
-            ]);
+            // history.done([
+            //   ...history.get(),
+            // ]);
             return (
               <>
                 Sorry, there was an error getting the current weather for{" "}
@@ -427,20 +413,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           .required(),
         generate: async function* ({ location, units, forecast_days }) {
           const toolCallId = uuidv4();
-          history.update((messages: ServerMessage[]) => [
-            ...messages,
-            {
-              role: "assistant",
-              content: [
-                {
-                  type: "tool-call",
-                  toolCallId: toolCallId,
-                  toolName: "get_weather_forecast",
-                  args: { location, units, forecast_days },
-                },
-              ],
-            },
-          ]);
           yield (
             <>
               Getting the weather forecast for {location}...
@@ -458,6 +430,17 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             ])) as WeatherForecastProps;
             history.done([
               ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_weather_forecast",
+                    args: { location, units, forecast_days },
+                  },
+                ],
+              },
               {
                 role: "tool",
                 content: [
@@ -483,20 +466,9 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            history.done([
-              ...history.get(),
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_weather_forecast",
-                    result: { error: error.message },
-                  },
-                ],
-              },
-            ]);
+            // history.done([
+            //   ...history.get(),
+            // ]);
             return (
               <>
                 Sorry, there was an error getting the weather forecast for{" "}
@@ -574,20 +546,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           .required(),
         generate: async function* ({ query, country, freshness, units }) {
           const toolCallId = uuidv4();
-          history.update((messages: ServerMessage[]) => [
-            ...messages,
-            {
-              role: "assistant",
-              content: [
-                {
-                  type: "tool-call",
-                  toolCallId: toolCallId,
-                  toolName: "search_the_web",
-                  args: { query, country, freshness, units },
-                },
-              ],
-            },
-          ]);
           yield (
             <>
               Searching the web for {query}...
@@ -606,6 +564,17 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
 
             history.done([
               ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_web",
+                    args: { query, country, freshness, units },
+                  },
+                ],
+              },
               {
                 role: "tool",
                 content: [
@@ -631,20 +600,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            history.done([
-              ...history.get(),
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_web",
-                    result: { error: error.message },
-                  },
-                ],
-              },
-            ]);
+            history.done([...history.get()]);
             return <>Sorry, there was an error searching the web for {query}</>;
           }
         },
@@ -716,20 +672,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           .required(),
         generate: async function* ({ query, country, freshness, units }) {
           const toolCallId = uuidv4();
-          history.update((messages: ServerMessage[]) => [
-            ...messages,
-            {
-              role: "assistant",
-              content: [
-                {
-                  type: "tool-call",
-                  toolCallId: toolCallId,
-                  toolName: "get_news",
-                  args: { query, country, freshness, units },
-                },
-              ],
-            },
-          ]);
           yield (
             <>
               Searching for news about {query}...
@@ -745,9 +687,19 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               get_news(query, country, freshness, units),
               timeout,
             ]);
-
             history.done([
               ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_news",
+                    args: { query, country, freshness, units },
+                  },
+                ],
+              },
               {
                 role: "tool",
                 content: [
@@ -773,20 +725,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            history.done([
-              ...history.get(),
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_news",
-                    result: { error: error.message },
-                  },
-                ],
-              },
-            ]);
+            history.done([...history.get()]);
             return (
               <>Sorry, there was an error searching for news about {query}</>
             );
@@ -823,20 +762,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           .required(),
         generate: async function* ({ query, city, category, currency }) {
           const toolCallId = uuidv4();
-          history.update((messages: ServerMessage[]) => [
-            ...messages,
-            {
-              role: "assistant",
-              content: [
-                {
-                  type: "tool-call",
-                  toolCallId: toolCallId,
-                  toolName: "search_for_locations",
-                  args: { query, city, category, currency },
-                },
-              ],
-            },
-          ]);
           yield (
             <>
               Searching for locations related to {query} in {city}...
@@ -855,6 +780,17 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
 
             history.done([
               ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_locations",
+                    args: { query, city, category, currency },
+                  },
+                ],
+              },
               {
                 role: "tool",
                 content: [
@@ -880,20 +816,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            history.done([
-              ...history.get(),
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_locations",
-                    result: { error: error.message },
-                  },
-                ],
-              },
-            ]);
+            history.done([...history.get()]);
             return (
               <>
                 Sorry, there was an error searching for locations related to{" "}
@@ -941,27 +864,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           limit,
         }) {
           const toolCallId = uuidv4();
-          history.update((messages: ServerMessage[]) => [
-            ...messages,
-            {
-              role: "assistant",
-              content: [
-                {
-                  type: "tool-call",
-                  toolCallId: toolCallId,
-                  toolName: "search_for_movies",
-                  args: {
-                    input,
-                    minimumIMDBRating,
-                    minimumReleaseYear,
-                    maximumReleaseYear,
-                    director,
-                    limit,
-                  },
-                },
-              ],
-            },
-          ]);
           yield (
             <>
               Searching for {input} movies...
@@ -987,6 +889,24 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
 
             history.done([
               ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_movies",
+                    args: {
+                      input,
+                      minimumIMDBRating,
+                      minimumReleaseYear,
+                      maximumReleaseYear,
+                      director,
+                      limit,
+                    },
+                  },
+                ],
+              },
               {
                 role: "tool",
                 content: [
@@ -1025,20 +945,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </div>
             );
           } catch (error: any) {
-            history.done([
-              ...history.get(),
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_movies",
-                    result: { error: error.message },
-                  },
-                ],
-              },
-            ]);
+            history.done([...history.get()]);
             return (
               <>
                 Sorry, there was an error searching for movies related to{" "}
@@ -1189,25 +1096,6 @@ async function submitRequestToGetWeatherForecast(
   const history = getMutableAIState();
   const toolCallId = uuidv4();
 
-  history.update([
-    ...history.get(),
-    {
-      role: "user",
-      content: `Get the weather forecast for ${location} in ${units} units for ${forecast_days} days.`,
-    },
-    {
-      role: "assistant",
-      content: [
-        {
-          type: "tool-call",
-          toolCallId: toolCallId,
-          toolName: "get_weather_forecast",
-          args: { location, units, forecast_days },
-        },
-      ],
-    },
-  ]);
-
   const uiStream = createStreamableUI(
     <>
       Getting the weather forecast for {location}...
@@ -1219,6 +1107,17 @@ async function submitRequestToGetWeatherForecast(
     const response = await get_weather_forecast(location, units, forecast_days);
     history.done([
       ...history.get(),
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "tool-call",
+            toolCallId: toolCallId,
+            toolName: "get_weather_forecast",
+            args: { location, units, forecast_days },
+          },
+        ],
+      },
       {
         role: "tool",
         content: [
@@ -1260,25 +1159,6 @@ async function submitRequestToGetCurrentWeather(
   const history = getMutableAIState();
   const toolCallId = uuidv4();
 
-  history.update([
-    ...history.get(),
-    {
-      role: "user",
-      content: `Get the current weather forecast for ${location} in ${units} units.`,
-    },
-    {
-      role: "assistant",
-      content: [
-        {
-          type: "tool-call",
-          toolCallId: toolCallId,
-          toolName: "get_current_weather",
-          args: { location, units },
-        },
-      ],
-    },
-  ]);
-
   const uiStream = createStreamableUI(
     <>
       Getting the current weather for {location}...
@@ -1288,8 +1168,19 @@ async function submitRequestToGetCurrentWeather(
 
   (async () => {
     const response = await get_current_weather(location, units);
-    history.update([
+    history.done([
       ...history.get(),
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "tool-call",
+            toolCallId: toolCallId,
+            toolName: "get_current_weather",
+            args: { location, units },
+          },
+        ],
+      },
       {
         role: "tool",
         content: [
