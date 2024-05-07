@@ -31,13 +31,13 @@ export default function Chat() {
   useEffect(() => {
     if (history) {
       setIsLoading(false);
-      // console.log("aiState: ", history);
+      console.log("aiState: ", history);
     }
   }, [history]);
 
-  // useEffect(() => {
-  //   console.log("messages: ", messages);
-  // }, [messages]);
+  useEffect(() => {
+    console.log("messages: ", messages);
+  }, [messages]);
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor();
