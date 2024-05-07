@@ -30,6 +30,9 @@ import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
 import LocationCardGroup from "./components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "./components/location-card/location-card-group-skeleton";
 
+const model = openai("gpt-3.5-turbo");
+// const model = mistral("mistral-large-latest");
+
 export interface ServerMessage {
   role: "user" | "assistant";
   content: string;
@@ -40,9 +43,6 @@ export interface ClientMessage {
   role: "user" | "assistant";
   display: React.ReactNode;
 }
-
-const model = openai("gpt-3.5-turbo");
-// const model = mistral("mistral-large-latest");
 
 async function get_current_weather(location: string, units?: string) {
   "use server";
