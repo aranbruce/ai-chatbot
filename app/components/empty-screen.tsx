@@ -10,8 +10,8 @@ const exampleMessages = [
   },
   {
     heading: "Weather",
-    subheading: "What is the weather like in London?",
-    message: "What is the weather like in London?",
+    subheading: "Show me the weather like in London",
+    message: "Show me the weather like in London",
   },
   {
     heading: "News",

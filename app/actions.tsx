@@ -2,6 +2,8 @@ import "server-only";
 
 import { openai } from "@ai-sdk/openai";
 import { mistral } from "@ai-sdk/mistral";
+import { anthropic } from "@ai-sdk/anthropic";
+
 import { v4 as uuidv4 } from "uuid";
 
 import {
@@ -221,21 +223,19 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
   const result = await streamUI({
     model,
     initial: <Spinner />,
+    temperature: 0.1,
     system: `
-      You are an AI designed to help users with their queries. You can perform functions like searching the web.
-      You can help users find information from the web, get the weather or find out the latest news.
-      If someone asks you to search the web, you can use the function \`search_the_web\`.
-      If someone asks you to get the latest news, you can use the function \`get_news\`.
-      If someone asks you to get the current weather, you can use the function \`get_current_weather\`.
-      If someone asks you to get the weather forecast or how the weather will look in the future, you can use the function \`get_weather_forecast\`.
+      You are an AI designed to help users with their queries. You can perform tools like searching the web, 
+      help users find information from the web, get the weather or find out the latest news.
+      If someone asks you to search the web, you can use the tool \`search_the_web\`.
+      If someone asks you to get the latest news, you can use the tool \`get_news\`.
+      If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
+      If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
+      If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
       Make sure to confirm their location and the units they want the temperature in.
-      If someone asks you to search for gifs, you can use the function \`search_for_gifs\`. Try to us a variety of related search terms.
-      If someone asks a question about movies, you can use the function \`search_for_movies\`.
-      If someone asks a question about locations or places to visit, you can use the function \`search_for_locations\`.
-      For gifs, try to display the image as markdown and provide a link to the source with a title for the gif.
-      For locations, try to provide a link to the location, a brief description of the location and a rating.
-      When asked to analyze a file make sure to look at the most recent file provided when appropriate.
-      If the user doesn't ask about the file, you can ignore it.`,
+      If someone asks a question about movies, you can use the tool \`search_for_movies\`.
+      If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
+      If you want to call a tool, simply call a tool without needing to explain what you are doing.`,
     messages: [...history.get(), { role: "user", content: userInput }],
     text: ({ content, done }) => {
       if (done) {
@@ -324,7 +324,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               .enum(["metric", "imperial"])
               .optional()
               .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'"
+                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
               ),
           })
           .required(),
@@ -373,6 +373,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                   },
                 ],
               },
+              {
+                role: "assistant",
+                content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
+              },
             ]);
             return (
               <>
@@ -404,7 +408,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               .enum(["metric", "imperial"])
               .optional()
               .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'"
+                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
               ),
             forecast_days: z
               .number()
@@ -456,6 +460,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                     },
                   },
                 ],
+              },
+              {
+                role: "assistant",
+                content: `Here's the ${forecast_days} day forecast for ${location}: ${JSON.stringify(response)}`,
               },
             ]);
 
@@ -540,7 +548,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               .enum(["metric", "imperial"])
               .optional()
               .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'"
+                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
               ),
           })
           .required(),
@@ -591,6 +599,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                     },
                   },
                 ],
+              },
+              {
+                role: "assistant",
+                content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
               },
             ]);
             return (
@@ -666,7 +678,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               .enum(["metric", "imperial"])
               .optional()
               .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'"
+                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
               ),
           })
           .required(),
@@ -716,6 +728,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                     },
                   },
                 ],
+              },
+              {
+                role: "assistant",
+                content: `Here are the latest news articles about ${query}: ${JSON.stringify(response)}`,
               },
             ]);
             return (
@@ -807,6 +823,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                     },
                   },
                 ],
+              },
+              {
+                role: "assistant",
+                content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
               },
             ]);
             return (
@@ -925,6 +945,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                     },
                   },
                 ],
+              },
+              {
+                role: "assistant",
+                content: `Here are movies related to ${input}: ${JSON.stringify(response)}`,
               },
             ]);
             return (
@@ -1134,6 +1158,10 @@ async function submitRequestToGetWeatherForecast(
           },
         ],
       },
+      {
+        role: "assistant",
+        content: `Here's the ${forecast_days} day forecast for ${location}: ${JSON.stringify(response)}`,
+      },
     ]);
     uiStream.done(
       <>
@@ -1195,6 +1223,10 @@ async function submitRequestToGetCurrentWeather(
             },
           },
         ],
+      },
+      {
+        role: "assistant",
+        content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
       },
     ]);
 
