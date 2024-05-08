@@ -32,9 +32,9 @@ import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
 import LocationCardGroup from "./components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "./components/location-card/location-card-group-skeleton";
 
-// const model = openai("gpt-3.5-turbo");
+const model = openai("gpt-3.5-turbo");
 // const model = mistral("mistral-large-latest");
-const model = anthropic("claude-3-opus-20240229");
+// const model = anthropic("claude-3-opus-20240229");
 
 export interface ServerMessage {
   role: "user" | "assistant";
