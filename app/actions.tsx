@@ -223,7 +223,6 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
   const result = await streamUI({
     model,
     initial: <Spinner />,
-    temperature: 0.1,
     system: `
       You are an AI designed to help users with their queries. You can perform tools like searching the web, 
       help users find information from the web, get the weather or find out the latest news.
