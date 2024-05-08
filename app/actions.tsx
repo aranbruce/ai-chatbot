@@ -32,9 +32,9 @@ import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
 import LocationCardGroup from "./components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "./components/location-card/location-card-group-skeleton";
 
-const model = openai("gpt-3.5-turbo");
+// const model = openai("gpt-3.5-turbo");
 // const model = mistral("mistral-large-latest");
-// const model = anthropic("claude-3-opus-20240229");
+const model = anthropic("claude-3-opus-20240229");
 
 export interface ServerMessage {
   role: "user" | "assistant";
@@ -233,10 +233,9 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
       If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
       If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
-      Make sure to confirm their location and the units they want the temperature in.
       If someone asks a question about movies, you can use the tool \`search_for_movies\`.
       If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
-      If you want to call a tool, simply call a tool without needing to explain what you are doing.`,
+      `,
     messages: [...history.get(), { role: "user", content: userInput }],
     text: ({ content, done }) => {
       if (done) {
