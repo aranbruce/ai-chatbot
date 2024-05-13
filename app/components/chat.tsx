@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import type { ClientMessage } from "../actions";
+import type { ClientMessage } from "../libs/actions";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
@@ -9,7 +9,7 @@ import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from "../contexts/file-collection-context";
-import { useScrollAnchor } from "./useScrollAnchor";
+import { useScrollAnchor } from "../libs/useScrollAnchor";
 
 type Message = {
   id: string;

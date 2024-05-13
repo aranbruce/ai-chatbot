@@ -6,7 +6,7 @@ import {
 
 import Textarea from "../components/textarea";
 import Button from "../components/button";
-import UploadButton from "../components/upload-button";
+import UploadButton from "../libs/upload-button";
 
 interface PromptFormProps {
   input: string;

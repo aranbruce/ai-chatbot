@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { useChat, Message } from "ai/react";
 import { v4 as uuidv4 } from "uuid";
 import { FileCollectionContext } from "../contexts/file-collection-context";
-import { useScrollAnchor } from "./useScrollAnchor";
+import { useScrollAnchor } from "../libs/useScrollAnchor";
 
 import PromptForm from "./prompt-form";
 import EmptyScreen from "./empty-screen";

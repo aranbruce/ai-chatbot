@@ -3,6 +3,7 @@ import "server-only";
 import { openai } from "@ai-sdk/openai";
 import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -16,25 +17,37 @@ import {
 import { z } from "zod";
 import Markdown from "react-markdown";
 
-import CurrentWeatherCard from "./components/current-weather/current-weather-card";
-import CurrentWeatherCardSkeleton from "./components/current-weather/current-weather-card-skeleton";
-import Spinner from "./components/spinner";
-import CodeContainer from "./components/code-container";
-import NewsCardGroup from "./components/news-card/news-card-group";
-import NewsCardGroupSkeleton from "./components/news-card/news-card-group-skeleton";
-import WebResultGroup from "./components/web-results/web-result-group";
-import WebResultCardGroupSkeleton from "./components/web-results/web-result-group-skeleton";
+import CurrentWeatherCard from "../components/current-weather/current-weather-card";
+import CurrentWeatherCardSkeleton from "../components/current-weather/current-weather-card-skeleton";
+import Spinner from "../components/spinner";
+import CodeContainer from "../components/code-container";
+import NewsCardGroup from "../components/news-card/news-card-group";
+import NewsCardGroupSkeleton from "../components/news-card/news-card-group-skeleton";
+import WebResultGroup from "../components/web-results/web-result-group";
+import WebResultCardGroupSkeleton from "../components/web-results/web-result-group-skeleton";
 import WeatherForecastCard, {
   WeatherForecastProps,
-} from "./components/weather-forecast/weather-forecast-card";
-import WeatherForecastCardSkeleton from "./components/weather-forecast/weather-forecast-card-skeleton";
-import MovieCard, { MovieCardProps } from "./components/movie-card/movie-card";
-import LocationCardGroup from "./components/location-card/location-card-group";
-import LocationCardGroupSkeleton from "./components/location-card/location-card-group-skeleton";
+} from "../components/weather-forecast/weather-forecast-card";
+import WeatherForecastCardSkeleton from "../components/weather-forecast/weather-forecast-card-skeleton";
+import MovieCard, { MovieCardProps } from "../components/movie-card/movie-card";
+import LocationCardGroup from "../components/location-card/location-card-group";
+import LocationCardGroupSkeleton from "../components/location-card/location-card-group-skeleton";
 
-const model = openai("gpt-3.5-turbo");
-// const model = mistral("mistral-large-latest");
-// const model = anthropic("claude-3-opus-20240229");
+const modelVariable = process.env.MODEL || "";
+let model: any = null;
+if (!modelVariable) {
+  throw new Error("MODEL environment variable is not set");
+} else if (modelVariable.startsWith("gpt-")) {
+  model = openai(modelVariable);
+} else if (modelVariable.startsWith("mistral-")) {
+  model = mistral(modelVariable);
+} else if (modelVariable.startsWith("claude-")) {
+  model = anthropic(modelVariable);
+} else if (modelVariable.includes("gemini-")) {
+  model = google("models/gemini-pro");
+} else {
+  throw new Error("MODEL environment variable is not a supported model");
+}
 
 export interface ServerMessage {
   role: "user" | "assistant";
@@ -235,6 +248,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
       If someone asks a question about movies, you can use the tool \`search_for_movies\`.
       If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
+      If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       `,
     messages: [...history.get(), { role: "user", content: userInput }],
     text: ({ content, done }) => {
