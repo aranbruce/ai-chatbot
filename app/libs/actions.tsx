@@ -1,4 +1,4 @@
-import "server-only";
+"use server";
 
 import { openai } from "@ai-sdk/openai";
 import { mistral } from "@ai-sdk/mistral";
