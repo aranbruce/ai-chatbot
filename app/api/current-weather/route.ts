@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
 
   // get the parameters from the location in the request
   const location = request.nextUrl.searchParams.get("location");
-  const units = request.nextUrl.searchParams.get("units");
+  let units = request.nextUrl.searchParams.get("units");
 
   if (!location) {
     return NextResponse.json(
@@ -67,11 +67,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid location" }, { status: 400 });
     }
 
-    let url = `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}&exclude=minutely,daily,alerts`;
+    let url = new URL(
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${process.env.OPENWEATHER_API_KEY}&exclude=minutely,daily,alerts`
+    );
 
-    if (units) {
-      url += `&units=${units}`;
+    if (!units) {
+      units = "metric";
     }
+    url.searchParams.append("units", units);
 
     const headers = {
       Accept: "application/json",
@@ -101,6 +104,7 @@ export async function GET(request: NextRequest) {
         weather: hour.weather[0].main,
       })),
     };
+    console.log("Response:", responseJson);
     return NextResponse.json(responseJson, { status: 200 });
   } catch (error) {
     console.error("Error:", error);

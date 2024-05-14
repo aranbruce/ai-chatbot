@@ -246,7 +246,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
     initial: <Spinner />,
     temperature: 0.1,
     system: `
-      You are an AI designed to help users with their queries. You can perform tools like searching the web, 
+      You are an AI designed to help users with their queries. You can perform tools like searching the web,
       help users find information from the web, get the weather or find out the latest news.
       If someone asks you to search the web, you can use the tool \`search_the_web\`.
       If someone asks you to get the latest news, you can use the tool \`get_news\`.
@@ -255,83 +255,93 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
       If someone asks a question about movies, you can use the tool \`search_for_movies\`.
       If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
+      Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       `,
-    messages: [...history.get(), { role: "user", content: userInput }],
+    messages: [{ role: "user", content: userInput }],
     text: ({ content, done }) => {
-      if (done) {
-        history.done((messages: ServerMessage[]) => [
-          ...messages,
-          { role: "assistant", content },
-        ]);
+      try {
+        if (done) {
+          history.done((messages: ServerMessage[]) => [
+            ...messages,
+            { role: "assistant", content },
+          ]);
+        }
+        return (
+          <Markdown
+            children={content}
+            components={{
+              // Map `h1` (`# heading`) to use `h2`s.
+              h1: "h2",
+              h2(props) {
+                const { node, ...rest } = props;
+                return <h2 className="text-xl font-semibold" {...rest} />;
+              },
+              h3(props) {
+                const { node, ...rest } = props;
+                return <h3 className="text-lg font-semibold" {...rest} />;
+              },
+              h4(props) {
+                const { node, ...rest } = props;
+                return <h4 className="text-md font-semibold" {...rest} />;
+              },
+              ol(props) {
+                const { node, ...rest } = props;
+                return (
+                  <ol className="flex flex-col flex-wrap gap-4" {...rest} />
+                );
+              },
+              ul(props) {
+                const { node, ...rest } = props;
+                return (
+                  <ul className="flex flex-col flex-wrap gap-4" {...rest} />
+                );
+              },
+              li(props) {
+                const { node, ...rest } = props;
+                return <li className="" {...rest} />;
+              },
+              a(props) {
+                const { node, ...rest } = props;
+                return (
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2"
+                    {...rest}
+                  />
+                );
+              },
+              pre(props) {
+                const { node, ...rest } = props;
+                return <pre className="grid w-full" {...rest} />;
+              },
+              code(props) {
+                const { children, className, node, ...rest } = props;
+                const match = /language-(\w+)/.exec(className || "");
+                const language = match ? match[1] : "text";
+                const capitalizedLanguage =
+                  language.charAt(0).toUpperCase() +
+                  language.slice(1).toLowerCase();
+                return match ? (
+                  <CodeContainer
+                    capitalizedLanguage={capitalizedLanguage}
+                    language={language}
+                    children={children}
+                  />
+                ) : (
+                  <code {...rest} className="text-sm font-semibold">
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          />
+        );
+      } catch (error) {
+        console.log("error: ", error);
+        return <>Sorry, looks like something went wrong</>;
       }
-      return (
-        <Markdown
-          children={content}
-          components={{
-            // Map `h1` (`# heading`) to use `h2`s.
-            h1: "h2",
-            h2(props) {
-              const { node, ...rest } = props;
-              return <h2 className="text-xl font-semibold" {...rest} />;
-            },
-            h3(props) {
-              const { node, ...rest } = props;
-              return <h3 className="text-lg font-semibold" {...rest} />;
-            },
-            h4(props) {
-              const { node, ...rest } = props;
-              return <h4 className="text-md font-semibold" {...rest} />;
-            },
-            ol(props) {
-              const { node, ...rest } = props;
-              return <ol className="flex flex-col flex-wrap gap-4" {...rest} />;
-            },
-            ul(props) {
-              const { node, ...rest } = props;
-              return <ul className="flex flex-col flex-wrap gap-4" {...rest} />;
-            },
-            li(props) {
-              const { node, ...rest } = props;
-              return <li className="" {...rest} />;
-            },
-            a(props) {
-              const { node, ...rest } = props;
-              return (
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2"
-                  {...rest}
-                />
-              );
-            },
-            pre(props) {
-              const { node, ...rest } = props;
-              return <pre className="grid w-full" {...rest} />;
-            },
-            code(props) {
-              const { children, className, node, ...rest } = props;
-              const match = /language-(\w+)/.exec(className || "");
-              const language = match ? match[1] : "text";
-              const capitalizedLanguage =
-                language.charAt(0).toUpperCase() +
-                language.slice(1).toLowerCase();
-              return match ? (
-                <CodeContainer
-                  capitalizedLanguage={capitalizedLanguage}
-                  language={language}
-                  children={children}
-                />
-              ) : (
-                <code {...rest} className="text-sm font-semibold">
-                  {children}
-                </code>
-              );
-            },
-          }}
-        />
-      );
     },
     tools: {
       get_current_weather: {
@@ -344,7 +354,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             .enum(["metric", "imperial"])
             .optional()
             .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric."
             ),
         }),
         generate: async function* ({ location, units }) {

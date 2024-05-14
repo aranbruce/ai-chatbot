@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   // get the parameters from the query string of the request
   const location = request.nextUrl.searchParams.get("location");
-  const units = request.nextUrl.searchParams.get("units");
+  let units = request.nextUrl.searchParams.get("units");
   const forecast_days = parseInt(
     request.nextUrl.searchParams.get("forecast_days") || "0"
   );
@@ -83,9 +83,10 @@ export async function GET(request: NextRequest) {
       `https://api.openweathermap.org/data/3.0/onecall?lat=${coordinates.latitude}&lon=${coordinates.longitude}&exclude=current,minutely,hourly,alerts&appid=${process.env.OPENWEATHER_API_KEY}`
     );
 
-    if (units) {
-      url.searchParams.append("units", units);
+    if (!units) {
+      units = "metric";
     }
+    url.searchParams.append("units", units);
 
     const response = await fetch(url, {
       method: "GET",
