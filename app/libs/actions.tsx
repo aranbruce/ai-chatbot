@@ -1,6 +1,6 @@
 "use server";
 
-import { openai } from "@ai-sdk/openai";
+import { openai, createOpenAI } from "@ai-sdk/openai";
 import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
@@ -33,6 +33,11 @@ import MovieCard, { MovieCardProps } from "../components/movie-card/movie-card";
 import LocationCardGroup from "../components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "../components/location-card/location-card-group-skeleton";
 
+const groq = createOpenAI({
+  baseURL: "https://api.groq.com/openai/v1",
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 const modelVariable = process.env.MODEL || "";
 let model: any = null;
 if (!modelVariable) {
@@ -45,6 +50,8 @@ if (!modelVariable) {
   model = anthropic(modelVariable);
 } else if (modelVariable.includes("gemini-")) {
   model = google("models/gemini-pro");
+} else if (modelVariable.includes("llama3-")) {
+  const model = groq(modelVariable);
 } else {
   throw new Error("MODEL environment variable is not a supported model");
 }
@@ -329,19 +336,17 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
     tools: {
       get_current_weather: {
         description: "Get the current weather forecast for a location",
-        parameters: z
-          .object({
-            location: z
-              .string()
-              .describe("The location to get the weather forecast for"),
-            units: z
-              .enum(["metric", "imperial"])
-              .optional()
-              .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
-              ),
-          })
-          .required(),
+        parameters: z.object({
+          location: z
+            .string()
+            .describe("The location to get the weather forecast for"),
+          units: z
+            .enum(["metric", "imperial"])
+            .optional()
+            .describe(
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+            ),
+        }),
         generate: async function* ({ location, units }) {
           const toolCallId = uuidv4();
           yield (
@@ -413,22 +418,20 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       },
       get_weather_forecast: {
         description: "Get the weather forecast for a location",
-        parameters: z
-          .object({
-            location: z
-              .string()
-              .describe("The location to get the weather forecast for"),
-            units: z
-              .enum(["metric", "imperial"])
-              .optional()
-              .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
-              ),
-            forecast_days: z
-              .number()
-              .describe("The number of days to forecast the weather for"),
-          })
-          .required(),
+        parameters: z.object({
+          location: z
+            .string()
+            .describe("The location to get the weather forecast for"),
+          units: z
+            .enum(["metric", "imperial"])
+            .optional()
+            .describe(
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+            ),
+          forecast_days: z
+            .number()
+            .describe("The number of days to forecast the weather for"),
+        }),
         generate: async function* ({ location, units, forecast_days }) {
           const toolCallId = uuidv4();
           yield (
@@ -503,69 +506,67 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       search_the_web: {
         description:
           "Search the web for information on a given topic or for a specific query",
-        parameters: z
-          .object({
-            query: z
-              .string()
-              .describe("The search query or topic to search for news on"),
-            country: z
-              .enum([
-                "AR",
-                "AU",
-                "AT",
-                "BE",
-                "BR",
-                "CA",
-                "CL",
-                "DK",
-                "FI",
-                "FR",
-                "DE",
-                "HK",
-                "IN",
-                "ID",
-                "IT",
-                "JP",
-                "KR",
-                "MY",
-                "MX",
-                "NL",
-                "NZ",
-                "NO",
-                "CN",
-                "PL",
-                "PT",
-                "PH",
-                "RU",
-                "SA",
-                "ZA",
-                "ES",
-                "SE",
-                "CH",
-                "TW",
-                "TH",
-                "TR",
-                "GB",
-                "US",
-              ])
-              .optional()
-              .describe(
-                "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries."
-              ),
-            freshness: z
-              .enum(["past-day", "past-week", "past-month", "past-year"])
-              .optional()
-              .describe(
-                "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'."
-              ),
-            units: z
-              .enum(["metric", "imperial"])
-              .optional()
-              .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
-              ),
-          })
-          .required(),
+        parameters: z.object({
+          query: z
+            .string()
+            .describe("The search query or topic to search for news on"),
+          country: z
+            .enum([
+              "AR",
+              "AU",
+              "AT",
+              "BE",
+              "BR",
+              "CA",
+              "CL",
+              "DK",
+              "FI",
+              "FR",
+              "DE",
+              "HK",
+              "IN",
+              "ID",
+              "IT",
+              "JP",
+              "KR",
+              "MY",
+              "MX",
+              "NL",
+              "NZ",
+              "NO",
+              "CN",
+              "PL",
+              "PT",
+              "PH",
+              "RU",
+              "SA",
+              "ZA",
+              "ES",
+              "SE",
+              "CH",
+              "TW",
+              "TH",
+              "TR",
+              "GB",
+              "US",
+            ])
+            .optional()
+            .describe(
+              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries."
+            ),
+          freshness: z
+            .enum(["past-day", "past-week", "past-month", "past-year"])
+            .optional()
+            .describe(
+              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'."
+            ),
+          units: z
+            .enum(["metric", "imperial"])
+            .optional()
+            .describe(
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+            ),
+        }),
         generate: async function* ({ query, country, freshness, units }) {
           const toolCallId = uuidv4();
           yield (
@@ -633,69 +634,67 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       },
       get_news: {
         description: "Search for news on the web for a given topic",
-        parameters: z
-          .object({
-            query: z
-              .string()
-              .describe("The search query or topic to search for news on"),
-            country: z
-              .enum([
-                "AR",
-                "AU",
-                "AT",
-                "BE",
-                "BR",
-                "CA",
-                "CL",
-                "DK",
-                "FI",
-                "FR",
-                "DE",
-                "HK",
-                "IN",
-                "ID",
-                "IT",
-                "JP",
-                "KR",
-                "MY",
-                "MX",
-                "NL",
-                "NZ",
-                "NO",
-                "CN",
-                "PL",
-                "PT",
-                "PH",
-                "RU",
-                "SA",
-                "ZA",
-                "ES",
-                "SE",
-                "CH",
-                "TW",
-                "TH",
-                "TR",
-                "GB",
-                "US",
-              ])
-              .optional()
-              .describe(
-                "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries."
-              ),
-            freshness: z
-              .enum(["past-day", "past-week", "past-month", "past-year"])
-              .optional()
-              .describe(
-                "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'."
-              ),
-            units: z
-              .enum(["metric", "imperial"])
-              .optional()
-              .describe(
-                "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
-              ),
-          })
-          .required(),
+        parameters: z.object({
+          query: z
+            .string()
+            .describe("The search query or topic to search for news on"),
+          country: z
+            .enum([
+              "AR",
+              "AU",
+              "AT",
+              "BE",
+              "BR",
+              "CA",
+              "CL",
+              "DK",
+              "FI",
+              "FR",
+              "DE",
+              "HK",
+              "IN",
+              "ID",
+              "IT",
+              "JP",
+              "KR",
+              "MY",
+              "MX",
+              "NL",
+              "NZ",
+              "NO",
+              "CN",
+              "PL",
+              "PT",
+              "PH",
+              "RU",
+              "SA",
+              "ZA",
+              "ES",
+              "SE",
+              "CH",
+              "TW",
+              "TH",
+              "TR",
+              "GB",
+              "US",
+            ])
+            .optional()
+            .describe(
+              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries."
+            ),
+          freshness: z
+            .enum(["past-day", "past-week", "past-month", "past-year"])
+            .optional()
+            .describe(
+              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'."
+            ),
+          units: z
+            .enum(["metric", "imperial"])
+            .optional()
+            .describe(
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+            ),
+        }),
         generate: async function* ({ query, country, freshness, units }) {
           const toolCallId = uuidv4();
           yield (
@@ -764,32 +763,28 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       },
       search_for_locations: {
         description: "Search for locations or places to visit",
-        parameters: z
-          .object({
-            query: z
-              .string()
-              .describe(
-                "The search query or topic to search for locations on."
-              ),
-            city: z
-              .string()
-              .describe(
-                "The city to search for locations in. The can only be a city and cannot be part of a city. For example, 'London' is valid, but 'North London' is not."
-              ),
-            category: z
-              .enum(["hotels", "restaurants", "attractions", "geos"])
-              .optional()
-              .describe(
-                "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'."
-              ),
-            currency: z
-              .string()
-              .optional()
-              .describe(
-                "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217."
-              ),
-          })
-          .required(),
+        parameters: z.object({
+          query: z
+            .string()
+            .describe("The search query or topic to search for locations on."),
+          city: z
+            .string()
+            .describe(
+              "The city to search for locations in. The can only be a city and cannot be part of a city. For example, 'London' is valid, but 'North London' is not."
+            ),
+          category: z
+            .enum(["hotels", "restaurants", "attractions", "geos"])
+            .optional()
+            .describe(
+              "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'."
+            ),
+          currency: z
+            .string()
+            .optional()
+            .describe(
+              "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217."
+            ),
+        }),
         generate: async function* ({ query, city, category, currency }) {
           const toolCallId = uuidv4();
           yield (
@@ -862,33 +857,31 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       },
       search_for_movies: {
         description: "Get movies from a database based on an input",
-        parameters: z
-          .object({
-            input: z
-              .string()
-              .describe("A description of the type of movies to search for"),
-            minimumIMDBRating: z
-              .number()
-              .optional()
-              .describe("The minimum IMDB rating of the movies to search for"),
-            minimumReleaseYear: z
-              .number()
-              .optional()
-              .describe("The minimum release year of the movies to search for"),
-            maximumReleaseYear: z
-              .number()
-              .optional()
-              .describe("The maximum release year of the movies to search for"),
-            director: z
-              .string()
-              .optional()
-              .describe("The director of the movies to search for"),
-            limit: z
-              .number()
-              .optional()
-              .describe("The number of movies to return"),
-          })
-          .required(),
+        parameters: z.object({
+          input: z
+            .string()
+            .describe("A description of the type of movies to search for"),
+          minimumIMDBRating: z
+            .number()
+            .optional()
+            .describe("The minimum IMDB rating of the movies to search for"),
+          minimumReleaseYear: z
+            .number()
+            .optional()
+            .describe("The minimum release year of the movies to search for"),
+          maximumReleaseYear: z
+            .number()
+            .optional()
+            .describe("The maximum release year of the movies to search for"),
+          director: z
+            .string()
+            .optional()
+            .describe("The director of the movies to search for"),
+          limit: z
+            .number()
+            .optional()
+            .describe("The number of movies to return"),
+        }),
         generate: async function* ({
           input,
           minimumIMDBRating,
@@ -1032,7 +1025,7 @@ async function submitFile(
   ]);
 
   const result = await streamUI({
-    model: openai("gpt-3.5-turbo"),
+    model,
     initial: <Spinner />,
     system: `
     Analyze the following data
