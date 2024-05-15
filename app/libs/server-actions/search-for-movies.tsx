@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { Pinecone } from "@pinecone-database/pinecone";
 
@@ -15,33 +14,25 @@ const pc = new Pinecone({
 // Set up Pinecone index
 const index = pc.index("movies-index");
 
-export const runtime = "edge";
+interface Request {
+  input: string;
+  minimumIMDBRating?: number;
+  minimumReleaseYear?: number;
+  maximumReleaseYear?: number;
+  director?: string;
+  limit?: number;
+}
 
-export async function GET(request: NextRequest) {
-  console.log("GET request received for movies-vector-db route");
-  const input = request.nextUrl.searchParams.get("input");
-  const minimumIMDBRating =
-    request.nextUrl.searchParams.get("minimumIMDBRating");
-  const minimumReleaseYear =
-    request.nextUrl.searchParams.get("minimumReleaseYear");
-  const maximumReleaseYear =
-    request.nextUrl.searchParams.get("maximumReleaseYear");
-  const director = request.nextUrl.searchParams.get("director");
-  const limit = request.nextUrl.searchParams.get("limit");
-
-  console.log("Input:", input);
-  console.log("Minimum IMDB rating:", minimumIMDBRating);
-  console.log("Minimum release year:", minimumReleaseYear);
-  console.log("Maximum release year:", maximumReleaseYear);
-  console.log("Director:", director);
-  console.log("Limit:", limit);
-
-  if (!input) {
-    return NextResponse.json(
-      { error: "An input is required" },
-      { status: 400 }
-    );
-  }
+export default async function search_for_movies({
+  input,
+  minimumIMDBRating,
+  minimumReleaseYear,
+  maximumReleaseYear,
+  director,
+  limit = 5,
+}: Request) {
+  "use server";
+  console.log("Request received for movies-vector-db action");
 
   try {
     // Get the embedding for the input
@@ -55,28 +46,25 @@ export async function GET(request: NextRequest) {
 
     // Query the Pinecone index with the embedding
     let queryResults = await index.namespace("movie-descriptions").query({
-      topK: limit ? parseInt(limit) : 10,
+      topK: limit,
       vector: embedding,
       includeMetadata: true,
       filter: {
         ...(minimumIMDBRating && {
-          imdbRating: { $gte: parseFloat(minimumIMDBRating) },
+          imdbRating: { $gte: minimumIMDBRating },
         }),
         ...(minimumReleaseYear && {
-          releaseYear: { $gte: parseInt(minimumReleaseYear) },
+          releaseYear: { $gte: minimumReleaseYear },
         }),
         ...(maximumReleaseYear && {
-          releaseYear: { $lte: parseInt(maximumReleaseYear) },
+          releaseYear: { $lte: maximumReleaseYear },
         }),
         ...(director && { director: { $eq: director } }),
       },
     });
 
     if (!queryResults) {
-      return NextResponse.json(
-        { message: "No results found" },
-        { status: 404 }
-      );
+      return [];
     }
 
     let results = await queryResults.matches;
@@ -100,12 +88,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(results, { status: 200 });
+    return results as any[];
   } catch (error) {
     console.error("Error:", error);
-    return NextResponse.json(
-      { error: `Error occurred: ${error}` },
-      { status: 500 }
-    );
+    return { error: `Error occurred: ${error}` };
   }
 }

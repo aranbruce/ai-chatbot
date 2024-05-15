@@ -17,21 +17,31 @@ import {
 import { z } from "zod";
 import Markdown from "react-markdown";
 
-import CurrentWeatherCard from "../components/current-weather/current-weather-card";
-import CurrentWeatherCardSkeleton from "../components/current-weather/current-weather-card-skeleton";
-import Spinner from "../components/spinner";
-import CodeContainer from "../components/code-container";
-import NewsCardGroup from "../components/news-card/news-card-group";
-import NewsCardGroupSkeleton from "../components/news-card/news-card-group-skeleton";
-import WebResultGroup from "../components/web-results/web-result-group";
-import WebResultCardGroupSkeleton from "../components/web-results/web-result-group-skeleton";
-import WeatherForecastCard, {
-  WeatherForecastProps,
-} from "../components/weather-forecast/weather-forecast-card";
-import WeatherForecastCardSkeleton from "../components/weather-forecast/weather-forecast-card-skeleton";
-import MovieCard, { MovieCardProps } from "../components/movie-card/movie-card";
-import LocationCardGroup from "../components/location-card/location-card-group";
-import LocationCardGroupSkeleton from "../components/location-card/location-card-group-skeleton";
+import get_coordinates from "./get-coordinates";
+import get_current_weather from "./get-current-weather";
+import get_weather_forecast from "./get-weather-forecast";
+import search_the_web from "./search-the-web";
+import search_the_news from "./search-the-news";
+import search_for_locations from "./search-for-locations";
+import search_for_movies from "./search-for-movies";
+import search_for_gifs from "./search-for-gifs";
+
+import CurrentWeatherCard from "../../components/current-weather/current-weather-card";
+import CurrentWeatherCardSkeleton from "../../components/current-weather/current-weather-card-skeleton";
+import Spinner from "../../components/spinner";
+import CodeContainer from "../../components/code-container";
+import NewsCardGroup from "../../components/news-card/news-card-group";
+import NewsCardGroupSkeleton from "../../components/news-card/news-card-group-skeleton";
+import WebResultGroup from "../../components/web-results/web-result-group";
+import WebResultCardGroupSkeleton from "../../components/web-results/web-result-group-skeleton";
+import WeatherForecastCard from "../../components/weather-forecast/weather-forecast-card";
+import WeatherForecastCardSkeleton from "../../components/weather-forecast/weather-forecast-card-skeleton";
+import MovieCard, {
+  MovieCardProps,
+} from "../../components/movie-card/movie-card";
+import LocationCardGroup from "../../components/location-card/location-card-group";
+import LocationCardGroupSkeleton from "../../components/location-card/location-card-group-skeleton";
+import Image from "next/image";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -67,171 +77,7 @@ export interface ClientMessage {
   display: React.ReactNode;
 }
 
-async function get_current_weather(location: string, units?: string) {
-  "use server";
-  try {
-    const url = new URL(`${process.env.URL}/api/current-weather`);
-    const params = new URLSearchParams({ location });
-    if (units) {
-      params.append("units", units);
-    }
-    url.search = params.toString();
-
-    const response = await fetch(url, { method: "GET" });
-    return await response.json();
-  } catch (error) {
-    console.error("error: ", error);
-    return error;
-  }
-}
-
-async function get_weather_forecast(
-  location: string,
-  units?: string,
-  forecast_days?: number
-) {
-  "use server";
-  try {
-    const url = new URL(`${process.env.URL}/api/weather-forecast`);
-    const params = new URLSearchParams({ location });
-    if (units) {
-      params.append("units", units);
-    }
-    if (forecast_days) {
-      params.append("forecast_days", forecast_days.toString());
-    }
-    url.search = params.toString();
-
-    const response = await fetch(url, { method: "GET" });
-    return await response.json();
-  } catch (error) {
-    console.error("error: ", error);
-    return error;
-  }
-}
-
-async function search_the_web(
-  query: string,
-  country?: string,
-  freshness?: string,
-  units?: string
-) {
-  "use server";
-  try {
-    const url = new URL(`${process.env.URL}/api/web-search`);
-    const params = new URLSearchParams({ query });
-    if (country) {
-      params.append("country", country);
-    }
-    if (freshness) {
-      params.append("freshness", freshness);
-    }
-    if (units) {
-      params.append("units", units);
-    }
-    url.search = params.toString();
-
-    const response = await fetch(url, { method: "GET" });
-    return await response.json();
-  } catch (error) {
-    console.error("error: ", error);
-    return error;
-  }
-}
-
-async function get_news(
-  query: string,
-  country?: string,
-  freshness?: string,
-  units?: string
-) {
-  "use server";
-  try {
-    const url = new URL(`${process.env.URL}/api/news-search`);
-    const params = new URLSearchParams({ query });
-    if (country) {
-      params.append("country", country);
-    }
-    if (freshness) {
-      params.append("freshness", freshness);
-    }
-    if (units) {
-      params.append("units", units);
-    }
-    url.search = params.toString();
-    const response = await fetch(url, { method: "GET" });
-    const responseJson = await response.json();
-    return responseJson;
-  } catch (error) {
-    console.error("error: ", error);
-    return error;
-  }
-}
-
-async function search_for_locations(
-  query: string,
-  city: string,
-  category?: string,
-  currency?: string
-) {
-  "use server";
-  try {
-    const url = new URL(`${process.env.URL}/api/location-search`);
-    const params = new URLSearchParams({ query, city });
-    if (category) {
-      params.append("category", category);
-    }
-    if (currency) {
-      params.append("currency", currency);
-    }
-    url.search = params.toString();
-
-    const response = await fetch(url, { method: "GET" });
-    return await response.json();
-  } catch (error) {
-    console.error("error: ", error);
-    return error;
-  }
-}
-
-async function search_for_movies(
-  input: string,
-  minimumIMDBRating?: number,
-  minimumReleaseYear?: number,
-  maximumReleaseYear?: number,
-  director?: string,
-  limit?: number
-) {
-  "use server";
-  try {
-    const url = new URL(`${process.env.URL}/api/movies-vector-db`);
-    const params = new URLSearchParams({ input });
-    if (minimumIMDBRating) {
-      params.append("minimumIMDBRating", minimumIMDBRating.toString());
-    }
-    if (minimumReleaseYear) {
-      params.append("minimumReleaseYear", minimumReleaseYear.toString());
-    }
-    if (maximumReleaseYear) {
-      params.append("maximumReleaseYear", maximumReleaseYear.toString());
-    }
-    if (director) {
-      params.append("director", director);
-    }
-    if (limit) {
-      params.append("limit", limit.toString());
-    }
-    url.search = params.toString();
-
-    const response = await fetch(url, { method: "GET" });
-    return await response.json();
-  } catch (error) {
-    console.error("error: ", error);
-    return error;
-  }
-}
-
-async function submitUserMessage(userInput: string): Promise<ClientMessage> {
+async function continueConversation(userInput: string): Promise<ClientMessage> {
   "use server";
 
   const history = getMutableAIState();
@@ -248,13 +94,15 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
     system: `
       You are an AI designed to help users with their queries. You can perform tools like searching the web,
       help users find information from the web, get the weather or find out the latest news.
-      If someone asks you to search the web, you can use the tool \`search_the_web\`.
-      If someone asks you to get the latest news, you can use the tool \`get_news\`.
+      If you need to get the coordinates of a location, you can use the tool \`get_coordinates\`.
       If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
       If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
       If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
+      If someone asks you to search the web, you can use the tool \`search_the_web\`.
+      If someone asks you to get the latest news, you can use the tool \`search_the_news\`.
       If someone asks a question about movies, you can use the tool \`search_for_movies\`.
       If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
+      If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
       Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       `,
@@ -344,12 +192,94 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
       }
     },
     tools: {
+      get_coordinates: {
+        description:
+          "Get the coordinates (latitude and longitude) of a location",
+        parameters: z.object({
+          location: z
+            .string()
+            .describe("The location to get the coordinates for"),
+        }),
+        generate: async function* ({ location }) {
+          const toolCallId = uuidv4();
+          yield (
+            <>
+              Getting the coordinates for {location}...
+              <Spinner />
+            </>
+          );
+          try {
+            const response = await get_coordinates({ location });
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_coordinates",
+                    args: { location },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_coordinates",
+                    result: response,
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `The coordinates for ${location} are: ${JSON.stringify(
+                  response
+                )}`,
+              },
+            ]);
+            return (
+              <>
+                The coordinates for {location} are:{" "}
+                {JSON.stringify(response, null, 2)}
+              </>
+            );
+          } catch (error: any) {
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_coordinates",
+                    args: { location },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error getting the coordinates for ${location}`,
+              },
+            ]);
+            return (
+              <>
+                {`Sorry, there was an error getting the coordinates for ${location}`}
+              </>
+            );
+          }
+        },
+      },
       get_current_weather: {
         description: "Get the current weather forecast for a location",
         parameters: z.object({
           location: z
             .string()
-            .describe("The location to get the weather forecast for"),
+            .describe("The location to get the current weather for"),
           units: z
             .enum(["metric", "imperial"])
             .optional()
@@ -366,14 +296,10 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             </>
           );
           try {
-            const timeout = new Promise(
-              (_, reject) =>
-                setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
-            );
-            const response = await Promise.race([
-              get_current_weather(location, units),
-              timeout,
-            ]);
+            const response = await get_current_weather({
+              location,
+              units,
+            });
             history.done([
               ...history.get(),
               {
@@ -414,13 +340,27 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            // history.done([
-            //   ...history.get(),
-            // ]);
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_current_weather",
+                    args: { location, units },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error getting the current weather for ${location}`,
+              },
+            ]);
             return (
               <>
-                Sorry, there was an error getting the current weather for{" "}
-                {location}
+                {`Sorry, there was an error getting the current weather for ${location}`}
               </>
             );
           }
@@ -451,14 +391,11 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             </>
           );
           try {
-            const timeout = new Promise(
-              (_, reject) =>
-                setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
-            );
-            const response = (await Promise.race([
-              get_weather_forecast(location, units, forecast_days),
-              timeout,
-            ])) as WeatherForecastProps;
+            const response = await get_weather_forecast({
+              location,
+              units,
+              forecast_days,
+            });
             history.done([
               ...history.get(),
               {
@@ -501,9 +438,24 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            // history.done([
-            //   ...history.get(),
-            // ]);
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "get_weather_forecast",
+                    args: { location, units, forecast_days },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error getting the weather forecast for ${location}`,
+              },
+            ]);
             return (
               <>
                 Sorry, there was an error getting the weather forecast for{" "}
@@ -576,8 +528,18 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             .describe(
               "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
             ),
+          count: z
+            .number()
+            .optional()
+            .describe("The number of search results to return"),
         }),
-        generate: async function* ({ query, country, freshness, units }) {
+        generate: async function* ({
+          query,
+          country,
+          freshness,
+          units,
+          count,
+        }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -586,14 +548,13 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             </>
           );
           try {
-            const timeout = new Promise(
-              (_, reject) =>
-                setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
-            );
-            const response = await Promise.race([
-              search_the_web(query, country, freshness, units),
-              timeout,
-            ]);
+            const response = await search_the_web({
+              query,
+              country,
+              freshness,
+              units,
+              count,
+            });
 
             history.done([
               ...history.get(),
@@ -637,12 +598,29 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
               </>
             );
           } catch (error: any) {
-            history.done([...history.get()]);
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_web",
+                    args: { query, country, freshness, units },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error searching the web for ${query}`,
+              },
+            ]);
             return <>Sorry, there was an error searching the web for {query}</>;
           }
         },
       },
-      get_news: {
+      search_the_news: {
         description: "Search for news on the web for a given topic",
         parameters: z.object({
           query: z
@@ -714,14 +692,13 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             </>
           );
           try {
-            const timeout = new Promise(
-              (_, reject) =>
-                setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
-            );
-            const response = await Promise.race([
-              get_news(query, country, freshness, units),
-              timeout,
-            ]);
+            const response = await search_the_news({
+              query,
+              country,
+              freshness,
+              units,
+              count: 10,
+            });
             history.done([
               ...history.get(),
               {
@@ -730,7 +707,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                   {
                     type: "tool-call",
                     toolCallId: toolCallId,
-                    toolName: "get_news",
+                    toolName: "search_the_news",
                     args: { query, country, freshness, units },
                   },
                 ],
@@ -741,7 +718,7 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                   {
                     type: "tool-result",
                     toolCallId: toolCallId,
-                    toolName: "get_news",
+                    toolName: "search_the_news",
                     result: {
                       ...response,
                       query,
@@ -763,8 +740,25 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
                 <NewsCardGroup news={response} />
               </>
             );
-          } catch (error: any) {
-            history.done([...history.get()]);
+          } catch (error) {
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_news",
+                    args: { query, country, freshness, units },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error searching for news about ${query}`,
+              },
+            ]);
             return (
               <>Sorry, there was an error searching for news about {query}</>
             );
@@ -804,14 +798,12 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             </>
           );
           try {
-            const timeout = new Promise(
-              (_, reject) =>
-                setTimeout(() => reject(new Error("Request timed out")), 10000) // 10 seconds timeout
-            );
-            const response = await Promise.race([
-              search_for_locations(query, city, category, currency),
-              timeout,
-            ]);
+            const response = await search_for_locations({
+              query,
+              city,
+              category,
+              currency,
+            });
 
             history.done([
               ...history.get(),
@@ -851,15 +843,33 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             return (
               <>
                 Here are the search results for {query} in {city}:
-                <LocationCardGroup locations={response} />
+                <LocationCardGroup
+                  locations={Array.isArray(response) ? response : []}
+                />
               </>
             );
           } catch (error: any) {
-            history.done([...history.get()]);
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_locations",
+                    args: { query, city, category, currency },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error searching for locations related to ${query} in ${city}`,
+              },
+            ]);
             return (
               <>
-                Sorry, there was an error searching for locations related to{" "}
-                {query} in {city}
+                {`Sorry, there was an error searching for locations related to{" "}${query} in ${city}`}
               </>
             );
           }
@@ -908,21 +918,14 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             </>
           );
           try {
-            const timeout = new Promise(
-              (_, reject) =>
-                setTimeout(() => reject(new Error("Request timed out")), 5000) // 5 seconds timeout
-            );
-            const response = await Promise.race([
-              search_for_movies(
-                input,
-                minimumIMDBRating,
-                minimumReleaseYear,
-                maximumReleaseYear,
-                director,
-                limit
-              ),
-              timeout,
-            ]);
+            const response = await search_for_movies({
+              input,
+              minimumIMDBRating,
+              minimumReleaseYear,
+              maximumReleaseYear,
+              director,
+              limit,
+            });
 
             history.done([
               ...history.get(),
@@ -970,23 +973,54 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
             ]);
             return (
               <div className="flex flex-col gap-8">
-                {response.map((movie: MovieCardProps, index: number) => (
-                  <MovieCard
-                    title={movie.title}
-                    description={movie.description}
-                    imdbRating={movie.imdbRating}
-                    releaseYear={movie.releaseYear}
-                    director={movie.director}
-                    genre={movie.genre}
-                    stars={movie.stars}
-                    imageURL={movie.imageURL}
-                    key={index}
-                  />
-                ))}
+                {Array.isArray(response) ? (
+                  response.map((movie: MovieCardProps, index: number) => (
+                    <MovieCard
+                      title={movie.title}
+                      description={movie.description}
+                      imdbRating={movie.imdbRating}
+                      releaseYear={movie.releaseYear}
+                      director={movie.director}
+                      genre={movie.genre}
+                      stars={movie.stars}
+                      imageURL={movie.imageURL}
+                      key={index}
+                    />
+                  ))
+                ) : (
+                  <div>
+                    Sorry, there was an error searching for movies related to{" "}
+                    {input}
+                  </div>
+                )}
               </div>
             );
           } catch (error: any) {
-            history.done([...history.get()]);
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_movies",
+                    args: {
+                      input,
+                      minimumIMDBRating,
+                      minimumReleaseYear,
+                      maximumReleaseYear,
+                      director,
+                      limit,
+                    },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error searching for movies related to ${input}`,
+              },
+            ]);
             return (
               <>
                 Sorry, there was an error searching for movies related to{" "}
@@ -996,11 +1030,123 @@ async function submitUserMessage(userInput: string): Promise<ClientMessage> {
           }
         },
       },
+      search_for_gifs: {
+        description: "Search for gifs on the web",
+        parameters: z.object({
+          query: z
+            .string()
+            .describe("The search query or topic to search for gifs on"),
+          limit: z.number().optional().describe("The number of gifs to return"),
+          rating: z
+            .enum(["g", "pg", "pg-13", "r"])
+            .optional()
+            .describe(
+              "The rating of the gifs to return. Can be 'g', 'pg', 'pg-13', or 'r'."
+            ),
+        }),
+        generate: async function* ({ query, limit, rating }) {
+          const toolCallId = uuidv4();
+          yield (
+            <>
+              Searching for gifs related to {query}...
+              <Spinner />
+            </>
+          );
+          try {
+            const response = await search_for_gifs({
+              query,
+              limit,
+              rating,
+            });
+
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_gifs",
+                    args: { query, limit, rating },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_gifs",
+                    result: {
+                      ...response,
+                      query,
+                      limit,
+                      rating,
+                    },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Here are the gifs related to ${query}: ${JSON.stringify(response)}`,
+              },
+            ]);
+            return (
+              <>
+                Here are the gifs related to {query}:
+                <div className="grid grid-cols-2 gap-4">
+                  {response.map((gif: any, index: number) => (
+                    <div key={index} className="flex flex-col gap-2">
+                      <Image
+                        unoptimized
+                        className="rounded-md"
+                        src={gif.images.original.url}
+                        alt={JSON.stringify(gif.title)}
+                        width={gif.images.original.width}
+                        height={gif.images.original.height}
+                      />
+                      <h4 className="text-zinc-500 text-sm">
+                        {JSON.stringify(gif.title)}
+                      </h4>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          } catch (error: any) {
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_gifs",
+                    args: { query, limit, rating },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error searching for gifs related to ${query}`,
+              },
+            ]);
+            return (
+              <>
+                Sorry, there was an error searching for gifs related to {query}
+              </>
+            );
+          }
+        },
+      },
     },
   });
 
   return {
-    id: Date.now().toString(),
+    id: uuidv4(),
     display: result.value,
     role: "assistant",
   };
@@ -1121,7 +1267,7 @@ async function submitFile(
   });
 
   return {
-    id: Date.now(),
+    id: uuidv4(),
     display: result.value,
     role: "assistant",
   };
@@ -1129,8 +1275,8 @@ async function submitFile(
 
 async function submitRequestToGetWeatherForecast(
   location: string,
-  units?: string,
-  forecast_days?: number
+  forecast_days: number,
+  units?: "metric" | "imperial" | undefined
 ) {
   "use server";
 
@@ -1145,7 +1291,11 @@ async function submitRequestToGetWeatherForecast(
   );
 
   (async () => {
-    const response = await get_weather_forecast(location, units, forecast_days);
+    const response = await get_weather_forecast({
+      location,
+      units,
+      forecast_days,
+    });
     history.done([
       ...history.get(),
       {
@@ -1189,7 +1339,7 @@ async function submitRequestToGetWeatherForecast(
   })();
 
   return {
-    id: Date.now(),
+    id: uuidv4(),
     display: uiStream.value,
     role: "assistant",
   };
@@ -1197,7 +1347,7 @@ async function submitRequestToGetWeatherForecast(
 
 async function submitRequestToGetCurrentWeather(
   location: string,
-  units?: string
+  units: "metric" | "imperial" | undefined
 ) {
   "use server";
 
@@ -1212,7 +1362,7 @@ async function submitRequestToGetCurrentWeather(
   );
 
   (async () => {
-    const response = await get_current_weather(location, units);
+    const response = await get_current_weather({ location, units });
     history.done([
       ...history.get(),
       {
@@ -1256,7 +1406,7 @@ async function submitRequestToGetCurrentWeather(
   })();
 
   return {
-    id: Date.now(),
+    id: uuidv4(),
     display: uiStream.value,
     role: "assistant",
   };
@@ -1264,7 +1414,7 @@ async function submitRequestToGetCurrentWeather(
 
 export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
-    submitUserMessage,
+    continueConversation,
     submitFile,
     submitRequestToGetWeatherForecast,
     submitRequestToGetCurrentWeather,

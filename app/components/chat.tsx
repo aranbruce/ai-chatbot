@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import type { ClientMessage } from "../libs/actions";
+import type { ClientMessage } from "../libs/server-actions/actions";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
@@ -9,7 +9,7 @@ import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from "../contexts/file-collection-context";
-import { useScrollAnchor } from "../libs/useScrollAnchor";
+import { useScrollAnchor } from "../libs/hooks/use-scroll-anchor";
 
 type Message = {
   id: string;
@@ -21,7 +21,7 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [history] = useAIState();
   const [messages, setMessages] = useUIState();
-  const { submitUserMessage, submitFile } = useActions();
+  const { continueConversation, submitFile } = useActions();
   const [isLoading, setIsLoading] = useState(false);
   const { fileCollection, filesAsInput, setFilesAsInput } = useContext(
     FileCollectionContext
@@ -57,7 +57,7 @@ export default function Chat() {
         },
       ]);
       // Submit and get response message
-      const responseMessage = await submitUserMessage(inputValue);
+      const responseMessage = await continueConversation(inputValue);
       setMessages((currentMessages: ClientMessage[]) => [
         ...currentMessages,
         responseMessage,
@@ -108,7 +108,6 @@ export default function Chat() {
           role: "user",
         } as Message,
       ]);
-      // Submit and get response message
       const responseMessage = await submitFile(
         filesAsInput,
         fileCollection,
@@ -128,7 +127,6 @@ export default function Chat() {
   }, [messages]);
 
   const handleExampleClick = async (example: string) => {
-    // Add user message to UI state
     setIsLoading(true);
     setMessages((currentMessages: ClientMessage[]) => [
       ...currentMessages,
@@ -138,8 +136,7 @@ export default function Chat() {
         role: "user",
       } as Message,
     ]);
-    // Submit and get response message
-    const responseMessage = await submitUserMessage(example);
+    const responseMessage = await continueConversation(example);
     setMessages((currentMessages: ClientMessage[]) => [
       ...currentMessages,
       responseMessage,
