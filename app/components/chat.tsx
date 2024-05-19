@@ -25,7 +25,7 @@ export default function Chat() {
   useEffect(() => {
     if (history) {
       setIsLoading(false);
-      // console.log("history: ", history);
+      console.log("history: ", history);
     }
   }, [history]);
 

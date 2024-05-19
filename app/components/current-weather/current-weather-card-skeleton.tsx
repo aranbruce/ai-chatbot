@@ -8,7 +8,7 @@ const CurrentWeatherCardSkeleton = () => {
         <h5 className="text-xs font-medium text-zinc-400">
           Weather Forecast: Loading...
         </h5>
-        <div className="flex flex-col shadow-md gap-4 w-full rounded-lg items-start bg-blue-400 dark:bg-zinc-900 text-white p-4 border border-zinc-200 dark:border-zinc-800">
+        <div className="flex flex-col shadow-md gap-4 w-full rounded-lg items-start bg-blue-400 dark:bg-zinc-900 text-white p-3 md:p-4 border border-zinc-200 dark:border-zinc-800">
           <div className="flex flex-col gap-2">
             <h5 className="text-xs font-medium">
               <Skeleton width={100} />
@@ -26,9 +26,9 @@ const CurrentWeatherCardSkeleton = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-7  auto-cols-min gap-4 w-full">
+          <div className="grid grid-cols-7  auto-cols-min gap-4 w-full">
             {[...Array(7)].map((_, index: number) => (
-              <div className="flex flex-col gap-2 items-center w-8" key={index}>
+              <div className="flex flex-col gap-1 items-center w-8" key={index}>
                 <h5 className="text-xs text-zinc-100">
                   <Skeleton width={20} />
                 </h5>

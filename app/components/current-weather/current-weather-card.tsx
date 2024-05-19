@@ -58,7 +58,7 @@ const CurrentWeatherCard = ({
         <h5 className="text-xs font-medium text-zinc-400">
           Weather Forecast: {currentWeather.location}
         </h5>
-        <div className="flex flex-col shadow-md gap-4 w-full rounded-lg items-start bg-blue-400 dark:bg-zinc-900 dark:border-zinc-800 text-white p-4">
+        <div className="flex flex-col shadow-md gap-4 w-full rounded-lg items-start bg-blue-400 dark:bg-zinc-900 dark:border-zinc-800 text-white p-3 md:p-4">
           <div className="flex flex-col gap-1">
             <h5 className="text-xs font-medium">
               {new Date(currentWeather.currentDate).toLocaleDateString(
@@ -85,12 +85,12 @@ const CurrentWeatherCard = ({
               />
             </div>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-7 auto-cols-min gap-4 w-full">
+          <div className="grid grid-cols-7 auto-cols-min gap-4 w-full">
             {currentWeather.hourly
               .slice(0, 7)
               .map((hour: any, index: number) => (
                 <div
-                  className="flex flex-col gap-2 items-center w-8"
+                  className="flex flex-col gap-1 items-center w-8"
                   key={index}
                 >
                   <h5 className="text-xs text-zinc-100">

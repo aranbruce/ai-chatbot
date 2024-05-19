@@ -81,6 +81,10 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
   "use server";
 
   const history = getMutableAIState();
+  history.update((messages: ServerMessage[]) => [
+    ...history.get(),
+    { role: "user", content: userInput },
+  ]);
 
   const result = await streamUI({
     model,
@@ -101,7 +105,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
       Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       `,
-    messages: [...history.get(), { role: "user", content: userInput }],
+    messages: [...history.get()],
     text: ({ content, done }) => {
       try {
         if (done) {
@@ -1168,9 +1172,8 @@ async function submitFile(
   });
 
   const history = getMutableAIState();
-
   history.update((messages: ServerMessage[]) => [
-    ...messages,
+    ...history.get(),
     {
       role: "user",
       content: userInput ? userInput : "User requested to analyze the file",
@@ -1185,7 +1188,7 @@ async function submitFile(
     provided as a document as part of your answer to the users question:
     <fileData>${JSON.stringify(fileData)}</fileData>
     `,
-    messages: [...history.get(), { role: "user", content: userInput }],
+    messages: [...history.get()],
     text: ({ content, done }) => {
       if (done) {
         history.done((messages: ServerMessage[]) => [
@@ -1297,6 +1300,10 @@ async function submitRequestToGetWeatherForecast(
       history.done([
         ...history.get(),
         {
+          role: "user",
+          content: `Get the weather forecast for ${location} for ${forecast_days} days`,
+        },
+        {
           role: "assistant",
           content: [
             {
@@ -1389,6 +1396,10 @@ async function submitRequestToGetCurrentWeather(
       const response = await get_current_weather({ location, units });
       history.done([
         ...history.get(),
+        {
+          role: "user",
+          content: `Get the current weather for ${location}`,
+        },
         {
           role: "assistant",
           content: [
