@@ -12,27 +12,26 @@ export interface FileCollectionItem {
   fileContent: string;
 }
 
+type FileCollectionArray = Array<FileCollectionItem>;
+type FileInputArray = Array<FileInputItem>;
+
 export interface FileCollectionContextProps {
-  fileCollection: Array<FileCollectionItem>; // Specify the type argument for the Array type
-  setFileCollection: React.Dispatch<
-    React.SetStateAction<Array<FileCollectionItem>>
-  >;
-  filesAsInput: Array<FileInputItem>;
-  setFilesAsInput: React.Dispatch<React.SetStateAction<Array<FileInputItem>>>;
+  fileCollection: FileCollectionArray;
+  setFileCollection: React.Dispatch<React.SetStateAction<FileCollectionArray>>;
+  filesAsInput: FileInputArray;
+  setFilesAsInput: React.Dispatch<React.SetStateAction<FileInputArray>>;
 }
 
 export const FileCollectionContext = createContext<FileCollectionContextProps>({
   fileCollection: [],
-  setFileCollection: () => {}, // initial value
+  setFileCollection: () => {},
   filesAsInput: [],
-  setFilesAsInput: () => {}, // initial value
+  setFilesAsInput: () => {},
 });
 
 export const FileCollectionContextProvider = (props: any) => {
-  const [fileCollection, setFileCollection] = useState(
-    [] as Array<FileCollectionItem>
-  );
-  const [filesAsInput, setFilesAsInput] = useState([] as Array<FileInputItem>);
+  const [fileCollection, setFileCollection] = useState<FileCollectionArray>([]);
+  const [filesAsInput, setFilesAsInput] = useState<FileInputArray>([]);
 
   return (
     <FileCollectionContext.Provider
