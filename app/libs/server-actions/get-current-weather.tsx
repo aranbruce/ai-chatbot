@@ -2,17 +2,17 @@ import get_coordinates from "./get-coordinates";
 
 interface Request {
   location: string;
-  units?: "metric" | "imperial";
+  units?: "metric" | "imperial" | undefined;
 }
 
 export default async function get_current_weather({
-  units,
   location,
+  units,
 }: Request) {
   "use server";
   console.log("Request received for get-current-weather action");
 
-  if (!units) {
+  if (!units || (units !== "metric" && units !== "imperial")) {
     units = "metric";
   }
 

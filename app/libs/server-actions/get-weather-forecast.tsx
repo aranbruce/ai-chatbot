@@ -2,8 +2,8 @@ import get_coordinates from "./get-coordinates";
 
 interface Request {
   location: string;
-  units?: "metric" | "imperial";
   forecast_days: number;
+  units?: "metric" | "imperial" | undefined;
 }
 
 export default async function get_weather_forecast({
@@ -14,7 +14,7 @@ export default async function get_weather_forecast({
   "use server";
   console.log("Request received for the weather-forecast action");
 
-  if (!units) {
+  if (!units || (units !== "metric" && units !== "imperial")) {
     units = "metric";
   }
 
@@ -46,6 +46,7 @@ export default async function get_weather_forecast({
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     let responseJson = await response.json();
+
     // make the response array the same length as the forecast_days
     responseJson.daily = responseJson.daily.slice(0, forecast_days);
 

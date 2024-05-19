@@ -32,13 +32,13 @@ const CurrentWeatherCard = ({
 
   const handleGetWeatherForecast = async (
     location: string,
-    units: "metric" | "imperial",
-    duration: number
+    forecast_days: number,
+    units: "metric" | "imperial" | undefined
   ) => {
     const newMessage = await submitRequestToGetWeatherForecast(
       location,
-      units,
-      duration
+      forecast_days,
+      units
     );
     setMessages((currentMessages: any[]) => [...currentMessages, newMessage]);
   };
@@ -116,8 +116,8 @@ const CurrentWeatherCard = ({
           onClick={() =>
             handleGetWeatherForecast(
               currentWeather.location,
-              currentWeather.units,
-              3
+              3,
+              currentWeather.units
             )
           }
         >
@@ -147,8 +147,8 @@ const CurrentWeatherCard = ({
           onClick={() =>
             handleGetWeatherForecast(
               currentWeather.location,
-              currentWeather.units,
-              5
+              5,
+              currentWeather.units
             )
           }
         >

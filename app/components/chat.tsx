@@ -11,12 +11,6 @@ import EmptyScreen from "./empty-screen";
 import { FileCollectionContext } from "../contexts/file-collection-context";
 import { useScrollAnchor } from "../libs/hooks/use-scroll-anchor";
 
-type Message = {
-  id: string;
-  display: JSX.Element;
-  role: string;
-};
-
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [history] = useAIState();
@@ -31,7 +25,7 @@ export default function Chat() {
   useEffect(() => {
     if (history) {
       setIsLoading(false);
-      // console.log("aiState: ", history);
+      // console.log("history: ", history);
     }
   }, [history]);
 
@@ -106,7 +100,7 @@ export default function Chat() {
             </div>
           ),
           role: "user",
-        } as Message,
+        } as ClientMessage,
       ]);
       const responseMessage = await submitFile(
         filesAsInput,
@@ -134,7 +128,7 @@ export default function Chat() {
         id: uuidv4(),
         display: <>{example}</>,
         role: "user",
-      } as Message,
+      } as ClientMessage,
     ]);
     const responseMessage = await continueConversation(example);
     setMessages((currentMessages: ClientMessage[]) => [
@@ -150,10 +144,7 @@ export default function Chat() {
         className="flex flex-col h-full w-full overflow-y-scroll px-5"
       >
         <div className="flex flex-col max-w-2xl w-full h-full pt-12 mx-auto stretch break-words">
-          {messages.filter(
-            (message: ClientMessage) =>
-              message.role === "user" || message.role === "assistant"
-          ).length === 0 ? (
+          {messages.length === 0 ? (
             <EmptyScreen handleExampleClick={handleExampleClick} />
           ) : (
             <div

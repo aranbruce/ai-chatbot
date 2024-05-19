@@ -82,11 +82,6 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
 
   const history = getMutableAIState();
 
-  history.update((messages: ServerMessage[]) => [
-    ...messages,
-    { role: "user", content: userInput },
-  ]);
-
   const result = await streamUI({
     model,
     initial: <Spinner />,
@@ -106,7 +101,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
       Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       `,
-    messages: [{ role: "user", content: userInput }],
+    messages: [...history.get(), { role: "user", content: userInput }],
     text: ({ content, done }) => {
       try {
         if (done) {
@@ -247,7 +242,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 {JSON.stringify(response, null, 2)}
               </>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -339,7 +334,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 <CurrentWeatherCard currentWeather={response} />
               </>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -372,17 +367,17 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
           location: z
             .string()
             .describe("The location to get the weather forecast for"),
+          forecast_days: z
+            .number()
+            .describe("The number of days to forecast the weather for"),
           units: z
             .enum(["metric", "imperial"])
             .optional()
             .describe(
               "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
             ),
-          forecast_days: z
-            .number()
-            .describe("The number of days to forecast the weather for"),
         }),
-        generate: async function* ({ location, units, forecast_days }) {
+        generate: async function* ({ location, forecast_days, units }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -393,9 +388,11 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
           try {
             const response = await get_weather_forecast({
               location,
-              units,
               forecast_days,
+              units,
             });
+            console.log("response: ", response);
+
             history.done([
               ...history.get(),
               {
@@ -405,7 +402,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_weather_forecast",
-                    args: { location, units, forecast_days },
+                    args: { location, forecast_days, units },
                   },
                 ],
               },
@@ -419,8 +416,8 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                     result: {
                       ...response,
                       location,
-                      units,
                       forecast_days,
+                      units,
                     },
                   },
                 ],
@@ -437,7 +434,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 <WeatherForecastCard weatherForecast={response} />
               </>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -447,7 +444,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_weather_forecast",
-                    args: { location, units, forecast_days },
+                    args: { location, forecast_days, units },
                   },
                 ],
               },
@@ -597,7 +594,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 <WebResultGroup results={response} />
               </>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -848,7 +845,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 />
               </>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -995,7 +992,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 )}
               </div>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -1115,7 +1112,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                 </div>
               </>
             );
-          } catch (error: any) {
+          } catch (error) {
             history.done([
               ...history.get(),
               {
@@ -1289,13 +1286,56 @@ async function submitRequestToGetWeatherForecast(
       <WeatherForecastCardSkeleton />
     </>
   );
+  try {
+    (async () => {
+      const response = await get_weather_forecast({
+        location,
+        forecast_days,
+        units,
+      });
 
-  (async () => {
-    const response = await get_weather_forecast({
-      location,
-      units,
-      forecast_days,
-    });
+      history.done([
+        ...history.get(),
+        {
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolCallId: toolCallId,
+              toolName: "get_weather_forecast",
+              args: { location, forecast_days, units },
+            },
+          ],
+        },
+        {
+          role: "tool",
+          content: [
+            {
+              type: "tool-result",
+              toolCallId: toolCallId,
+              toolName: "get_weather_forecast",
+              result: {
+                ...response,
+                location,
+                forecast_days,
+                units,
+              },
+            },
+          ],
+        },
+        {
+          role: "assistant",
+          content: `Here's the ${forecast_days} day forecast for ${location}: ${JSON.stringify(response)}`,
+        },
+      ]);
+      uiStream.done(
+        <>
+          Here's the {forecast_days} day forecast for {location}:
+          <WeatherForecastCard weatherForecast={response} />
+        </>
+      );
+    })();
+  } catch (error) {
     history.done([
       ...history.get(),
       {
@@ -1305,39 +1345,19 @@ async function submitRequestToGetWeatherForecast(
             type: "tool-call",
             toolCallId: toolCallId,
             toolName: "get_weather_forecast",
-            args: { location, units, forecast_days },
-          },
-        ],
-      },
-      {
-        role: "tool",
-        content: [
-          {
-            type: "tool-result",
-            toolCallId: toolCallId,
-            toolName: "get_weather_forecast",
-            result: {
-              ...response,
-              location,
-              units,
-              forecast_days,
-            },
+            args: { location, forecast_days, units },
           },
         ],
       },
       {
         role: "assistant",
-        content: `Here's the ${forecast_days} day forecast for ${location}: ${JSON.stringify(response)}`,
+        content: `Sorry, there was an error getting the weather forecast for ${location}`,
       },
     ]);
     uiStream.done(
-      <>
-        Here's the {forecast_days} day forecast for {location}:
-        <WeatherForecastCard weatherForecast={response} />
-      </>
+      <>Sorry, there was an error getting the weather forecast for {location}</>
     );
-  })();
-
+  }
   return {
     id: uuidv4(),
     display: uiStream.value,
@@ -1351,6 +1371,10 @@ async function submitRequestToGetCurrentWeather(
 ) {
   "use server";
 
+  if (units === undefined) {
+    units = "metric";
+  }
+
   const history = getMutableAIState();
   const toolCallId = uuidv4();
 
@@ -1360,9 +1384,51 @@ async function submitRequestToGetCurrentWeather(
       <CurrentWeatherCardSkeleton />
     </>
   );
+  try {
+    (async () => {
+      const response = await get_current_weather({ location, units });
+      history.done([
+        ...history.get(),
+        {
+          role: "assistant",
+          content: [
+            {
+              type: "tool-call",
+              toolCallId: toolCallId,
+              toolName: "get_current_weather",
+              args: { location, units },
+            },
+          ],
+        },
+        {
+          role: "tool",
+          content: [
+            {
+              type: "tool-result",
+              toolCallId: toolCallId,
+              toolName: "get_current_weather",
+              result: {
+                ...response,
+                location,
+                units,
+              },
+            },
+          ],
+        },
+        {
+          role: "assistant",
+          content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
+        },
+      ]);
 
-  (async () => {
-    const response = await get_current_weather({ location, units });
+      uiStream.done(
+        <>
+          Here's the current weather for {location}:
+          <CurrentWeatherCard currentWeather={response} />
+        </>
+      );
+    })();
+  } catch (error) {
     history.done([
       ...history.get(),
       {
@@ -1377,33 +1443,11 @@ async function submitRequestToGetCurrentWeather(
         ],
       },
       {
-        role: "tool",
-        content: [
-          {
-            type: "tool-result",
-            toolCallId: toolCallId,
-            toolName: "get_current_weather",
-            result: {
-              ...response,
-              location,
-              units,
-            },
-          },
-        ],
-      },
-      {
         role: "assistant",
-        content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
+        content: `Sorry, there was an error getting the current weather for ${location}`,
       },
     ]);
-
-    uiStream.done(
-      <>
-        Here's the current weather for {location}:
-        <CurrentWeatherCard currentWeather={response} />
-      </>
-    );
-  })();
+  }
 
   return {
     id: uuidv4(),
