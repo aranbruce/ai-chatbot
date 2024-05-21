@@ -19,8 +19,8 @@ const WebResult = ({
   imageURL,
 }: WebResultProps) => {
   return (
-    <div className="flex flex-row gap-4 w-full">
-      <div className="flex flex-col gap-2 w-full">
+    <div className="flex w-full flex-row gap-4">
+      <div className="flex w-full flex-col gap-2">
         {imageURL && (
           <Image
             src={imageURL}
@@ -33,7 +33,7 @@ const WebResult = ({
         <h3 className="text-md font-semibold text-zinc-950 dark:text-white">
           {title}
         </h3>
-        <div className="flex flex-row gap-2 w-full">
+        <div className="flex w-full flex-row gap-2">
           <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
             {author}
           </p>
@@ -47,7 +47,7 @@ const WebResult = ({
         <a
           href={url}
           target="_blank"
-          className="text-sm text-zinc-950 dark:text-white font-semibold hover:text-zinc-700 dark:hover:text-zinc-200"
+          className="text-sm font-semibold text-zinc-950 hover:text-zinc-700 dark:text-white dark:hover:text-zinc-200"
         >
           Read more
         </a>

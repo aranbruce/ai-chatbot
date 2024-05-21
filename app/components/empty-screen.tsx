@@ -27,8 +27,8 @@ const exampleMessages = [
 
 const EmptyScreen = ({ handleExampleClick }: EmptyScreenProps) => {
   return (
-    <div className="flex flex-col h-full min-h-fit justify-between gap-6">
-      <div className="flex flex-col gap-1 content-center h-full justify-center items-center text-center">
+    <div className="flex h-full min-h-fit flex-col justify-between gap-6">
+      <div className="flex h-full flex-col content-center items-center justify-center gap-1 text-center">
         <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-100">
           Hi I'm Pal
         </h1>
@@ -40,8 +40,8 @@ const EmptyScreen = ({ handleExampleClick }: EmptyScreenProps) => {
         {exampleMessages.map((example, index) => (
           <button
             key={example.heading}
-            className={`transition cursor-pointer rounded-xl bg-zinc-100 dark:bg-zinc-900 p-4 hover:dark:border-zinc-800 hover:bg-zinc-200 hover:dark:bg-zinc-800 active:border-zinc-900 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 focus-visible:border-zinc-400 dark:focus-visible:ring-white/40
-            text-left ${index > 1 && "hidden md:block"}`}
+            className={`cursor-pointer rounded-xl bg-zinc-100 p-4 text-left transition hover:bg-zinc-200 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-900 dark:bg-zinc-900 hover:dark:border-zinc-800 hover:dark:bg-zinc-800
+            dark:focus-visible:ring-white/40 ${index > 1 && "hidden md:block"}`}
             onClick={() => handleExampleClick(example.message)}
           >
             <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">

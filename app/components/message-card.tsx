@@ -15,10 +15,10 @@ const MessageCard = ({ id, role, content, data }: MessageProps) => {
   return role === "system" ? null : (
     <div
       key={id}
-      className="messages whitespace-pre-wrap flex flex-row gap-3 items-start"
+      className="messages flex flex-row items-start gap-3 whitespace-pre-wrap"
     >
-      <div className="flex flex-row gap-4 items-center">
-        <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-lg text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-row items-center gap-4">
+        <div className="flex h-7 w-7 shrink-0 select-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-950 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50">
           {role === "assistant" ? (
             <svg
               fill="currentColor"
@@ -41,8 +41,8 @@ const MessageCard = ({ id, role, content, data }: MessageProps) => {
           )}
         </div>
       </div>
-      <div className="flex gap-2 flex-col max-w-full w-full">
-        <h5 className="text-md text-zinc-950 dark:text-zinc-300 font-semibold pt-1">
+      <div className="flex w-full max-w-full flex-col gap-2">
+        <h5 className="text-md pt-1 font-semibold text-zinc-950 dark:text-zinc-300">
           {role === "user" ? "You" : "Chatbot"}
         </h5>
         {data &&
@@ -50,9 +50,9 @@ const MessageCard = ({ id, role, content, data }: MessageProps) => {
           data.files.map((file: any) => (
             <div
               key={file.fileId}
-              className="flex flex-row gap-2 items-center bg-white dark:bg-zinc-900 border border-zinc-10 dark:border-zinc-700 p-3 rounded-lg text-zinc-800 dark:text-zinc-300"
+              className="border-zinc-10 flex flex-row items-center gap-2 rounded-lg border bg-white p-3 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
             >
-              <div className="bg-zinc-800 rounded-full p-2 text-zinc-50 border border-zinc-200 dark:border-zinc-700">
+              <div className="rounded-full border border-zinc-200 bg-zinc-800 p-2 text-zinc-50 dark:border-zinc-700">
                 <svg
                   width="18"
                   height="18"
@@ -68,14 +68,14 @@ const MessageCard = ({ id, role, content, data }: MessageProps) => {
                   ></path>
                 </svg>
               </div>
-              <div className="font-medium text-sm">
+              <div className="text-sm font-medium">
                 {file.fileName.length > 30
                   ? `${file.fileName.substring(0, 30)}...`
                   : file.fileName}
               </div>
             </div>
           ))}
-        <div className="text-zinc-950 dark:text-zinc-300 flex flex-col gap-4 w-full">
+        <div className="flex w-full flex-col gap-4 text-zinc-950 dark:text-zinc-300">
           {typeof content === "string" ? (
             <Markdown
               children={content}
@@ -116,7 +116,7 @@ const MessageCard = ({ id, role, content, data }: MessageProps) => {
                     <a
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2"
+                      className="text-zinc-950 underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-zinc-50 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-300"
                       {...rest}
                     />
                   );
@@ -133,8 +133,8 @@ const MessageCard = ({ id, role, content, data }: MessageProps) => {
                     language.charAt(0).toUpperCase() +
                     language.slice(1).toLowerCase();
                   return match ? (
-                    <div className="flex flex-col text-zinc-200 rounded-md overflow-hidden bg-zinc-900 border border-zinc-300 dark:border-zinc-800">
-                      <div className="flex justify-between relative bg-zinc-700 text-zinc:600 px-4 py-2 text-xs">
+                    <div className="flex flex-col overflow-hidden rounded-md border border-zinc-300 bg-zinc-900 text-zinc-200 dark:border-zinc-800">
+                      <div className="text-zinc:600 relative flex justify-between bg-zinc-700 px-4 py-2 text-xs">
                         <div>{capitalizedLanguage}</div>
                         <button
                           onClick={() =>

@@ -2,7 +2,7 @@ import WebResultSkeleton from "./web-result-skeleton";
 
 const WebResultCardGroupSkeleton = () => {
   return (
-    <div className="flex flex-col gap-8 w-full">
+    <div className="flex w-full flex-col gap-8">
       {[...Array(4)].map((_, index) => (
         <WebResultSkeleton key={index} />
       ))}

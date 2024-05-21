@@ -4,10 +4,10 @@ import "react-loading-skeleton/dist/skeleton.css";
 const WebResultCardSkeleton = () => {
   return (
     <SkeletonTheme baseColor="#d4d4d8" highlightColor="#f4f4f5">
-      <div className="flex flex-row gap-4 w-full">
-        <div className="flex flex-col gap-2 w-full">
+      <div className="flex w-full flex-row gap-4">
+        <div className="flex w-full flex-col gap-2">
           <Skeleton count={1} height={28} width={160} />
-          <div className="flex flex-row gap-2 w-full">
+          <div className="flex w-full flex-row gap-2">
             <Skeleton count={1} width={96} height={16} />
             <Skeleton count={1} width={64} height={16} />
           </div>

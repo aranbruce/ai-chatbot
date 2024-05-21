@@ -3,7 +3,7 @@ import { WebResultProps } from "./web-result";
 
 const WebResultGroup = ({ results }: { results: WebResultProps[] }) => {
   return (
-    <div className="flex flex-col gap-10 w-full">
+    <div className="flex w-full flex-col gap-10">
       {results.map((result, index) => (
         <WebResult
           key={index}

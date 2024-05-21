@@ -33,9 +33,9 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
   }, [location.description]);
 
   return (
-    <div className="flex flex-col gap-4 py-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
-      <div className="flex flex-col px-4 gap-2">
-        <div className="flex flex-row gap-4 justify-between text-zinc-950 dark:text-white ">
+    <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col gap-2 px-4">
+        <div className="flex flex-row justify-between gap-4 text-zinc-950 dark:text-white ">
           <h3 className="font-semibold">{location.name}</h3>
           <h5 className="font-medium">{location.rating} ⭐️</h5>
         </div>
@@ -57,14 +57,14 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
           {isOverflowing && (
             <button
               onClick={toggleExpanded}
-              className="text-sm font-semibold w-fit"
+              className="w-fit text-sm font-semibold"
             >
               {isExpanded ? "Show less" : "Show more"}
             </button>
           )}
         </div>
       )}
-      <div className="flex flex-row gap-4 px-4 items-center overflow-x-scroll ">
+      <div className="flex flex-row items-center gap-4 overflow-x-scroll px-4 ">
         {Array.isArray(location.photoUrls) &&
           location.photoUrls.map((url, index) => (
             <Image
@@ -73,7 +73,7 @@ const LocationCard = ({ location }: { location: LocationCardProps }) => {
               alt={location.name}
               width={192}
               height={144}
-              className="rounded-lg h-36 w-48 shrink-0"
+              className="h-36 w-48 shrink-0 rounded-lg"
               style={{ objectFit: "cover" }}
             />
           ))}

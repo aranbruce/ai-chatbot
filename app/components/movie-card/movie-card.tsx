@@ -22,7 +22,7 @@ const MovieCard = ({
   imageURL,
 }: MovieCardProps) => {
   return (
-    <div className="flex flex-col items-start	 sm:flex-row gap-8 p-4 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg">
+    <div className="flex flex-col items-start	 gap-8 rounded-lg border border-zinc-200 bg-white p-4 sm:flex-row dark:border-zinc-800 dark:bg-zinc-900">
       {imageURL && (
         <Image
           className="rounded-md"
@@ -32,15 +32,15 @@ const MovieCard = ({
           alt={title}
         />
       )}
-      <div className="flex flex-col gap-4 justify-between">
-        <h3 className="text-zinc-950 dark:text-white font-semibold">{title}</h3>
+      <div className="flex flex-col justify-between gap-4">
+        <h3 className="font-semibold text-zinc-950 dark:text-white">{title}</h3>
         <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
           <p>{description}</p>
           <p>IMDB Rating: {imdbRating}</p>
           <p>Release Year: {releaseYear}</p>
           <p>Director: {director}</p>
           <p>Genre: {genre}</p>
-          <div className="flex flex-row gap-2 flex-wrap">
+          <div className="flex flex-row flex-wrap gap-2">
             <p>Stars: </p>
             {stars.map((star: string, index: number) => (
               <span key={index}>

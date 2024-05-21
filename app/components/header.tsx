@@ -3,12 +3,12 @@ import Button from "./button";
 
 const Header = () => {
   return (
-    <header className="sticky top-0 z-50 flex h-fit w-full shrink-0 items-center justify-between bg-white dark:bg-zinc-950 px-4 py-2">
+    <header className="sticky top-0 z-50 flex h-fit w-full shrink-0 items-center justify-between bg-white px-4 py-2 dark:bg-zinc-950">
       <a
         href="/"
-        className="focus-visible:rounded-sm focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-500 dark:ring-offset-zinc-900 focus-visible:ring-2 focus-visible:ring-offset-2"
+        className="focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-500"
       >
-        <div className="font-medium text-2xl flex items-center gap-x-[10px] text-zinc-950 dark:text-zinc-50">
+        <div className="flex items-center gap-x-[10px] text-2xl font-medium text-zinc-950 dark:text-zinc-50">
           <Image src="/logo-mark.svg" alt="Pal Logo" width={40} height={40} />
           Pal
         </div>
