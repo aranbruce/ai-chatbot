@@ -87,8 +87,8 @@ export default function Chat() {
     setInputValue("");
 
     // Add user message to UI state
-    setMessages((currentMessages: ClientMessage[]) => [
-      ...currentMessages,
+    setMessages((messages: ClientMessage[]) => [
+      ...messages,
       {
         id: uuidv4(),
         display: <>{inputValue}</>,
@@ -96,20 +96,20 @@ export default function Chat() {
       },
     ]);
     // Submit and get response message
-    const responseMessage = await continueConversation(
+    const response = await continueConversation(
       inputValue,
       modelVariable,
     );
-    setMessages((currentMessages: ClientMessage[]) => [
-      ...currentMessages,
-      responseMessage,
+    setMessages((messages: ClientMessage[]) => [
+      ...messages,
+      response,
     ]);
   };
 
   const handleExampleClick = async (example: string) => {
     setIsLoading(true);
-    setMessages((currentMessages: ClientMessage[]) => [
-      ...currentMessages,
+    setMessages((messages: ClientMessage[]) => [
+      ...messages,
       {
         id: uuidv4(),
         display: <>{example}</>,
@@ -123,7 +123,7 @@ export default function Chat() {
   return (
     <div className="stretch mx-auto flex min-h-1 w-full grow flex-col items-center justify-start  bg-white dark:bg-zinc-950">
       <div className="flex w-full flex-row items-center justify-center gap-2 px-4 py-2">
-        <label className=" text-sm">Model:</label>
+        <label className="text-sm dark:text-white">Model:</label>
 
         <Select
           options={modelVariableOptions}
