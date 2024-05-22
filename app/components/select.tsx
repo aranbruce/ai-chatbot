@@ -57,24 +57,21 @@ export default function Select({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <MenuItems className="absolute right-0 z-10 mt-2 max-h-40 w-full origin-top-right overflow-scroll rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <MenuItems className="absolute right-0 z-10 mt-2 max-h-40 w-full origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800">
           <div className="py-1">
             {options.map((option) => (
               <MenuItem key={option.value}>
-                {({ active }) => (
-                  <a
-                    href="#"
-                    className={classNames(
-                      active ? "bg-gray-100 text-gray-900" : "text-gray-700",
-                      "block px-4 py-2 text-sm",
-                    )}
-                    onClick={() =>
-                      setSelectedValue && setSelectedValue(option.value)
-                    }
-                  >
-                    {option.label}
-                  </a>
-                )}
+                <a
+                  href="#"
+                  className={classNames(
+                    "block rounded-md px-4 py-2 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300",
+                  )}
+                  onClick={() =>
+                    setSelectedValue && setSelectedValue(option.value)
+                  }
+                >
+                  {option.label}
+                </a>
               </MenuItem>
             ))}
           </div>

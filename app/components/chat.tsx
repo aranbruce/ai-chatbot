@@ -64,17 +64,12 @@ export default function Chat() {
   useEffect(() => {
     if (history) {
       setIsLoading(false);
-      console.log("history: ", history);
     }
   }, [history]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  useEffect(() => {
-    console.log("modelVariable: ", modelVariable);
-  }, [modelVariable]);
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor();
