@@ -24,7 +24,7 @@ const WeatherForecastCard = ({
 }: {
   weatherForecast: WeatherForecastProps;
 }) => {
-  const [setMessages] = useUIState();
+  const [, setMessages] = useUIState();
   const { getCurrentWeather } = useActions();
 
   // take the day and return the day of the week based on today"s date. If the day is 0, it will return today"s day of the week

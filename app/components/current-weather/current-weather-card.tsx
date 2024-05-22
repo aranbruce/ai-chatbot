@@ -25,7 +25,7 @@ const CurrentWeatherCard = ({
 }: {
   currentWeather: CurrentWeatherProps;
 }) => {
-  const [setMessages] = useUIState();
+  const [, setMessages] = useUIState();
 
   const { getWeatherForecast, getCurrentWeather } = useActions();
 
