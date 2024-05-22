@@ -35,7 +35,7 @@ const CurrentWeatherCard = ({
     units: "metric" | "imperial" | undefined,
   ) => {
     const response = await getWeatherForecast(location, forecast_days, units);
-    setMessages((messages: ClientMesage[]) => [...messages, response]);
+    setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   const handleGetCurrentWeather = async (
