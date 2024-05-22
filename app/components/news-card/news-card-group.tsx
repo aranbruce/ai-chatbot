@@ -3,7 +3,7 @@ import { NewsCardProps } from "./news-card";
 
 const NewsCardGroup = ({ news }: { news: NewsCardProps[] }) => {
   return (
-    <div className="flex flex-col gap-8 w-full">
+    <div className="flex w-full flex-col gap-8">
       {news.map((newsItem, index) => (
         <NewsCard
           key={index}

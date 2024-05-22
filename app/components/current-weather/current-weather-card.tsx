@@ -2,6 +2,8 @@
 
 import { useActions, useUIState } from "ai/rsc";
 
+import type { ClientMessage } from "../../libs/server-actions/actions";
+
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 
 type WeatherProps = {
@@ -25,40 +27,32 @@ const CurrentWeatherCard = ({
 }) => {
   const [, setMessages] = useUIState();
 
-  const {
-    submitRequestToGetWeatherForecast,
-    submitRequestToGetCurrentWeather,
-  } = useActions();
+  const { getWeatherForecast, getCurrentWeather } = useActions();
 
   const handleGetWeatherForecast = async (
     location: string,
     forecast_days: number,
-    units: "metric" | "imperial" | undefined
+    units: "metric" | "imperial" | undefined,
   ) => {
-    const newMessage = await submitRequestToGetWeatherForecast(
-      location,
-      forecast_days,
-      units
-    );
-    setMessages((currentMessages: any[]) => [...currentMessages, newMessage]);
+    const response = await getWeatherForecast(location, forecast_days, units);
+    setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   const handleGetCurrentWeather = async (
     location: string,
-    units: "metric" | "imperial"
+    units: "metric" | "imperial",
   ) => {
-    console.log("Getting current weather");
-    const newMessage = await submitRequestToGetCurrentWeather(location, units);
-    setMessages((currentMessages: any[]) => [...currentMessages, newMessage]);
+    const response = await getCurrentWeather(location, units);
+    setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   return (
     <>
-      <div className="flex flex-col items-center gap-2 w-full">
+      <div className="flex w-full flex-col items-center gap-2">
         <h5 className="text-xs font-medium text-zinc-400">
           Weather Forecast: {currentWeather.location}
         </h5>
-        <div className="flex flex-col shadow-md gap-4 w-full rounded-lg items-start bg-blue-400 dark:bg-zinc-900 dark:border-zinc-800 text-white p-3 md:p-4">
+        <div className="flex w-full flex-col items-start gap-4 rounded-lg bg-blue-400 p-3 text-white shadow-md md:p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-col gap-1">
             <h5 className="text-xs font-medium">
               {new Date(currentWeather.currentDate).toLocaleDateString(
@@ -68,10 +62,10 @@ const CurrentWeatherCard = ({
                   year: "numeric",
                   month: "long",
                   day: "numeric",
-                }
+                },
               )}
             </h5>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex flex-row items-center gap-2">
               <div className="flex flex-row gap-1">
                 <h2 className="text-2xl font-semibold">
                   {currentWeather.current.temp}
@@ -85,12 +79,12 @@ const CurrentWeatherCard = ({
               />
             </div>
           </div>
-          <div className="grid grid-cols-7 auto-cols-min gap-4 w-full">
+          <div className="grid w-full auto-cols-min grid-cols-7 gap-4">
             {currentWeather.hourly
               .slice(0, 7)
               .map((hour: any, index: number) => (
                 <div
-                  className="flex flex-col gap-1 items-center w-8"
+                  className="flex w-8 flex-col items-center gap-1"
                   key={index}
                 >
                   <h5 className="text-xs text-zinc-100">
@@ -101,7 +95,7 @@ const CurrentWeatherCard = ({
                           .padStart(2, "0")}
                   </h5>
                   <WeatherImage height={32} width={32} weather={hour.weather} />
-                  <div className="flex flex-row gap-[0.125rem] font-semibold items-center">
+                  <div className="flex flex-row items-center gap-[0.125rem] font-semibold">
                     <h4 className="font-medium">{Math.round(hour.temp)}</h4>
                     <h5 className="text-xs">°</h5>
                   </div>
@@ -110,14 +104,14 @@ const CurrentWeatherCard = ({
           </div>
         </div>
       </div>
-      <div className="flex flex-row gap-2 items-center flex-wrap">
+      <div className="flex flex-row flex-wrap items-center gap-2">
         <button
-          className="flex flex-row gap-2 items-center text-sm text-zinc-600 px-2 py-1 bg-zinc-100 rounded-xl w-fit border border-zinc-200/50"
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200/50 bg-zinc-100 px-2 py-1 text-sm text-zinc-600"
           onClick={() =>
             handleGetWeatherForecast(
               currentWeather.location,
               3,
-              currentWeather.units
+              currentWeather.units,
             )
           }
         >
@@ -143,12 +137,12 @@ const CurrentWeatherCard = ({
           3 day forecast
         </button>
         <button
-          className="flex flex-row gap-2 items-center text-sm text-zinc-600 px-2 py-1 bg-zinc-100 rounded-xl w-fit border border-zinc-200/50"
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200/50 bg-zinc-100 px-2 py-1 text-sm text-zinc-600"
           onClick={() =>
             handleGetWeatherForecast(
               currentWeather.location,
               5,
-              currentWeather.units
+              currentWeather.units,
             )
           }
         >
@@ -174,11 +168,11 @@ const CurrentWeatherCard = ({
           5 day forecast
         </button>
         <button
-          className="flex flex-row gap-2 items-center text-sm text-zinc-600 px-2 py-1 bg-zinc-100 rounded-xl w-fit border border-zinc-200/50"
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200/50 bg-zinc-100 px-2 py-1 text-sm text-zinc-600"
           onClick={() =>
             handleGetCurrentWeather(
               currentWeather.location === "New York" ? "London" : "New York",
-              currentWeather.units
+              currentWeather.units,
             )
           }
         >

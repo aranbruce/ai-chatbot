@@ -4,13 +4,13 @@ import "react-loading-skeleton/dist/skeleton.css";
 const NewsCardSkeleton = () => {
   return (
     <SkeletonTheme baseColor="#d4d4d8" highlightColor="#f4f4f5">
-      <div className="flex flex-col md:flex-row gap-4 w-full p-4 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl">
-        <div className="h-40 w-full md:h-32 md:w-32 rounded-xl shrink-0 overflow-hidden p">
+      <div className="flex w-full flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 md:flex-row dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="p h-40 w-full shrink-0 overflow-hidden rounded-xl md:h-32 md:w-32">
           <div className="mt-[-8px]">
             <Skeleton height={300} />
           </div>
         </div>
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Skeleton count={1} height={32} />
           <Skeleton count={1} height={12} width={96} />
           <Skeleton count={3} height={16} />

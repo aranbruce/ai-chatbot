@@ -3,6 +3,8 @@
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 import { useActions, useUIState } from "ai/rsc";
 
+import type { ClientMessage } from "../../libs/server-actions/actions";
+
 export interface WeatherForecastProps {
   location: string;
   daily: WeatherForecastDayProps[];
@@ -23,7 +25,7 @@ const WeatherForecastCard = ({
   weatherForecast: WeatherForecastProps;
 }) => {
   const [, setMessages] = useUIState();
-  const { submitRequestToGetCurrentWeather } = useActions();
+  const { getCurrentWeather } = useActions();
 
   // take the day and return the day of the week based on today"s date. If the day is 0, it will return today"s day of the week
   const getDayOfWeek = (day: number) => {
@@ -45,35 +47,35 @@ const WeatherForecastCard = ({
 
   const handleGetCurrentWeather = async (
     location: string,
-    units: "metric" | "imperial"
+    units: "metric" | "imperial",
   ) => {
     console.log("Getting current weather");
-    const newMessage = await submitRequestToGetCurrentWeather(location, units);
-    setMessages((currentMessages: any[]) => [...currentMessages, newMessage]);
+    const response = await getCurrentWeather(location, units);
+    setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   return (
     <>
-      <div className="flex flex-col items-center gap-2 w-full">
-        <h5 className="text-xs font-medium text-zinc-400 w-full text-center">
+      <div className="flex w-full flex-col items-center gap-2">
+        <h5 className="w-full text-center text-xs font-medium text-zinc-400">
           {weatherForecast.daily.length} Day Weather Forecast
         </h5>
-        <div className="flex flex-col gap-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-blue-400 dark:bg-zinc-900 w-full">
-          <h4 className="text-xl text-white font-medium">
+        <div className="flex w-full flex-col gap-4 rounded-lg border border-zinc-200 bg-blue-400 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h4 className="text-xl font-medium text-white">
             {weatherForecast.daily.length} Days Weather Forecast
           </h4>
           {weatherForecast.daily.map((day: any, index: number) => (
             <div
               key={index}
-              className="grid grid-cols-[88px_32px_56px_60px] justify-between gap:2 sm:gap-4 w-full items-center"
+              className="gap:2 grid w-full grid-cols-[88px_32px_56px_60px] items-center justify-between sm:gap-4"
             >
               <p className="text-white">{getDayOfWeek(index)}</p>
               <WeatherImage height={32} width={32} weather={day.weather} />
-              <h5 className="font-medium text-xl text-white">
+              <h5 className="text-xl font-medium text-white">
                 {Math.round(day.temperatureMain)}{" "}
                 {day.units === "metric" ? "°C" : "°F"}
               </h5>
-              <div className="flex flex-row gap-4 items-center text-center">
+              <div className="flex flex-row items-center gap-4 text-center">
                 <div className="flex flex-col gap-1 text-white">
                   <p className="text-xs">Min</p>
                   <p className="font-medium">
@@ -91,13 +93,13 @@ const WeatherForecastCard = ({
           ))}
         </div>
       </div>
-      <div className="flex flex-row gap-2 items-center">
+      <div className="flex flex-row items-center gap-2">
         <button
-          className="flex flex-row gap-2 items-center text-sm text-zinc-600 px-2 py-1 bg-zinc-100 rounded-xl w-fit border border-zinc-200/50"
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200/50 bg-zinc-100 px-2 py-1 text-sm text-zinc-600"
           onClick={() =>
             handleGetCurrentWeather(
               weatherForecast.location,
-              weatherForecast.daily[0].units
+              weatherForecast.daily[0].units,
             )
           }
         >

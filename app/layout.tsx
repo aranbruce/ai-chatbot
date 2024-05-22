@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 
 import Header from "./components/header";
-import { Providers } from "./providers";
 import { AI } from "./libs/server-actions/actions";
 
 export const metadata: Metadata = {
@@ -22,7 +21,7 @@ export default function RootLayout({
       <body className={GeistSans.className}>
         <AI>
           <Header />
-          <Providers>{children}</Providers>
+          {children}
         </AI>
       </body>
     </html>

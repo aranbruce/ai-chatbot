@@ -16,6 +16,7 @@ import {
 
 import { z } from "zod";
 import Markdown from "react-markdown";
+import Image from "next/image";
 
 import get_coordinates from "./get-coordinates";
 import get_current_weather from "./get-current-weather";
@@ -41,34 +42,21 @@ import MovieCard, {
 } from "../../components/movie-card/movie-card";
 import LocationCardGroup from "../../components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "../../components/location-card/location-card-group-skeleton";
-import Image from "next/image";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const modelVariable = process.env.MODEL || "";
-let model: any = null;
-if (!modelVariable) {
-  throw new Error("MODEL environment variable is not set");
-} else if (modelVariable.startsWith("gpt-")) {
-  model = openai(modelVariable);
-} else if (modelVariable.startsWith("mistral-")) {
-  model = mistral(modelVariable);
-} else if (modelVariable.startsWith("claude-")) {
-  model = anthropic(modelVariable);
-} else if (modelVariable.includes("gemini-")) {
-  model = google("models/gemini-pro");
-} else if (modelVariable.includes("llama3-")) {
-  const model = groq(modelVariable);
-} else {
-  throw new Error("MODEL environment variable is not a supported model");
-}
-
 export interface ServerMessage {
   role: "user" | "assistant";
-  content: string;
+  content: Array<ServerMessageContent>;
+}
+
+interface ServerMessageContent {
+  type: "text" | "image";
+  text?: string;
+  image?: URL | string;
 }
 
 export interface ClientMessage {
@@ -77,14 +65,31 @@ export interface ClientMessage {
   display: React.ReactNode;
 }
 
-async function continueConversation(userInput: string): Promise<ClientMessage> {
+async function continueConversation(
+  message: string,
+  modelVariable: string,
+): Promise<ClientMessage> {
   "use server";
 
   const history = getMutableAIState();
-  history.update((messages: ServerMessage[]) => [
-    ...history.get(),
-    { role: "user", content: userInput },
-  ]);
+  history.update([...history.get(), { role: "user", content: message }]);
+  console.log("modelVariable: ", modelVariable);
+  let model: any = null;
+  if (!modelVariable) {
+    throw new Error("MODEL environment variable is not set");
+  } else if (modelVariable.startsWith("gpt-")) {
+    model = openai(modelVariable);
+  } else if (modelVariable.startsWith("mistral-")) {
+    model = mistral(modelVariable);
+  } else if (modelVariable.startsWith("claude-")) {
+    model = anthropic(modelVariable);
+  } else if (modelVariable.includes("gemini-")) {
+    model = google("models/gemini-pro");
+  } else if (modelVariable.includes("llama3-")) {
+    const model = groq(modelVariable);
+  } else {
+    throw new Error("MODEL environment variable is not a supported model");
+  }
 
   const result = await streamUI({
     model,
@@ -154,7 +159,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2"
+                    className="text-zinc-950 underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-zinc-50 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-300"
                     {...rest}
                   />
                 );
@@ -236,7 +241,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
               {
                 role: "assistant",
                 content: `The coordinates for ${location} are: ${JSON.stringify(
-                  response
+                  response,
                 )}`,
               },
             ]);
@@ -283,7 +288,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
             .enum(["metric", "imperial"])
             .optional()
             .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric."
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric.",
             ),
         }),
         generate: async function* ({ location, units }) {
@@ -378,7 +383,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
             .enum(["metric", "imperial"])
             .optional()
             .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
             ),
         }),
         generate: async function* ({ location, forecast_days, units }) {
@@ -515,19 +520,19 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
             ])
             .optional()
             .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries."
+              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
             ),
           freshness: z
             .enum(["past-day", "past-week", "past-month", "past-year"])
             .optional()
             .describe(
-              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'."
+              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
             ),
           units: z
             .enum(["metric", "imperial"])
             .optional()
             .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
             ),
           count: z
             .number()
@@ -669,19 +674,19 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
             ])
             .optional()
             .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries."
+              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
             ),
           freshness: z
             .enum(["past-day", "past-week", "past-month", "past-year"])
             .optional()
             .describe(
-              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'."
+              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
             ),
           units: z
             .enum(["metric", "imperial"])
             .optional()
             .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'"
+              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
             ),
         }),
         generate: async function* ({ query, country, freshness, units }) {
@@ -775,19 +780,19 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
           city: z
             .string()
             .describe(
-              "The city to search for locations in. The can only be a city and cannot be part of a city. For example, 'London' is valid, but 'North London' is not."
+              "The city to search for locations in. The can only be a city and cannot be part of a city. For example, 'London' is valid, but 'North London' is not.",
             ),
           category: z
             .enum(["hotels", "restaurants", "attractions", "geos"])
             .optional()
             .describe(
-              "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'."
+              "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'.",
             ),
           currency: z
             .string()
             .optional()
             .describe(
-              "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217."
+              "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217.",
             ),
         }),
         generate: async function* ({ query, city, category, currency }) {
@@ -1042,7 +1047,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
             .enum(["g", "pg", "pg-13", "r"])
             .optional()
             .describe(
-              "The rating of the gifs to return. Can be 'g', 'pg', 'pg-13', or 'r'."
+              "The rating of the gifs to return. Can be 'g', 'pg', 'pg-13', or 'r'.",
             ),
         }),
         generate: async function* ({ query, limit, rating }) {
@@ -1108,7 +1113,7 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
                         width={gif.images.original.width}
                         height={gif.images.original.height}
                       />
-                      <h4 className="text-zinc-500 text-sm">
+                      <h4 className="text-sm text-zinc-500">
                         {JSON.stringify(gif.title)}
                       </h4>
                     </div>
@@ -1153,130 +1158,10 @@ async function continueConversation(userInput: string): Promise<ClientMessage> {
   };
 }
 
-async function submitFile(
-  filesAsInput: any,
-  fileCollection: any,
-  userInput?: string
-) {
-  "use server";
-
-  const fileData = filesAsInput.map((file: any) => {
-    const fileContent = fileCollection.find(
-      (fileObject: any) => fileObject.fileId === file.fileId
-    )?.fileContent;
-    return {
-      fileId: file.fileId,
-      fileName: file.fileName,
-      fileContent,
-    };
-  });
-
-  const history = getMutableAIState();
-  history.update((messages: ServerMessage[]) => [
-    ...history.get(),
-    {
-      role: "user",
-      content: userInput ? userInput : "User requested to analyze the file",
-    },
-  ]);
-
-  const result = await streamUI({
-    model,
-    initial: <Spinner />,
-    system: `
-    Analyze the following data
-    provided as a document as part of your answer to the users question:
-    <fileData>${JSON.stringify(fileData)}</fileData>
-    `,
-    messages: [...history.get()],
-    text: ({ content, done }) => {
-      if (done) {
-        history.done((messages: ServerMessage[]) => [
-          ...messages,
-          { role: "assistant", content },
-        ]);
-      }
-      return (
-        <Markdown
-          children={content}
-          components={{
-            // Map `h1` (`# heading`) to use `h2`s.
-            h1: "h2",
-            h2(props) {
-              const { node, ...rest } = props;
-              return <h2 className="text-xl font-semibold" {...rest} />;
-            },
-            h3(props) {
-              const { node, ...rest } = props;
-              return <h3 className="text-lg font-semibold" {...rest} />;
-            },
-            h4(props) {
-              const { node, ...rest } = props;
-              return <h4 className="text-md font-semibold" {...rest} />;
-            },
-            ol(props) {
-              const { node, ...rest } = props;
-              return <ol className="flex flex-col flex-wrap gap-4" {...rest} />;
-            },
-            ul(props) {
-              const { node, ...rest } = props;
-              return <ul className="flex flex-col flex-wrap gap-4" {...rest} />;
-            },
-            li(props) {
-              const { node, ...rest } = props;
-              return <li className="" {...rest} />;
-            },
-            a(props) {
-              const { node, ...rest } = props;
-              return (
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-950 dark:text-zinc-50 underline focus-visible:rounded-sm focus-visible:ring-zinc-700 dark:focus-visible:ring-zinc-300 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 focus-visible:ring-2"
-                  {...rest}
-                />
-              );
-            },
-            pre(props) {
-              const { node, ...rest } = props;
-              return <pre className="grid w-full" {...rest} />;
-            },
-            code(props) {
-              const { children, className, node, ...rest } = props;
-              const match = /language-(\w+)/.exec(className || "");
-              const language = match ? match[1] : "text";
-              const capitalizedLanguage =
-                language.charAt(0).toUpperCase() +
-                language.slice(1).toLowerCase();
-              return match ? (
-                <CodeContainer
-                  capitalizedLanguage={capitalizedLanguage}
-                  language={language}
-                  children={children}
-                />
-              ) : (
-                <code {...rest} className="text-sm font-semibold">
-                  {children}
-                </code>
-              );
-            },
-          }}
-        />
-      );
-    },
-  });
-
-  return {
-    id: uuidv4(),
-    display: result.value,
-    role: "assistant",
-  };
-}
-
-async function submitRequestToGetWeatherForecast(
+async function getWeatherForecast(
   location: string,
   forecast_days: number,
-  units?: "metric" | "imperial" | undefined
+  units?: "metric" | "imperial" | undefined,
 ) {
   "use server";
 
@@ -1287,7 +1172,7 @@ async function submitRequestToGetWeatherForecast(
     <>
       Getting the weather forecast for {location}...
       <WeatherForecastCardSkeleton />
-    </>
+    </>,
   );
   try {
     (async () => {
@@ -1339,7 +1224,7 @@ async function submitRequestToGetWeatherForecast(
         <>
           Here's the {forecast_days} day forecast for {location}:
           <WeatherForecastCard weatherForecast={response} />
-        </>
+        </>,
       );
     })();
   } catch (error) {
@@ -1362,7 +1247,9 @@ async function submitRequestToGetWeatherForecast(
       },
     ]);
     uiStream.done(
-      <>Sorry, there was an error getting the weather forecast for {location}</>
+      <>
+        Sorry, there was an error getting the weather forecast for {location}
+      </>,
     );
   }
   return {
@@ -1372,9 +1259,9 @@ async function submitRequestToGetWeatherForecast(
   };
 }
 
-async function submitRequestToGetCurrentWeather(
+async function getCurrentWeather(
   location: string,
-  units: "metric" | "imperial" | undefined
+  units: "metric" | "imperial" | undefined,
 ) {
   "use server";
 
@@ -1389,7 +1276,7 @@ async function submitRequestToGetCurrentWeather(
     <>
       Getting the current weather for {location}...
       <CurrentWeatherCardSkeleton />
-    </>
+    </>,
   );
   try {
     (async () => {
@@ -1436,7 +1323,7 @@ async function submitRequestToGetCurrentWeather(
         <>
           Here's the current weather for {location}:
           <CurrentWeatherCard currentWeather={response} />
-        </>
+        </>,
       );
     })();
   } catch (error) {
@@ -1470,9 +1357,8 @@ async function submitRequestToGetCurrentWeather(
 export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     continueConversation,
-    submitFile,
-    submitRequestToGetWeatherForecast,
-    submitRequestToGetCurrentWeather,
+    getWeatherForecast,
+    getCurrentWeather,
   },
   initialAIState: [],
   initialUIState: [],

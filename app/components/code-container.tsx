@@ -28,8 +28,8 @@ const CodeContainer = ({
   }, 4000);
 
   return (
-    <div className="flex flex-col text-zinc-200 rounded-md overflow-hidden bg-zinc-900 border border-zinc-300 dark:border-zinc-800">
-      <div className="flex justify-between relative bg-zinc-700 text-zinc:600 px-4 py-2 text-xs">
+    <div className="flex flex-col overflow-hidden rounded-md border border-zinc-300 bg-zinc-900 text-zinc-200 dark:border-zinc-800">
+      <div className="text-zinc:600 relative flex justify-between bg-zinc-700 px-4 py-2 text-xs">
         <div>{capitalizedLanguage}</div>
         <button onClick={handleCopy}>{isCopied ? "Copied" : "Copy"}</button>
         {/* <Button onClick={handleCopy} variant={"secondary"}>Copy</Button> */}
