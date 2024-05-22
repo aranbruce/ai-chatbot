@@ -2,6 +2,8 @@
 
 import { useActions, useUIState } from "ai/rsc";
 
+import type { ClientMessage } from "../libs/server-actions/actions";
+
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 
 type WeatherProps = {
@@ -23,7 +25,7 @@ const CurrentWeatherCard = ({
 }: {
   currentWeather: CurrentWeatherProps;
 }) => {
-  const [, setMessages] = useUIState();
+  const [setMessages] = useUIState();
 
   const { getWeatherForecast, getCurrentWeather } = useActions();
 
@@ -32,17 +34,16 @@ const CurrentWeatherCard = ({
     forecast_days: number,
     units: "metric" | "imperial" | undefined,
   ) => {
-    const newMessage = await getWeatherForecast(location, forecast_days, units);
-    setMessages((currentMessages: any[]) => [...currentMessages, newMessage]);
+    const response = await getWeatherForecast(location, forecast_days, units);
+    setMessages((messages: ClientMesage[]) => [...messages, response]);
   };
 
   const handleGetCurrentWeather = async (
     location: string,
     units: "metric" | "imperial",
   ) => {
-    console.log("Getting current weather");
-    const newMessage = await getCurrentWeather(location, units);
-    setMessages((currentMessages: any[]) => [...currentMessages, newMessage]);
+    const response = await getCurrentWeather(location, units);
+    setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   return (
