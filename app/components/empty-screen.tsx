@@ -34,7 +34,9 @@ const EmptyScreen = ({ handleExampleClick, SelectProps }: EmptyScreenProps) => {
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
       <div className="flex flex-col items-center gap-2">
-        <p className="text-sm text-zinc-500">Select a model</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-300">
+          Select a model
+        </p>
         <Select
           options={SelectProps.options}
           selectedValue={SelectProps.selectedValue}
