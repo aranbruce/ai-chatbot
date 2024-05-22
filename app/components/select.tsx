@@ -62,9 +62,8 @@ export default function Select({
             {options.map((option) => (
               <MenuItem key={option.value}>
                 <a
-                  href="#"
                   className={classNames(
-                    "block rounded-md px-4 py-2 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300",
+                    "block cursor-pointer rounded-md px-4 py-2 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300",
                   )}
                   onClick={() =>
                     setSelectedValue && setSelectedValue(option.value)
