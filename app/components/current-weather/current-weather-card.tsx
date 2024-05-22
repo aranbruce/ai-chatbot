@@ -2,7 +2,7 @@
 
 import { useActions, useUIState } from "ai/rsc";
 
-import type { ClientMessage } from "../libs/server-actions/actions";
+import type { ClientMessage } from "../../libs/server-actions/actions";
 
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 
