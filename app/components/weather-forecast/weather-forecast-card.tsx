@@ -3,7 +3,7 @@
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 import { useActions, useUIState } from "ai/rsc";
 
-import type { ClientMessage } from "../libs/server-actions/actions";
+import type { ClientMessage } from "../../libs/server-actions/actions";
 
 export interface WeatherForecastProps {
   location: string;
