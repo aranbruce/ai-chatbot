@@ -1,5 +1,4 @@
-interface SelectProps {
-  // handleChange: () => void;
+export interface SelectProps {
   options: Option[];
   selectedValue: string;
   setSelectedValue: (value: string) => void;
@@ -29,11 +28,12 @@ export default function Select({
   setSelectedValue,
 }: SelectProps) {
   return (
-    <Menu as="div" className="relative inline-block w-52">
+    <Menu as="div" className="relative inline-block w-40 text-left">
       <div>
-        <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-          <div className="w-full text-left text-sm">{selectedValue}</div>
-          {/* <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" /> */}
+        <MenuButton className="text-primary-foreground dark:active-bg-zinc-700 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-950 ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600">
+          <div className="w-full text-left text-sm">
+            {options.find((option) => option.value === selectedValue)?.label}
+          </div>
           <svg
             className="-mr-1 h-5 w-5 text-gray-400"
             viewBox="0 0 20 20"
@@ -48,7 +48,6 @@ export default function Select({
           </svg>
         </MenuButton>
       </div>
-
       <Transition
         as={Fragment}
         enter="transition ease-out duration-100"
@@ -58,7 +57,7 @@ export default function Select({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <MenuItems className="absolute right-0 z-10 mt-2 max-h-40 w-full origin-top-right overflow-scroll rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
             {options.map((option) => (
               <MenuItem key={option.value}>
@@ -69,7 +68,9 @@ export default function Select({
                       active ? "bg-gray-100 text-gray-900" : "text-gray-700",
                       "block px-4 py-2 text-sm",
                     )}
-                    onClick={() => setSelectedValue(option.value)}
+                    onClick={() =>
+                      setSelectedValue && setSelectedValue(option.value)
+                    }
                   >
                     {option.label}
                   </a>

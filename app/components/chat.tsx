@@ -10,44 +10,43 @@ import EmptyScreen from "./empty-screen";
 import { useScrollAnchor } from "../libs/hooks/use-scroll-anchor";
 
 import type { ClientMessage } from "../libs/server-actions/actions";
-import Select from "./select";
 
 const modelVariableOptions = [
   {
     value: "gpt-4o",
-    label: "gpt-4o",
+    label: "GPT 4o",
   },
   {
     value: "gpt-4-turbo",
-    label: "gpt-4-turbo",
+    label: "GPT 4 Turbo",
   },
   {
     value: "gpt-3.5-turbo",
-    label: "gpt-3.5-turbo",
+    label: "GPT 3.5 Turbo",
   },
   {
     value: "gemini-1.5-pro-latest",
-    label: "gemini-1.5-pro",
+    label: "Gemini 1.5 Pro",
   },
   {
     value: "gemini-1.5-flash-latest",
-    label: "gemini-1.5-flash",
+    label: "Gemini 1.5 Flash",
   },
   {
     value: "mistral-large-latest",
-    label: "mistral-large",
+    label: "Mistral Large",
   },
   {
     value: "claude-3-opus-20240229",
-    label: "claude-3-opus",
+    label: "Claude 3 Opus",
   },
   {
     value: "claude-3-sonnet-20240229",
-    label: "claude-3-sonnet",
+    label: "Claude 3 Sonnet",
   },
   {
     value: "claude-3-haiku-20240307",
-    label: "claude-3-haiku",
+    label: "Claude 3 Haiku",
   },
 ];
 
@@ -96,14 +95,8 @@ export default function Chat() {
       },
     ]);
     // Submit and get response message
-    const response = await continueConversation(
-      inputValue,
-      modelVariable,
-    );
-    setMessages((messages: ClientMessage[]) => [
-      ...messages,
-      response,
-    ]);
+    const response = await continueConversation(inputValue, modelVariable);
+    setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   const handleExampleClick = async (example: string) => {
@@ -122,22 +115,21 @@ export default function Chat() {
 
   return (
     <div className="stretch mx-auto flex min-h-1 w-full grow flex-col items-center justify-start  bg-white dark:bg-zinc-950">
-      <div className="flex w-full flex-row items-center justify-center gap-2 px-4 py-2">
-        <label className="text-sm dark:text-white">Model:</label>
-
-        <Select
-          options={modelVariableOptions}
-          selectedValue={modelVariable}
-          setSelectedValue={setModelVariable}
-        />
-      </div>
+      <div className="flex w-full flex-row items-center justify-center gap-2 px-4 py-2"></div>
       <div
         ref={scrollRef}
         className="flex h-full w-full flex-col overflow-y-scroll px-5"
       >
-        <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words pt-12">
+        <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words pt-8">
           {messages.length === 0 ? (
-            <EmptyScreen handleExampleClick={handleExampleClick} />
+            <EmptyScreen
+              handleExampleClick={handleExampleClick}
+              SelectProps={{
+                options: modelVariableOptions,
+                selectedValue: modelVariable,
+                setSelectedValue: setModelVariable,
+              }}
+            />
           ) : (
             <div
               ref={messagesRef}
@@ -147,7 +139,13 @@ export default function Chat() {
                 <MessageCard
                   key={message.id}
                   id={JSON.stringify(message.id)}
-                  role={message.role}
+                  role={
+                    message.role !== "user"
+                      ? modelVariableOptions.find(
+                          (option) => option.value === modelVariable,
+                        )?.label || "Chatbot"
+                      : "user"
+                  }
                   content={message.display}
                 />
               ))}
