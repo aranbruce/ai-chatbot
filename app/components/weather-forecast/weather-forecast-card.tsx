@@ -50,7 +50,7 @@ const WeatherForecastCard = ({
     units: "metric" | "imperial",
   ) => {
     console.log("Getting current weather");
-    const response = await submitRequestToGetCurrentWeather(location, units);
+    const response = await getCurrentWeather(location, units);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
