@@ -1,3 +1,5 @@
+"use server";
+
 interface Request {
   location: string;
 }
@@ -13,7 +15,7 @@ export default async function get_coordinates({ location }: Request) {
           Accept: "application/json",
           "Accept-Encoding": "gzip",
         },
-      }
+      },
     );
 
     if (!response.ok) {

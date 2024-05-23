@@ -1,3 +1,5 @@
+"use server";
+
 interface Request {
   query: string;
   limit?: number;
@@ -16,7 +18,7 @@ export default async function search_for_gifs({
 
   // call giphy API
   let url = new URL(
-    `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${query}&limit=${limit}&rating=g&lang=en&bundle=messaging_non_clips`
+    `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${query}&limit=${limit}&rating=g&lang=en&bundle=messaging_non_clips`,
   );
   if (limit) {
     url.searchParams.append("limit", limit.toString());

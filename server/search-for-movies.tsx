@@ -1,10 +1,8 @@
-import OpenAI from "openai";
-import { Pinecone } from "@pinecone-database/pinecone";
+"use server";
 
-// Create an OpenAI API client (that's edge friendly!)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-});
+import { embed } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { Pinecone } from "@pinecone-database/pinecone";
 
 // Set up Pinecone client
 const pc = new Pinecone({
@@ -35,14 +33,10 @@ export default async function search_for_movies({
   console.log("Request received for movies-vector-db action");
 
   try {
-    // Get the embedding for the input
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input,
-      encoding_format: "float",
+    const { embedding } = await embed({
+      model: openai.embedding("text-embedding-ada-002"),
+      value: input,
     });
-
-    const embedding = embeddingResponse.data[0].embedding;
 
     // Query the Pinecone index with the embedding
     let queryResults = await index.namespace("movie-descriptions").query({

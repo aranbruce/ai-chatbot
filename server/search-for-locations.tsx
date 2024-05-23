@@ -1,3 +1,5 @@
+"use server";
+
 import get_coordinates from "./get-coordinates";
 
 interface Request {
@@ -36,11 +38,11 @@ export default async function search_for_locations({
     city: string,
     latitude: number,
     longitude: number,
-    category: string | undefined
+    category: string | undefined,
   ) => {
     try {
       const url = new URL(
-        `https://api.content.tripadvisor.com/api/v1/location/search?key=${process.env.TRIPADVISOR_API_KEY}&searchQuery=${query}&language=en`
+        `https://api.content.tripadvisor.com/api/v1/location/search?key=${process.env.TRIPADVISOR_API_KEY}&searchQuery=${query}&language=en`,
       );
       if (!latitude || !longitude) {
         url.searchParams.append("searchQuery", `${query} in ${city}`);
@@ -72,12 +74,12 @@ export default async function search_for_locations({
 
   const getLocationDetails = async (
     locationId: any,
-    currency: string | undefined
+    currency: string | undefined,
   ) => {
     try {
       // Get details for each location
       const url = new URL(
-        `https://api.content.tripadvisor.com/api/v1/location/${locationId}/details?language=en&key=${process.env.TRIPADVISOR_API_KEY}`
+        `https://api.content.tripadvisor.com/api/v1/location/${locationId}/details?language=en&key=${process.env.TRIPADVISOR_API_KEY}`,
       );
       if (currency) {
         url.searchParams.append("currency", currency);
@@ -103,7 +105,7 @@ export default async function search_for_locations({
   const getLocationPhotos = async (locationId: string) => {
     try {
       const url = new URL(
-        `https://api.content.tripadvisor.com/api/v1/location/${locationId}/photos?key=${process.env.TRIPADVISOR_API_KEY}&language=en`
+        `https://api.content.tripadvisor.com/api/v1/location/${locationId}/photos?key=${process.env.TRIPADVISOR_API_KEY}&language=en`,
       );
       const locationPhotosResponse = await fetch(url, {
         method: "GET",
@@ -134,7 +136,7 @@ export default async function search_for_locations({
     city,
     latitude,
     longitude,
-    category ? category : undefined
+    category ? category : undefined,
   );
 
   // Get details for each location and add to the locations array
@@ -142,7 +144,7 @@ export default async function search_for_locations({
   for (const location of locations) {
     const locationDetails = await getLocationDetails(
       location.location_id,
-      currency ? currency : undefined
+      currency ? currency : undefined,
     );
     locationsWithDetails.push(locationDetails);
   }
@@ -169,7 +171,7 @@ export default async function search_for_locations({
         address: location.address_obj.address_string,
         photoUrls: location.photoUrls,
       };
-    }
+    },
   );
 
   return locationsWithDetailsAndPhotos;

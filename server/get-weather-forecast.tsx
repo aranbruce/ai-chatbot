@@ -1,3 +1,5 @@
+"use server";
+
 import get_coordinates from "./get-coordinates";
 
 interface Request {
@@ -29,7 +31,7 @@ export default async function get_weather_forecast({
 
   try {
     const url = new URL(
-      `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=current,minutely,hourly,alerts&appid=${process.env.OPENWEATHER_API_KEY}&units=${units}`
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=current,minutely,hourly,alerts&appid=${process.env.OPENWEATHER_API_KEY}&units=${units}`,
     );
 
     const headers = {
