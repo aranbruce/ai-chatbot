@@ -2,8 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 
-import Header from "./components/header";
-import { AI } from "./libs/server-actions/actions";
+import Header from "@/components/header";
+import { AI } from "../server/actions";
 
 export const metadata: Metadata = {
   title: "Pal | AI Chatbot",
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-white dark:bg-zinc-950">
       <body className={GeistSans.className}>
         <AI>
           <Header />
