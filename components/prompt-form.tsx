@@ -4,7 +4,7 @@ import Button from "./button";
 interface PromptFormProps {
   inputValue: string;
   setInputValue: (value: string) => void;
-  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  handleSubmit: (message: string) => void;
   isAtBottom: boolean;
   scrollToBottom: () => void;
 }
@@ -52,7 +52,17 @@ export default function PromptForm({
         </div>
       )}
       <div className="w-full space-y-4 bg-white/60 px-4 pb-4 pt-2 backdrop-blur md:mx-5 md:max-w-2xl dark:bg-zinc-950/60">
-        <form onSubmit={handleSubmit} className="relative">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            // Blur focus on mobile
+            if (window.innerWidth < 600) {
+              (event.target as HTMLFormElement)["message"]?.blur();
+            }
+            handleSubmit(inputValue);
+          }}
+          className="relative"
+        >
           <div className="relative flex w-full grow flex-col overflow-hidden rounded-[1.75rem] border border-zinc-200/50 bg-zinc-100 pr-1 ring-slate-950/20 ring-offset-0 transition focus-within:ring-[3px] has-[button:focus]:ring-0 dark:border-zinc-200/10 dark:bg-zinc-900 dark:ring-white/40">
             <Textarea
               placeholder="Send a message..."
