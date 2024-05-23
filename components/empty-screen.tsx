@@ -30,7 +30,10 @@ const exampleMessages = [
   },
 ];
 
-export default function EmptyScreen ({ handleExampleClick, SelectProps }: EmptyScreenProps) {
+export default function EmptyScreen({
+  handleExampleClick,
+  SelectProps,
+}: EmptyScreenProps) {
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
       <div className="flex flex-col items-center gap-2">
@@ -72,4 +75,4 @@ export default function EmptyScreen ({ handleExampleClick, SelectProps }: EmptyS
       </div>
     </div>
   );
-};
+}

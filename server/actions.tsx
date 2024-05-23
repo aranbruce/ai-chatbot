@@ -53,7 +53,7 @@ export interface ServerMessage {
 interface ServerMessageContent {
   type: "text" | "image";
   text?: string;
-  image?: URL | string;
+  image?: ArrayBuffer | Uint8Array | Buffer | URL;
 }
 
 export interface ClientMessage {
@@ -70,7 +70,7 @@ async function continueConversation(
 
   const history = getMutableAIState();
   history.update([...history.get(), { role: "user", content: message }]);
-  console.log("modelVariable: ", modelVariable);
+
   let model: any = null;
   if (!modelVariable) {
     throw new Error("MODEL environment variable is not set");
@@ -107,7 +107,7 @@ async function continueConversation(
       Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       `,
-    messages: [...history.get()],
+    messages: history.get(),
     text: ({ content, done }) => {
       try {
         if (done) {

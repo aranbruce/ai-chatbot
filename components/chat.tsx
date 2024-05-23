@@ -54,18 +54,11 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [history] = useAIState();
   const [messages, setMessages] = useUIState();
-  const { continueConversation, submitFile } = useActions();
+  const { continueConversation } = useActions();
   const [isLoading, setIsLoading] = useState(false);
   const [modelVariable, setModelVariable] = useState(
     modelVariableOptions[0].value,
   );
-
-  // Set loading to false when AI state is updated
-  useEffect(() => {
-    if (history) {
-      setIsLoading(false);
-    }
-  }, [history]);
 
   useEffect(() => {
     scrollToBottom();
@@ -74,9 +67,8 @@ export default function Chat() {
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor();
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (isLoading || !inputValue) return;
+  async function sendMessage(message: string) {
+    if (isLoading || !message) return;
     setIsLoading(true);
     setInputValue("");
 
@@ -85,27 +77,14 @@ export default function Chat() {
       ...messages,
       {
         id: uuidv4(),
-        display: <>{inputValue}</>,
+        display: <>{message}</>,
         role: "user",
       },
     ]);
     // Submit and get response message
-    const response = await continueConversation(inputValue, modelVariable);
+    const response = await continueConversation(message, modelVariable);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
-  }
-
-  async function handleExampleClick(example: string) {
-    setIsLoading(true);
-    setMessages((messages: ClientMessage[]) => [
-      ...messages,
-      {
-        id: uuidv4(),
-        display: <>{example}</>,
-        role: "user",
-      } as ClientMessage,
-    ]);
-    const response = await continueConversation(example, modelVariable);
-    setMessages((messages: ClientMessage[]) => [...messages, response]);
+    setIsLoading(false);
   }
 
   return (
@@ -117,7 +96,7 @@ export default function Chat() {
         <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words ">
           {messages.length === 0 ? (
             <EmptyScreen
-              handleExampleClick={handleExampleClick}
+              handleExampleClick={sendMessage}
               SelectProps={{
                 options: modelVariableOptions,
                 selectedValue: modelVariable,
@@ -151,7 +130,7 @@ export default function Chat() {
       <PromptForm
         inputValue={inputValue}
         setInputValue={setInputValue}
-        handleSubmit={handleSubmit}
+        handleSubmit={sendMessage}
         isAtBottom={isAtBottom}
         scrollToBottom={scrollToBottom}
       />
