@@ -95,7 +95,7 @@ export default function WeatherForecastCard({
       </div>
       <div className="flex flex-row items-center gap-2">
         <button
-          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200/50 bg-zinc-100 px-2 py-1 text-sm text-zinc-600"
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40 "
           onClick={() =>
             handleGetCurrentWeather(
               weatherForecast.location,
