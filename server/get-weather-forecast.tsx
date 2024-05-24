@@ -5,13 +5,15 @@ import get_coordinates from "./get-coordinates";
 interface Request {
   location: string;
   forecast_days: number;
+  countryCode?: string;
   units?: "metric" | "imperial" | undefined;
 }
 
 export default async function get_weather_forecast({
   location,
-  units,
   forecast_days,
+  countryCode,
+  units,
 }: Request) {
   "use server";
   console.log("Request received for the weather-forecast action");
@@ -27,7 +29,10 @@ export default async function get_weather_forecast({
     throw new Error("forecast_days must be no more than 7");
   }
 
-  const { latitude, longitude } = await get_coordinates({ location });
+  const { latitude, longitude } = await get_coordinates({
+    location,
+    countryCode,
+  });
 
   try {
     const url = new URL(
