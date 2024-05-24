@@ -76,7 +76,7 @@ export default function EmptyScreen({
         {exampleMessages.slice(0, 4).map((example, index) => (
           <button
             key={example.heading}
-            className={`cursor-pointer rounded-xl border border-zinc-200 bg-white p-4 text-left transition hover:bg-zinc-100 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-900 dark:bg-zinc-900 hover:dark:border-zinc-800 hover:dark:bg-zinc-800
+            className={`dark:border-700 cursor-pointer rounded-xl border border-zinc-200/70 bg-white p-4 text-left shadow-sm transition hover:bg-zinc-100 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 hover:dark:border-zinc-700 hover:dark:bg-zinc-800 dark:focus-visible:border-zinc-800
             dark:focus-visible:ring-white/40 ${index > 1 && "hidden md:block"}`}
             onClick={() => handleExampleClick(example.message)}
           >

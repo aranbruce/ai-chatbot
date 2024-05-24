@@ -41,7 +41,7 @@ export default function MessageCard({ id, role, content, data }: MessageProps) {
         )}
 
         <div
-          className={`flex w-full flex-col gap-4 text-zinc-950 dark:text-zinc-300 ${role === "user" && "w-auto rounded-xl bg-zinc-200/60 px-4 py-2 dark:bg-zinc-800"}`}
+          className={`flex flex-col gap-4 text-zinc-950 dark:text-zinc-300 ${role === "user" && "w-auto rounded-xl bg-zinc-200/60 px-4 py-2 dark:bg-zinc-800"}`}
         >
           {typeof content === "string" ? (
             <MarkdownContainer children={content} />
