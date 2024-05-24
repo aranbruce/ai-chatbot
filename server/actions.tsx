@@ -1120,7 +1120,8 @@ async function continueConversation(
 async function getWeatherForecast(
   location: string,
   forecast_days: number,
-  units?: "metric" | "imperial" | undefined,
+  countryCode?: string,
+  units?: "metric" | "imperial",
 ) {
   "use server";
 
@@ -1138,6 +1139,7 @@ async function getWeatherForecast(
       const response = await get_weather_forecast({
         location,
         forecast_days,
+        countryCode,
         units,
       });
 
@@ -1154,7 +1156,7 @@ async function getWeatherForecast(
               type: "tool-call",
               toolCallId: toolCallId,
               toolName: "get_weather_forecast",
-              args: { location, forecast_days, units },
+              args: { location, forecast_days, countryCode, units },
             },
           ],
         },
@@ -1196,7 +1198,7 @@ async function getWeatherForecast(
             type: "tool-call",
             toolCallId: toolCallId,
             toolName: "get_weather_forecast",
-            args: { location, forecast_days, units },
+            args: { location, forecast_days, countryCode, units },
           },
         ],
       },
