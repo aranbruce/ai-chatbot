@@ -15,6 +15,11 @@ interface ExampleMessage {
 
 const exampleMessages: ExampleMessage[] = [
   {
+    heading: "Cute dog pics",
+    subheading: "Show me some cute dog pictures",
+    message: "Show me some cute dog pictures",
+  },
+  {
     heading: "New York Pizza",
     subheading: "Recommend great pizza places in New York",
     message: "Recommend great pizza places in New York",

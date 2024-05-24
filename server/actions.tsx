@@ -21,6 +21,7 @@ import get_coordinates from "@/server/get-coordinates";
 import get_current_weather from "@/server/get-current-weather";
 import get_weather_forecast from "@/server/get-weather-forecast";
 import search_the_web from "@/server/search-the-web";
+import search_for_images from "./search-for-images";
 import search_the_news from "@/server/search-the-news";
 import search_for_locations from "@/server/search-for-locations";
 import search_for_movies from "@/server/search-for-movies";
@@ -39,7 +40,6 @@ import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
 import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
-import { count } from "console";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -534,7 +534,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_the_web",
-                    args: { query, country, freshness, units },
+                    args: { query, country, freshness, units, count },
                   },
                 ],
               },
@@ -551,6 +551,7 @@ async function continueConversation(
                       country,
                       freshness,
                       units,
+                      count,
                     },
                   },
                 ],
@@ -576,7 +577,148 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_the_web",
-                    args: { query, country, freshness, units },
+                    args: { query, country, freshness, units, count },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Sorry, there was an error searching the web for ${query}`,
+              },
+            ]);
+            return <>Sorry, there was an error searching the web for {query}</>;
+          }
+        },
+      },
+      search_for_images: {
+        description: "Search for images on the web for a given topic or query",
+        parameters: z.object({
+          query: z
+            .string()
+            .describe("The search query or topic to search for news on"),
+          country: z
+            .enum([
+              "AR",
+              "AU",
+              "AT",
+              "BE",
+              "BR",
+              "CA",
+              "CL",
+              "DK",
+              "FI",
+              "FR",
+              "DE",
+              "HK",
+              "IN",
+              "ID",
+              "IT",
+              "JP",
+              "KR",
+              "MY",
+              "MX",
+              "NL",
+              "NZ",
+              "NO",
+              "CN",
+              "PL",
+              "PT",
+              "PH",
+              "RU",
+              "SA",
+              "ZA",
+              "ES",
+              "SE",
+              "CH",
+              "TW",
+              "TH",
+              "TR",
+              "GB",
+              "US",
+            ])
+            .optional()
+            .describe(
+              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
+            ),
+          count: z
+            .number()
+            .optional()
+            .describe("The number of search results to return"),
+        }),
+        generate: async function* ({ query, country, count }) {
+          const toolCallId = uuidv4();
+          yield <>Searching for images of {query}...</>;
+          try {
+            const response = await search_for_images({
+              query,
+              country,
+              count,
+            });
+
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_images",
+                    args: { query, country, count },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_form_images",
+                    result: {
+                      ...response,
+                      query,
+                      country,
+                      count,
+                    },
+                  },
+                ],
+              },
+              {
+                role: "assistant",
+                content: `Here are images of ${query}: ${JSON.stringify(response)}`,
+              },
+            ]);
+            return (
+              <>
+                Here are images of {query}:
+                {/* <WebResultGroup results={response} /> */}
+                <div className="grid grid-cols-2 gap-4">
+                  {response.map((result: any, index: number) => (
+                    <div key={index} className="flex flex-col gap-2">
+                      <a href={result.url} target="_blank" rel="noreferrer">
+                        <img
+                          className="rounded-md"
+                          src={result.src}
+                          alt={result.title}
+                        />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          } catch (error) {
+            history.done([
+              ...history.get(),
+              {
+                role: "assistant",
+                content: [
+                  {
+                    type: "tool-call",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_images",
+                    args: { query, country, count },
                   },
                 ],
               },
