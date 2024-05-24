@@ -39,6 +39,7 @@ import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
 import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
+import { count } from "console";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -158,7 +159,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_coordinates",
-                    args: { location },
+                    args: { location, countryCode },
                   },
                 ],
               },
@@ -196,7 +197,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_coordinates",
-                    args: { location },
+                    args: { location, countryCode },
                   },
                 ],
               },
@@ -257,7 +258,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_current_weather",
-                    args: { location, units },
+                    args: { location, countryCode, units },
                   },
                 ],
               },
@@ -297,7 +298,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_current_weather",
-                    args: { location, units },
+                    args: { location, countryCode, units },
                   },
                 ],
               },
@@ -369,7 +370,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_weather_forecast",
-                    args: { location, forecast_days, units },
+                    args: { location, forecast_days, countryCode, units },
                   },
                 ],
               },
@@ -1219,7 +1220,8 @@ async function getWeatherForecast(
 
 async function getCurrentWeather(
   location: string,
-  units: "metric" | "imperial" | undefined,
+  countryCode?: string,
+  units?: "metric" | "imperial",
 ) {
   "use server";
 
@@ -1238,7 +1240,11 @@ async function getCurrentWeather(
   );
   try {
     (async () => {
-      const response = await get_current_weather({ location, units });
+      const response = await get_current_weather({
+        location,
+        countryCode,
+        units,
+      });
       history.done([
         ...history.get(),
         {
@@ -1252,7 +1258,7 @@ async function getCurrentWeather(
               type: "tool-call",
               toolCallId: toolCallId,
               toolName: "get_current_weather",
-              args: { location, units },
+              args: { location, countryCode, units },
             },
           ],
         },
@@ -1266,6 +1272,7 @@ async function getCurrentWeather(
               result: {
                 ...response,
                 location,
+                countryCode,
                 units,
               },
             },
@@ -1294,7 +1301,7 @@ async function getCurrentWeather(
             type: "tool-call",
             toolCallId: toolCallId,
             toolName: "get_current_weather",
-            args: { location, units },
+            args: { location, countryCode, units },
           },
         ],
       },
