@@ -9,7 +9,7 @@ interface ButtonProps {
   variant?: "primary" | "secondary";
 }
 
-export default function Button ({
+export default function Button({
   onClick,
   children,
   href,
@@ -19,31 +19,11 @@ export default function Button ({
   openInNewTab,
   variant = "primary",
 }: ButtonProps) {
-  const primaryClassNames = `
-    text-white
-    font-semibold
-    dark:text-zinc-950
-    bg-zinc-950 
-    dark:bg-zinc-50
-    hover:bg-zinc-700
-    dark:hover:bg-zinc-300
-    active:bg-zinc-800
-    dark:active-bg-zinc-900  
-  `;
+  const primaryClassNames =
+    "text-white font-semibold dark:text-zinc-950 bg-zinc-950 dark:bg-zinc-50 hover:bg-zinc-700 dark:hover:bg-zinc-300 active:bg-zinc-800 dark:active-bg-zinc-900";
 
-  const secondaryClassNames = `
-    text-zinc-950
-    dark:text-zinc-50
-    bg-white 
-    dark:bg-zinc-800
-    border 
-    border-zinc-200
-    dark:border-zinc-800
-    hover:bg-zinc-100
-    dark:hover:bg-zinc-800
-    active:bg-zinc-200
-    dark:active-bg-zinc-700
-  `;
+  const secondaryClassNames =
+    "text-zinc-950 dark:text-zinc-50 bg-white  dark:bg-zinc-800 border  border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 active:bg-zinc-200 dark:active-bg-zinc-700";
 
   const baseClassNames = `
   inline-flex items-center justify-center ${
@@ -76,4 +56,4 @@ export default function Button ({
       {children}
     </button>
   );
-};
+}
