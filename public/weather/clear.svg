@@ -1,8 +1,6 @@
 <svg width="40" height="40" viewBox="0 0 40 40" fill="none"
   xmlns="http://www.w3.org/2000/svg">
-  <g filter="url(#filter0_i_114_156)">
-    <path d="M35.0382 20.1655C35.0382 28.5411 28.3118 35.3309 20.0145 35.3309C11.7171 35.3309 4.99072 28.5411 4.99072 20.1655C4.99072 11.7898 11.7171 5 20.0145 5C28.3118 5 35.0382 11.7898 35.0382 20.1655Z" fill="url(#paint0_linear_114_156)"/>
-  </g>
+  <path d="M35.0382 20.1655C35.0382 28.5411 28.3118 35.3309 20.0145 35.3309C11.7171 35.3309 4.99072 28.5411 4.99072 20.1655C4.99072 11.7898 11.7171 5 20.0145 5C28.3118 5 35.0382 11.7898 35.0382 20.1655Z" fill="url(#paint0_linear_114_156)"/>
   <defs>
     <filter id="filter0_i_114_156" x="4.99072" y="5" width="30.0474" height="31.0396" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
