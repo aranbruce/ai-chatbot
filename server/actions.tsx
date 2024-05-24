@@ -325,7 +325,11 @@ async function continueConversation(
             ),
           forecast_days: z
             .number()
-            .describe("The number of days to forecast the weather for"),
+            .min(1)
+            .max(7)
+            .describe(
+              "The number of days to forecast the weather for. Max 7 days",
+            ),
           countryCode: z
             .string()
             .optional()

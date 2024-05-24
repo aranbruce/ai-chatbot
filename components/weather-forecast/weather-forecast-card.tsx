@@ -33,15 +33,7 @@ export default function WeatherForecastCard({
       return "Today";
     }
     const today = new Date().getDay();
-    const days = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
     return days[(today + day) % 7];
   };
 
@@ -64,33 +56,30 @@ export default function WeatherForecastCard({
           <h4 className="text-xl font-medium text-white">
             {weatherForecast.daily.length} Days Weather Forecast
           </h4>
-          {weatherForecast.daily.map((day: any, index: number) => (
-            <div
-              key={index}
-              className="gap:2 grid w-full grid-cols-[88px_32px_56px_60px] items-center justify-between sm:gap-4"
-            >
-              <p className="text-white">{getDayOfWeek(index)}</p>
-              <WeatherImage height={32} width={32} weather={day.weather} />
-              <h5 className="text-xl font-medium text-white">
-                {Math.round(day.temperatureMain)}{" "}
-                {day.units === "metric" ? "°C" : "°F"}
-              </h5>
-              <div className="flex flex-row items-center gap-4 text-center">
-                <div className="flex flex-col gap-1 text-white">
-                  <p className="text-xs">Min</p>
-                  <p className="font-medium">
-                    {Math.round(day.temperatureMin)}°
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1 text-white">
-                  <p className="text-xs">Max</p>
-                  <p className="font-medium">
-                    {Math.round(day.temperatureMax)}°
-                  </p>
+          <div className="flex flex-col justify-between gap-2 sm:flex-row">
+            {weatherForecast.daily.map((day: any, index: number) => (
+              <div
+                key={index}
+                className="flex flex-row items-center justify-between gap-2 sm:flex-col"
+              >
+                <p className="min-w-10 text-center text-sm text-white">
+                  {getDayOfWeek(index)}
+                </p>
+                <WeatherImage height={32} width={32} weather={day.weather} />
+                <h5 className="text-lg font-medium text-white">
+                  {Math.round(day.temperatureMain)}{" "}
+                  {day.units === "metric" ? "°C" : "°F"}
+                </h5>
+                <div className="flex flex-row items-center gap-4 text-center">
+                  <div className="flex flex-col gap-1 text-white">
+                    <p className="text-xs font-medium">
+                      {`${Math.round(day.temperatureMin)}° - ${Math.round(day.temperatureMax)}°`}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
       <div className="flex flex-row items-center gap-2">
