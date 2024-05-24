@@ -18,11 +18,16 @@ export default function GlobalError({
       >
         <Header />
         <div className="flex h-full flex-col items-center p-4">
-          <div className="flex h-full max-w-56 flex-col justify-center gap-8 pb-12 text-center">
+          <div className="flex h-full max-w-56 flex-col justify-center gap-4 pb-12 text-center">
             <h2 className="text-xl font-medium text-zinc-950 dark:text-white">
               Something went wrong!
             </h2>
-            <Button onClick={() => reset()}>Try again</Button>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => reset()}>Try again</Button>
+              <Button variant="secondary" href="/">
+                Go back to home
+              </Button>
+            </div>
           </div>
         </div>
       </body>

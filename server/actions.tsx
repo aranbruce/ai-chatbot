@@ -39,6 +39,7 @@ import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
 import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
+import { count } from "console";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -129,9 +130,17 @@ async function continueConversation(
         parameters: z.object({
           location: z
             .string()
-            .describe("The location to get the coordinates for"),
+            .describe(
+              "The location to get the current weather for, excluding the country",
+            ),
+          countryCode: z
+            .string()
+            .optional()
+            .describe(
+              "The country code of the location to get the coordinates for. This should be an ISO 3166 country code",
+            ),
         }),
-        generate: async function* ({ location }) {
+        generate: async function* ({ location, countryCode }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -140,7 +149,7 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await get_coordinates({ location });
+            const response = await get_coordinates({ location, countryCode });
             history.done([
               ...history.get(),
               {
@@ -150,7 +159,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_coordinates",
-                    args: { location },
+                    args: { location, countryCode },
                   },
                 ],
               },
@@ -188,7 +197,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_coordinates",
-                    args: { location },
+                    args: { location, countryCode },
                   },
                 ],
               },
@@ -210,7 +219,15 @@ async function continueConversation(
         parameters: z.object({
           location: z
             .string()
-            .describe("The location to get the current weather for"),
+            .describe(
+              "The location to get the current weather for, excluding the country",
+            ),
+          countryCode: z
+            .string()
+            .optional()
+            .describe(
+              "The country code of the location to get the current weather for. This should be an ISO 3166 country code",
+            ),
           units: z
             .enum(["metric", "imperial"])
             .optional()
@@ -218,7 +235,7 @@ async function continueConversation(
               "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric.",
             ),
         }),
-        generate: async function* ({ location, units }) {
+        generate: async function* ({ location, countryCode, units }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -229,6 +246,7 @@ async function continueConversation(
           try {
             const response = await get_current_weather({
               location,
+              countryCode,
               units,
             });
             history.done([
@@ -240,7 +258,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_current_weather",
-                    args: { location, units },
+                    args: { location, countryCode, units },
                   },
                 ],
               },
@@ -280,7 +298,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_current_weather",
-                    args: { location, units },
+                    args: { location, countryCode, units },
                   },
                 ],
               },
@@ -302,10 +320,18 @@ async function continueConversation(
         parameters: z.object({
           location: z
             .string()
-            .describe("The location to get the weather forecast for"),
+            .describe(
+              "The location to get the weather forecast for, excluding the country",
+            ),
           forecast_days: z
             .number()
             .describe("The number of days to forecast the weather for"),
+          countryCode: z
+            .string()
+            .optional()
+            .describe(
+              "The country code of the location to get the weather forecast for. This should be an ISO 3166 country code",
+            ),
           units: z
             .enum(["metric", "imperial"])
             .optional()
@@ -313,7 +339,12 @@ async function continueConversation(
               "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
             ),
         }),
-        generate: async function* ({ location, forecast_days, units }) {
+        generate: async function* ({
+          location,
+          forecast_days,
+          countryCode,
+          units,
+        }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -325,6 +356,7 @@ async function continueConversation(
             const response = await get_weather_forecast({
               location,
               forecast_days,
+              countryCode,
               units,
             });
             console.log("response: ", response);
@@ -338,7 +370,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_weather_forecast",
-                    args: { location, forecast_days, units },
+                    args: { location, forecast_days, countryCode, units },
                   },
                 ],
               },
@@ -1088,7 +1120,8 @@ async function continueConversation(
 async function getWeatherForecast(
   location: string,
   forecast_days: number,
-  units?: "metric" | "imperial" | undefined,
+  countryCode?: string,
+  units?: "metric" | "imperial",
 ) {
   "use server";
 
@@ -1106,6 +1139,7 @@ async function getWeatherForecast(
       const response = await get_weather_forecast({
         location,
         forecast_days,
+        countryCode,
         units,
       });
 
@@ -1122,7 +1156,7 @@ async function getWeatherForecast(
               type: "tool-call",
               toolCallId: toolCallId,
               toolName: "get_weather_forecast",
-              args: { location, forecast_days, units },
+              args: { location, forecast_days, countryCode, units },
             },
           ],
         },
@@ -1164,7 +1198,7 @@ async function getWeatherForecast(
             type: "tool-call",
             toolCallId: toolCallId,
             toolName: "get_weather_forecast",
-            args: { location, forecast_days, units },
+            args: { location, forecast_days, countryCode, units },
           },
         ],
       },
@@ -1188,7 +1222,8 @@ async function getWeatherForecast(
 
 async function getCurrentWeather(
   location: string,
-  units: "metric" | "imperial" | undefined,
+  countryCode?: string,
+  units?: "metric" | "imperial",
 ) {
   "use server";
 
@@ -1207,7 +1242,11 @@ async function getCurrentWeather(
   );
   try {
     (async () => {
-      const response = await get_current_weather({ location, units });
+      const response = await get_current_weather({
+        location,
+        countryCode,
+        units,
+      });
       history.done([
         ...history.get(),
         {
@@ -1221,7 +1260,7 @@ async function getCurrentWeather(
               type: "tool-call",
               toolCallId: toolCallId,
               toolName: "get_current_weather",
-              args: { location, units },
+              args: { location, countryCode, units },
             },
           ],
         },
@@ -1235,6 +1274,7 @@ async function getCurrentWeather(
               result: {
                 ...response,
                 location,
+                countryCode,
                 units,
               },
             },
@@ -1263,7 +1303,7 @@ async function getCurrentWeather(
             type: "tool-call",
             toolCallId: toolCallId,
             toolName: "get_current_weather",
-            args: { location, units },
+            args: { location, countryCode, units },
           },
         ],
       },

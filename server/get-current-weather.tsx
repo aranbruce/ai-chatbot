@@ -4,11 +4,13 @@ import get_coordinates from "./get-coordinates";
 
 interface Request {
   location: string;
+  countryCode?: string;
   units?: "metric" | "imperial" | undefined;
 }
 
 export default async function get_current_weather({
   location,
+  countryCode,
   units,
 }: Request) {
   "use server";
@@ -19,7 +21,11 @@ export default async function get_current_weather({
   }
 
   // Get the coordinates from the location
-  const { latitude, longitude } = await get_coordinates({ location });
+  const { latitude, longitude } = await get_coordinates({
+    location,
+    countryCode,
+  });
+  console.log(`Coordinates for ${location}: ${latitude}, ${longitude}`);
 
   try {
     const url = new URL(
@@ -29,6 +35,7 @@ export default async function get_current_weather({
       Accept: "application/json",
       "Accept-Encoding": "gzip",
     };
+    console.log(`Requesting weather data from ${url}`);
 
     const response = await fetch(url, {
       method: "GET",

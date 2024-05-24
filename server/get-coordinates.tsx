@@ -2,11 +2,19 @@
 
 interface Request {
   location: string;
+  countryCode?: string;
 }
 
-export default async function get_coordinates({ location }: Request) {
+export default async function get_coordinates({
+  location,
+  countryCode,
+}: Request) {
   "use server";
   try {
+    console.log("Request received for get-coordinates action");
+    console.log(
+      `Requesting coordinates for ${location}: http://api.openweathermap.org/geo/1.0/direct?q=${location},${countryCode}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`,
+    );
     const response = await fetch(
       `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`,
       {
