@@ -68,6 +68,7 @@ export interface ClientMessage {
 async function continueConversation(
   message: string,
   modelVariable: string,
+  userLocation?: { latitude: number; longitude: number },
 ): Promise<ClientMessage> {
   "use server";
 
@@ -88,7 +89,7 @@ async function continueConversation(
   } else if (modelVariable.includes("llama3-")) {
     const model = groq(modelVariable);
   } else {
-    throw new Error("MODEL environment variable is not a supported model");
+    throw new Error("Model is not a supported model");
   }
 
   const result = await streamUI({
@@ -109,7 +110,7 @@ async function continueConversation(
       If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
       Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
-      `,
+      ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}` : ""}`,
     messages: history.get(),
     text: ({ content, done }) => {
       try {
@@ -1265,7 +1266,10 @@ async function continueConversation(
   };
 }
 
-async function createExampleMessages(modelVariable: string) {
+async function createExampleMessages(
+  modelVariable: string,
+  userLocation?: { latitude: number; longitude: number },
+) {
   "use server";
   const exampleMessagesUI = createStreamableUI(
     <ExampleMessageCardGroupSkeleton />,
@@ -1283,7 +1287,8 @@ async function createExampleMessages(modelVariable: string) {
         - Search for locations or places to visit
         - Get movies from a database based on an input
         - Search for images on the web for a given topic or query
-      `,
+        ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}. Try to make the example messages relevant to their location` : ""}`,
+
     prompt:
       "Generate 4 example messages to inspire the user to start a conversation with the LLM assistant. Select randomly for the capabilities of the LLM assistant.",
     temperature: 1,

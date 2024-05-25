@@ -16,7 +16,11 @@ export interface LocationCardProps {
   photoUrls: string[];
 }
 
-export default function LocationCard ({ location }: { location: LocationCardProps }) {
+export default function LocationCard({
+  location,
+}: {
+  location: LocationCardProps;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const descriptionRef = useRef<HTMLParagraphElement | null>(null);
@@ -41,7 +45,9 @@ export default function LocationCard ({ location }: { location: LocationCardProp
         </div>
         <div className="flex flex-row gap-4 text-xs text-zinc-600 dark:text-zinc-400">
           <p>{location.address}</p>
-          <p className="shrink-0">Price: {location.priceLevel}</p>
+          {location.priceLevel && (
+            <p className="shrink-0">Price: {location.priceLevel}</p>
+          )}
         </div>
       </div>
       {location.description && (
@@ -85,4 +91,4 @@ export default function LocationCard ({ location }: { location: LocationCardProp
       </div>
     </div>
   );
-};
+}
