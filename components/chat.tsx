@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-import { useUIState, useAIState, useActions } from "ai/rsc";
+import { useUIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
 import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
@@ -52,7 +52,6 @@ const modelVariableOptions = [
 
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
-  const [history] = useAIState();
   const [messages, setMessages] = useUIState();
   const { continueConversation } = useActions();
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +95,6 @@ export default function Chat() {
         <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words ">
           {messages.length === 0 ? (
             <EmptyScreen
-              handleExampleClick={sendMessage}
               SelectProps={{
                 options: modelVariableOptions,
                 selectedValue: modelVariable,
