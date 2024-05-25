@@ -1,60 +1,27 @@
-import Select from "./select";
+"use client";
 
-import { SelectProps } from "./select";
+import { useEffect, useState } from "react";
+import { useActions } from "ai/rsc";
+
+import Select, { SelectProps } from "./select";
+import ExampleMessageCardGroupSkeleton from "./example-message/example-message-group-skeleton";
 
 interface EmptyScreenProps {
-  handleExampleClick: (message: string) => void;
   SelectProps: SelectProps;
 }
 
-interface ExampleMessage {
-  heading: string;
-  subheading: string;
-  message: string;
-}
+export default function EmptyScreen({ SelectProps }: EmptyScreenProps) {
+  const [examplesUI, setExamplesUI] = useState(null);
+  const { createExampleMessages } = useActions();
 
-const exampleMessages: ExampleMessage[] = [
-  {
-    heading: "Cute dog pics",
-    subheading: "Show me some cute dog pictures",
-    message: "Show me some cute dog pictures",
-  },
-  {
-    heading: "New York Pizza",
-    subheading: "Recommend great pizza places in New York",
-    message: "Recommend great pizza places in New York",
-  },
-  {
-    heading: "Weather",
-    subheading: "Show me the weather in London",
-    message: "Show me the weather in London",
-  },
-  {
-    heading: "News",
-    subheading: "Get the latest news about GenAI",
-    message: "Get the latest news about GenAI",
-  },
-  {
-    heading: "Comedy movies",
-    subheading: "What are some great comedy movies?",
-    message: "What are some great comedy movies?",
-  },
-  {
-    heading: "Work gifs",
-    subheading: "Show me some gifs about work",
-    message: "Show me some gifs about work",
-  },
-  {
-    heading: "Find a pancake recipe",
-    subheading: "Search the web for a pancake recipe",
-    message: "Search the web for a pancake recipe",
-  },
-];
+  useEffect(() => {
+    async function fetchExamples(model: string) {
+      const exampleMessagesUI = await createExampleMessages(model);
+      setExamplesUI(exampleMessagesUI);
+    }
+    fetchExamples(SelectProps.selectedValue);
+  }, []);
 
-export default function EmptyScreen({
-  handleExampleClick,
-  SelectProps,
-}: EmptyScreenProps) {
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
       <div className="flex flex-col items-center gap-2">
@@ -77,23 +44,7 @@ export default function EmptyScreen({
           </p>
         </div>
       </div>
-      <div className="mb-4 grid grid-cols-2 gap-2 px-4 sm:px-0">
-        {exampleMessages.slice(0, 4).map((example, index) => (
-          <button
-            key={example.heading}
-            className={`dark:border-700 cursor-pointer rounded-xl border border-zinc-200/70 bg-white p-4 text-left shadow-sm transition hover:bg-zinc-100 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 hover:dark:border-zinc-700 hover:dark:bg-zinc-800 dark:focus-visible:border-zinc-800
-            dark:focus-visible:ring-white/40 ${index > 1 && "hidden md:block"}`}
-            onClick={() => handleExampleClick(example.message)}
-          >
-            <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-              {example.heading}
-            </div>
-            <div className="text-sm text-zinc-500 dark:text-zinc-400">
-              {example.subheading}
-            </div>
-          </button>
-        ))}
-      </div>
+      {!examplesUI ? <ExampleMessageCardGroupSkeleton /> : examplesUI}
     </div>
   );
 }

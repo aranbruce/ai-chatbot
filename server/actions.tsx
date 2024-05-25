@@ -5,8 +5,7 @@ import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 
-import { v4 as uuidv4 } from "uuid";
-
+import { generateObject } from "ai";
 import {
   createAI,
   createStreamableUI,
@@ -16,6 +15,7 @@ import {
 
 import { z } from "zod";
 import Image from "next/image";
+import { v4 as uuidv4 } from "uuid";
 
 import get_coordinates from "@/server/get-coordinates";
 import get_current_weather from "@/server/get-current-weather";
@@ -40,6 +40,8 @@ import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
 import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
+import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
+import ExampleMessageCardGroupSkeleton from "@/components/example-message/example-message-group-skeleton";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -1263,6 +1265,56 @@ async function continueConversation(
   };
 }
 
+async function createExampleMessages(modelVariable: string) {
+  "use server";
+  const exampleMessagesUI = createStreamableUI(
+    <ExampleMessageCardGroupSkeleton />,
+  );
+  const exampleMessages = await generateObject({
+    model: openai("gpt-4o"),
+    system: `
+        You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
+        The LLM assistant, Pal has the following capabilities:
+        - Display fun or entertaining gifs
+        - Get the current weather for a location
+        - Get the weather forecast for a location
+        - Search the web for information on a given topic or for a specific query
+        - Search for news on the web for a given topic
+        - Search for locations or places to visit
+        - Get movies from a database based on an input
+        - Search for images on the web for a given topic or query
+      `,
+    prompt:
+      "Generate 4 example messages to inspire the user to start a conversation with the LLM assistant. Select randomly for the capabilities of the LLM assistant.",
+    temperature: 1,
+    schema: z.object({
+      examples: z.array(
+        z.object({
+          heading: z
+            .string()
+            .describe("A short heading for the example message"),
+          subheading: z
+            .string()
+            .describe(
+              "A short description of the example message. This is the message that will be sent to the LLM",
+            ),
+        }),
+      ),
+    }),
+  });
+
+  exampleMessagesUI.done(
+    <>
+      <ExampleMessageCardGroup
+        exampleMessages={exampleMessages.object.examples.map(
+          (example: any) => ({ ...example, modelVariable }),
+        )}
+      />
+    </>,
+  );
+  return exampleMessagesUI.value;
+}
+
 async function getWeatherForecast(
   location: string,
   forecast_days: number,
@@ -1458,6 +1510,9 @@ async function getCurrentWeather(
         content: `Sorry, there was an error getting the current weather for ${location}`,
       },
     ]);
+    uiStream.done(
+      <>Sorry, there was an error getting the current weather for {location}</>,
+    );
   }
 
   return {
@@ -1470,6 +1525,7 @@ async function getCurrentWeather(
 export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     continueConversation,
+    createExampleMessages,
     getWeatherForecast,
     getCurrentWeather,
   },
