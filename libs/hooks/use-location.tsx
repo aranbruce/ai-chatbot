@@ -32,6 +32,8 @@ export default function useLocation() {
       return;
     }
 
+    let timerId: NodeJS.Timeout;
+
     const success = (position: GeolocationPosition) => {
       setLocation({
         latitude: position.coords.latitude,
@@ -44,6 +46,12 @@ export default function useLocation() {
     };
 
     navigator.geolocation.getCurrentPosition(success, handleError, options);
+
+    timerId = setTimeout(() => {
+      setError(new Error("Location request timed out."));
+    }, 5000);
+
+    return () => clearTimeout(timerId); // Clear the timeout if the component unmounts
   }, []);
 
   return { location, error };

@@ -21,9 +21,12 @@ export default function EmptyScreen({
   const { createExampleMessages } = useActions();
 
   useEffect(() => {
+    if (examplesUI) {
+      return;
+    }
     if (locationError) {
       fetchExamples(SelectProps.selectedValue);
-      return;
+      console.error("locationError: ", locationError.message);
     } else if (userLocation) {
       fetchExamples(SelectProps.selectedValue, userLocation);
     }
