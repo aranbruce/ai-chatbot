@@ -20,8 +20,6 @@ export default function EmptyScreen({
   const [examplesUI, setExamplesUI] = useState(null);
   const { createExampleMessages } = useActions();
 
-  console.log("locationError", locationError);
-
   useEffect(() => {
     if (locationError) {
       fetchExamples(SelectProps.selectedValue);

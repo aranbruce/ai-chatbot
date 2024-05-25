@@ -39,7 +39,11 @@ export default function useLocation() {
       });
     };
 
-    navigator.geolocation.getCurrentPosition(success, handleError);
+    const options = {
+      timeout: 5000, // Timeout after 5 seconds
+    };
+
+    navigator.geolocation.getCurrentPosition(success, handleError, options);
   }, []);
 
   return { location, error };
