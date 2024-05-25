@@ -1,5 +1,12 @@
-import Select from "./select";
+"use client";
 
+import { useEffect, useState } from "react";
+import { useActions } from "ai/rsc";
+
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+
+import Select from "./select";
 import { SelectProps } from "./select";
 
 interface EmptyScreenProps {
@@ -10,51 +17,28 @@ interface EmptyScreenProps {
 interface ExampleMessage {
   heading: string;
   subheading: string;
-  message: string;
 }
-
-const exampleMessages: ExampleMessage[] = [
-  {
-    heading: "Cute dog pics",
-    subheading: "Show me some cute dog pictures",
-    message: "Show me some cute dog pictures",
-  },
-  {
-    heading: "New York Pizza",
-    subheading: "Recommend great pizza places in New York",
-    message: "Recommend great pizza places in New York",
-  },
-  {
-    heading: "Weather",
-    subheading: "Show me the weather in London",
-    message: "Show me the weather in London",
-  },
-  {
-    heading: "News",
-    subheading: "Get the latest news about GenAI",
-    message: "Get the latest news about GenAI",
-  },
-  {
-    heading: "Comedy movies",
-    subheading: "What are some great comedy movies?",
-    message: "What are some great comedy movies?",
-  },
-  {
-    heading: "Work gifs",
-    subheading: "Show me some gifs about work",
-    message: "Show me some gifs about work",
-  },
-  {
-    heading: "Find a pancake recipe",
-    subheading: "Search the web for a pancake recipe",
-    message: "Search the web for a pancake recipe",
-  },
-];
 
 export default function EmptyScreen({
   handleExampleClick,
   SelectProps,
 }: EmptyScreenProps) {
+  const [examples, setExamples] = useState<ExampleMessage[]>([]);
+  const [isExamplesLoaded, setIsExamplesLoaded] = useState(false);
+  const { createExampleMessages } = useActions();
+
+  useEffect(() => {
+    async function fetchExamples() {
+      const response = await createExampleMessages();
+      const examples = response.examples;
+      setExamples(examples);
+      setIsExamplesLoaded(true);
+    }
+    if (!isExamplesLoaded) {
+      fetchExamples();
+    }
+  }, []);
+
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
       <div className="flex flex-col items-center gap-2">
@@ -78,21 +62,42 @@ export default function EmptyScreen({
         </div>
       </div>
       <div className="mb-4 grid grid-cols-2 gap-2 px-4 sm:px-0">
-        {exampleMessages.slice(0, 4).map((example, index) => (
-          <button
-            key={example.heading}
-            className={`dark:border-700 cursor-pointer rounded-xl border border-zinc-200/70 bg-white p-4 text-left shadow-sm transition hover:bg-zinc-100 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 hover:dark:border-zinc-700 hover:dark:bg-zinc-800 dark:focus-visible:border-zinc-800
+        {!isExamplesLoaded
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <SkeletonTheme
+                baseColor="#d4d4d8"
+                highlightColor="#f4f4f5"
+                key={index}
+              >
+                <div
+                  className={`dark:border-700 flex cursor-pointer flex-col gap-1 rounded-xl border border-zinc-200/70 bg-white p-4 text-left shadow-sm transition hover:bg-zinc-100 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 hover:dark:border-zinc-700 hover:dark:bg-zinc-800 dark:focus-visible:border-zinc-800
             dark:focus-visible:ring-white/40 ${index > 1 && "hidden md:block"}`}
-            onClick={() => handleExampleClick(example.message)}
-          >
-            <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-              {example.heading}
-            </div>
-            <div className="text-sm text-zinc-500 dark:text-zinc-400">
-              {example.subheading}
-            </div>
-          </button>
-        ))}
+                >
+                  <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                    <Skeleton width={96} height={20} />
+                  </div>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <Skeleton height={14} />
+                    <Skeleton width={96} height={14} />
+                  </div>
+                </div>
+              </SkeletonTheme>
+            ))
+          : examples.map((example: ExampleMessage, index: number) => (
+              <button
+                key={index}
+                className={`dark:border-700 cursor-pointer rounded-xl border border-zinc-200/70 bg-white p-4 text-left shadow-sm transition hover:bg-zinc-100 focus-visible:border-zinc-400 focus-visible:ring-[3px] focus-visible:ring-slate-950/20 active:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 hover:dark:border-zinc-700 hover:dark:bg-zinc-800 dark:focus-visible:border-zinc-800
+            dark:focus-visible:ring-white/40 ${index > 1 && "hidden md:block"}`}
+                onClick={() => handleExampleClick(example.subheading)}
+              >
+                <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                  {example.heading}
+                </div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {example.subheading}
+                </div>
+              </button>
+            ))}
       </div>
     </div>
   );

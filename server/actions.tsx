@@ -5,8 +5,7 @@ import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 
-import { v4 as uuidv4 } from "uuid";
-
+import { generateObject } from "ai";
 import {
   createAI,
   createStreamableUI,
@@ -16,6 +15,7 @@ import {
 
 import { z } from "zod";
 import Image from "next/image";
+import { v4 as uuidv4 } from "uuid";
 
 import get_coordinates from "@/server/get-coordinates";
 import get_current_weather from "@/server/get-current-weather";
@@ -1263,6 +1263,43 @@ async function continueConversation(
   };
 }
 
+async function createExampleMessages() {
+  "use server";
+
+  const { object: response } = await generateObject({
+    model: openai("gpt-4o"),
+    system: `
+        You generate examples mess  ages to inspire the user to start a conversation with the LLM assistant.
+        The LLM assistant has the following capabilities:
+        - Get the current weather for a location
+        - Get the weather forecast for a location
+        - Search the web for information on a given topic or for a specific query
+        - Search for news on the web for a given topic
+        - Search for locations or places to visit
+        - Get movies from a database based on an input
+        - Search for gifs and show them to the user
+        - Search for images on the web for a given topic or query
+      `,
+    prompt:
+      "generate 4 example messages to inspire the user to start a conversation with the LLM assistant",
+    schema: z.object({
+      examples: z.array(
+        z.object({
+          heading: z
+            .string()
+            .describe("A short heading for the example message"),
+          subheading: z
+            .string()
+            .describe(
+              "A short description of the example message. This is the message that will be sent to the LLM",
+            ),
+        }),
+      ),
+    }),
+  });
+  return response;
+}
+
 async function getWeatherForecast(
   location: string,
   forecast_days: number,
@@ -1458,6 +1495,9 @@ async function getCurrentWeather(
         content: `Sorry, there was an error getting the current weather for ${location}`,
       },
     ]);
+    uiStream.done(
+      <>Sorry, there was an error getting the current weather for {location}</>,
+    );
   }
 
   return {
@@ -1470,6 +1510,7 @@ async function getCurrentWeather(
 export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     continueConversation,
+    createExampleMessages,
     getWeatherForecast,
     getCurrentWeather,
   },
