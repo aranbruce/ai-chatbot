@@ -7,7 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
 import EmptyScreen from "./empty-screen";
-import { useScrollAnchor } from "../libs/hooks/use-scroll-anchor";
+import { useScrollAnchor } from "@/libs/hooks/use-scroll-anchor";
+import useLocation from "@/libs/hooks/use-location";
 
 import type { ClientMessage } from "../server/actions";
 
@@ -55,6 +56,7 @@ export default function Chat() {
   const [messages, setMessages] = useUIState();
   const { continueConversation } = useActions();
   const [isLoading, setIsLoading] = useState(false);
+  const { location, error } = useLocation();
   const [modelVariable, setModelVariable] = useState(
     modelVariableOptions[0].value,
   );
@@ -81,7 +83,11 @@ export default function Chat() {
       },
     ]);
     // Submit and get response message
-    const response = await continueConversation(message, modelVariable);
+    const response = await continueConversation(
+      message,
+      modelVariable,
+      location,
+    );
     setMessages((messages: ClientMessage[]) => [...messages, response]);
     setIsLoading(false);
   }
@@ -100,6 +106,8 @@ export default function Chat() {
                 selectedValue: modelVariable,
                 setSelectedValue: setModelVariable,
               }}
+              userLocation={location ? location : undefined}
+              locationError={error ? error : undefined}
             />
           ) : (
             <div

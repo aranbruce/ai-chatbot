@@ -8,19 +8,39 @@ import ExampleMessageCardGroupSkeleton from "./example-message/example-message-g
 
 interface EmptyScreenProps {
   SelectProps: SelectProps;
+  userLocation?: { latitude: number; longitude: number };
+  locationError?: Error;
 }
 
-export default function EmptyScreen({ SelectProps }: EmptyScreenProps) {
+export default function EmptyScreen({
+  SelectProps,
+  userLocation,
+  locationError,
+}: EmptyScreenProps) {
   const [examplesUI, setExamplesUI] = useState(null);
   const { createExampleMessages } = useActions();
 
   useEffect(() => {
-    async function fetchExamples(model: string) {
-      const exampleMessagesUI = await createExampleMessages(model);
+    if (examplesUI) {
+      return;
+    }
+    if (locationError) {
+      fetchExamples(SelectProps.selectedValue);
+      console.error("locationError: ", locationError.message);
+    } else if (userLocation) {
+      fetchExamples(SelectProps.selectedValue, userLocation);
+    }
+    async function fetchExamples(
+      model: string,
+      userLocation?: { latitude: number; longitude: number },
+    ) {
+      const exampleMessagesUI = await createExampleMessages(
+        model,
+        userLocation,
+      );
       setExamplesUI(exampleMessagesUI);
     }
-    fetchExamples(SelectProps.selectedValue);
-  }, []);
+  }, [userLocation, locationError]);
 
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
