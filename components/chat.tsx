@@ -100,24 +100,15 @@ export default function Chat() {
       >
         <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words ">
           {messages.length === 0 ? (
-            location !== null && !error ? (
-              <EmptyScreen
-                SelectProps={{
-                  options: modelVariableOptions,
-                  selectedValue: modelVariable,
-                  setSelectedValue: setModelVariable,
-                }}
-                userLocation={location}
-              />
-            ) : (
-              <EmptyScreen
-                SelectProps={{
-                  options: modelVariableOptions,
-                  selectedValue: modelVariable,
-                  setSelectedValue: setModelVariable,
-                }}
-              />
-            )
+            <EmptyScreen
+              SelectProps={{
+                options: modelVariableOptions,
+                selectedValue: modelVariable,
+                setSelectedValue: setModelVariable,
+              }}
+              userLocation={location ? location : undefined}
+              locationError={error ? error : undefined}
+            />
           ) : (
             <div
               ref={messagesRef}

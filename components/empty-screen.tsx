@@ -9,20 +9,24 @@ import ExampleMessageCardGroupSkeleton from "./example-message/example-message-g
 interface EmptyScreenProps {
   SelectProps: SelectProps;
   userLocation?: { latitude: number; longitude: number };
+  locationError?: Error;
 }
 
 export default function EmptyScreen({
   SelectProps,
   userLocation,
+  locationError,
 }: EmptyScreenProps) {
   const [examplesUI, setExamplesUI] = useState(null);
   const { createExampleMessages } = useActions();
 
+  console.log("locationError", locationError);
+
   useEffect(() => {
-    if (!userLocation || userLocation instanceof Error) {
+    if (locationError) {
       fetchExamples(SelectProps.selectedValue);
       return;
-    } else {
+    } else if (userLocation) {
       fetchExamples(SelectProps.selectedValue, userLocation);
     }
     async function fetchExamples(
@@ -35,10 +39,7 @@ export default function EmptyScreen({
       );
       setExamplesUI(exampleMessagesUI);
     }
-    if (userLocation) {
-    } else {
-    }
-  }, [userLocation]);
+  }, [userLocation, locationError]);
 
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
