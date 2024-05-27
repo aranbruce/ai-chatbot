@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { set } from "zod";
 
 interface Location {
   latitude: number;
@@ -8,10 +9,12 @@ interface Location {
 export default function useLocation() {
   const [location, setLocation] = useState<Location | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) {
       setError(new Error("Geolocation is not supported by your browser"));
+      setIsLoaded(true);
       return;
     }
 
@@ -24,21 +27,26 @@ export default function useLocation() {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
+      setIsLoaded(true);
     };
 
     const handleError = (error: GeolocationPositionError) => {
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError(new Error("User denied the request for Geolocation."));
+          setIsLoaded(true);
           break;
         case error.POSITION_UNAVAILABLE:
           setError(new Error("Location information is unavailable."));
+          setIsLoaded(true);
           break;
         case error.TIMEOUT:
           setError(new Error("The request to get user location timed out."));
+          setIsLoaded(true);
           break;
         default:
           setError(new Error("An unknown error occurred."));
+          setIsLoaded(true);
           break;
       }
     };
@@ -46,5 +54,5 @@ export default function useLocation() {
     navigator.geolocation.getCurrentPosition(success, handleError, options);
   }, []);
 
-  return { location, error };
+  return { location, error, isLoaded };
 }

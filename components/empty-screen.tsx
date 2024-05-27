@@ -10,23 +10,24 @@ interface EmptyScreenProps {
   SelectProps: SelectProps;
   userLocation?: { latitude: number; longitude: number };
   locationError?: Error;
+  locationIsLoaded?: boolean;
 }
 
 export default function EmptyScreen({
   SelectProps,
   userLocation,
   locationError,
+  locationIsLoaded,
 }: EmptyScreenProps) {
   const [examplesUI, setExamplesUI] = useState(null);
   const { createExampleMessages } = useActions();
 
   useEffect(() => {
-    if (examplesUI) {
+    if (!locationIsLoaded) {
       return;
     }
     if (locationError) {
       fetchExamples(SelectProps.selectedValue);
-      console.error("locationError: ", locationError.message);
     } else if (userLocation) {
       fetchExamples(SelectProps.selectedValue, userLocation);
     }
@@ -40,7 +41,7 @@ export default function EmptyScreen({
       );
       setExamplesUI(exampleMessagesUI);
     }
-  }, [userLocation, locationError]);
+  }, [locationIsLoaded, locationError]);
 
   return (
     <div className="flex h-full min-h-fit flex-col justify-between gap-1">
