@@ -56,7 +56,6 @@ export default function Chat() {
   const [messages, setMessages] = useUIState();
   const { continueConversation } = useActions();
   const [isLoading, setIsLoading] = useState(false);
-  const { location, error } = useLocation();
   const [modelVariable, setModelVariable] = useState(
     modelVariableOptions[0].value,
   );
@@ -64,6 +63,8 @@ export default function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const { location, error, isLoaded } = useLocation();
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor();
@@ -96,7 +97,7 @@ export default function Chat() {
     <div className="stretch mx-auto flex min-h-1 w-full grow flex-col items-center justify-start bg-white dark:bg-zinc-950">
       <div
         ref={scrollRef}
-        className="flex h-full w-full flex-col overflow-y-scroll px-5 pt-24"
+        className="flex h-full w-full flex-col overflow-y-scroll px-5 pt-10"
       >
         <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words ">
           {messages.length === 0 ? (
@@ -108,6 +109,7 @@ export default function Chat() {
               }}
               userLocation={location ? location : undefined}
               locationError={error ? error : undefined}
+              locationIsLoaded={isLoaded}
             />
           ) : (
             <div
