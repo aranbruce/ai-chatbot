@@ -3,7 +3,7 @@ import Button from "./button";
 
 export default function Header() {
   return (
-    <header className="fixed top-0 z-50 flex h-fit w-full shrink-0 items-center justify-between bg-white/60 px-4 py-2 backdrop-blur dark:bg-zinc-950/60">
+    <header className="flex h-fit w-full shrink-0 items-center justify-between bg-white px-4 py-2 dark:bg-zinc-950">
       <a
         href="/"
         className="focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-500"
