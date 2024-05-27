@@ -27,28 +27,27 @@ export default function useLocation() {
         longitude: position.coords.longitude,
       });
       setIsLoaded(true);
+      clearTimeout(timerId);
     };
 
     const handleError = (error: GeolocationPositionError) => {
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError(new Error("User denied the request for Geolocation."));
-          setIsLoaded(true);
           break;
         case error.POSITION_UNAVAILABLE:
           setError(new Error("Location information is unavailable."));
-          setIsLoaded(true);
           break;
         case error.TIMEOUT:
           setError(new Error("The request to get user location timed out."));
           console.log("The request to get user location timed out.");
-          setIsLoaded(true);
           break;
         default:
           setError(new Error("An unknown error occurred."));
-          setIsLoaded(true);
           break;
       }
+      setIsLoaded(true);
+      clearTimeout(timerId);
     };
 
     const watchId = navigator.geolocation.getCurrentPosition(
@@ -62,9 +61,11 @@ export default function useLocation() {
       if (watchId !== undefined) {
         navigator.geolocation.clearWatch(watchId);
       }
-      console.log("No response from user.");
-      setError(new Error("No response from user."));
-      setIsLoaded(true);
+      if (!isLoaded) {
+        console.log("No response from user.");
+        setError(new Error("No response from user."));
+        setIsLoaded(true);
+      }
     }, 5000); // Timeout after 5 seconds
 
     return () => clearTimeout(timerId); // Clear the timeout if the component is unmounted.
