@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { set } from "zod";
 
 interface Location {
   latitude: number;
@@ -52,7 +51,23 @@ export default function useLocation() {
       }
     };
 
-    navigator.geolocation.getCurrentPosition(success, handleError, options);
+    const watchId = navigator.geolocation.getCurrentPosition(
+      success,
+      handleError,
+      options,
+    );
+
+    // Set a timeout to handle the case where the user does not make a selection.
+    const timerId = setTimeout(() => {
+      if (watchId !== undefined) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      console.log("No response from user.");
+      setError(new Error("No response from user."));
+      setIsLoaded(true);
+    }, 5000); // Timeout after 5 seconds
+
+    return () => clearTimeout(timerId); // Clear the timeout if the component is unmounted.
   }, []);
 
   return { location, error, isLoaded };
