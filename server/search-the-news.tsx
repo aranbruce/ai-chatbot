@@ -4,6 +4,7 @@ interface Request {
   freshness?: freshnessOptions;
   units?: "metric" | "imperial";
   count?: number;
+  offset?: number;
 }
 
 type countryOptions =
@@ -55,12 +56,13 @@ type freshnessOptions =
   | "past-year"
   | "py";
 
-export default async function search_the_news({
+export default async function searchTheNews({
   query,
   country,
   freshness,
   units,
   count = 5,
+  offset,
 }: Request) {
   "use server";
   console.log("Request received for search_the_news action");
@@ -79,7 +81,7 @@ export default async function search_the_news({
 
   try {
     const url = new URL(
-      `https://api.search.brave.com/res/v1/news/search?q=${query}&count=${count}`
+      `https://api.search.brave.com/res/v1/news/search?q=${query}&count=${count}`,
     );
 
     if (country) {
@@ -90,6 +92,9 @@ export default async function search_the_news({
     }
     if (units) {
       url.searchParams.append("units", units);
+    }
+    if (offset) {
+      url.searchParams.append("offset", offset.toString());
     }
 
     console.log("URL:", url);

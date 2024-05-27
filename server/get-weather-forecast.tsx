@@ -4,14 +4,14 @@ import get_coordinates from "./get-coordinates";
 
 interface Request {
   location: string;
-  forecast_days: number;
+  forecastDays: number;
   countryCode?: string;
   units?: "metric" | "imperial" | undefined;
 }
 
-export default async function get_weather_forecast({
+export default async function getWeatherForecast({
   location,
-  forecast_days,
+  forecastDays,
   countryCode,
   units,
 }: Request) {
@@ -22,11 +22,11 @@ export default async function get_weather_forecast({
     units = "metric";
   }
 
-  if (forecast_days < 1) {
-    throw new Error("forecast_days must be at least 1");
+  if (forecastDays < 1) {
+    throw new Error("forecastDays must be at least 1");
   }
-  if (forecast_days > 7) {
-    throw new Error("forecast_days must be no more than 7");
+  if (forecastDays > 7) {
+    throw new Error("forecastDays must be no more than 7");
   }
 
   const { latitude, longitude } = await get_coordinates({
@@ -54,8 +54,8 @@ export default async function get_weather_forecast({
     }
     let responseJson = await response.json();
 
-    // make the response array the same length as the forecast_days
-    responseJson.daily = responseJson.daily.slice(0, forecast_days);
+    // make the response array the same length as the forecastDays
+    responseJson.daily = responseJson.daily.slice(0, forecastDays);
 
     responseJson = {
       lat: responseJson.lat,
@@ -63,6 +63,8 @@ export default async function get_weather_forecast({
       timezone: responseJson.timezone,
       timezone_offset: responseJson.timezone_offset,
       location: location,
+      forecastDays: forecastDays,
+      countryCode: countryCode,
       daily: responseJson.daily.map((day: any, index: number) => ({
         dayIndex: index,
         temperatureMain: day.temp.day,

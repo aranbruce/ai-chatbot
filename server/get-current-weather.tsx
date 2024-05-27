@@ -1,6 +1,6 @@
 "use server";
 
-import get_coordinates from "./get-coordinates";
+import getCoordinates from "./get-coordinates";
 
 interface Request {
   location: string;
@@ -8,7 +8,7 @@ interface Request {
   units?: "metric" | "imperial" | undefined;
 }
 
-export default async function get_current_weather({
+export default async function getCurrentWeather({
   location,
   countryCode,
   units,
@@ -21,7 +21,7 @@ export default async function get_current_weather({
   }
 
   // Get the coordinates from the location
-  const { latitude, longitude } = await get_coordinates({
+  const { latitude, longitude } = await getCoordinates({
     location,
     countryCode,
   });
@@ -48,6 +48,7 @@ export default async function get_current_weather({
 
     responseJson = {
       location: location,
+      countryCode: countryCode,
       currentHour: new Date().getHours(),
       currentDate: new Date().getTime(),
       units: units,

@@ -11,7 +11,7 @@ interface Request {
 
 type categoryOptions = "hotels" | "restaurants" | "attractions" | "geos";
 
-export default async function search_for_locations({
+export default async function searchForLocations({
   query,
   city,
   category,

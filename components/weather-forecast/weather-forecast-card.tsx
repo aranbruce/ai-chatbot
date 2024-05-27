@@ -7,6 +7,8 @@ import type { ClientMessage } from "../../server/actions";
 
 export interface WeatherForecastProps {
   location: string;
+  forecastDays: number;
+  countryCode?: string;
   daily: WeatherForecastDayProps[];
 }
 
@@ -25,7 +27,7 @@ export default function WeatherForecastCard({
   weatherForecast: WeatherForecastProps;
 }) {
   const [, setMessages] = useUIState();
-  const { getCurrentWeather } = useActions();
+  const { getCurrentWeatherUI } = useActions();
 
   // take the day and return the day of the week based on today"s date. If the day is 0, it will return today"s day of the week
   const getDayOfWeek = (day: number) => {
@@ -39,10 +41,11 @@ export default function WeatherForecastCard({
 
   const handleGetCurrentWeather = async (
     location: string,
+    countryCode: string | undefined,
     units: "metric" | "imperial",
   ) => {
     console.log("Getting current weather");
-    const response = await getCurrentWeather(location, units);
+    const response = await getCurrentWeatherUI(location, countryCode, units);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
@@ -50,7 +53,11 @@ export default function WeatherForecastCard({
     <>
       <div className="flex w-full flex-col items-center gap-2">
         <h5 className="w-full text-center text-xs font-medium text-zinc-400">
-          {weatherForecast.daily.length} Day Weather Forecast
+          {weatherForecast.forecastDays} Day Weather Forecast for{" "}
+          {weatherForecast.location}
+          {weatherForecast.countryCode
+            ? `, ${weatherForecast.countryCode}`
+            : ""}
         </h5>
         <div className="flex w-full flex-col gap-4 rounded-lg border border-zinc-200 bg-blue-400 p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <h4 className="text-xl font-medium text-white">
@@ -88,6 +95,7 @@ export default function WeatherForecastCard({
           onClick={() =>
             handleGetCurrentWeather(
               weatherForecast.location,
+              weatherForecast.countryCode,
               weatherForecast.daily[0].units,
             )
           }

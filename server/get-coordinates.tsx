@@ -5,26 +5,29 @@ interface Request {
   countryCode?: string;
 }
 
-export default async function get_coordinates({
+export default async function getCoordinates({
   location,
   countryCode,
 }: Request) {
   "use server";
   try {
     console.log("Request received for get-coordinates action");
-    console.log(
-      `Requesting coordinates for ${location}: http://api.openweathermap.org/geo/1.0/direct?q=${location},${countryCode}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`,
-    );
-    const response = await fetch(
+
+    const url = new URL(
       `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Accept-Encoding": "gzip",
-        },
-      },
     );
+
+    if (countryCode) {
+      url.searchParams.append("country", countryCode);
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Accept-Encoding": "gzip",
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
