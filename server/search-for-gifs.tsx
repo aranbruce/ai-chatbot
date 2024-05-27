@@ -3,17 +3,20 @@
 interface Request {
   query: string;
   limit?: number;
+  offset?: number;
   rating?: string;
 }
 
 export default async function search_for_gifs({
   query,
-  limit = 1,
+  limit = 5,
+  offset,
   rating,
 }: Request) {
   "use server";
   console.log("Request received for search_for_gifs action");
   console.log("Query:", query);
+  console.log("Offset:", offset);
   console.log("Limit:", limit);
 
   // call giphy API
@@ -25,6 +28,9 @@ export default async function search_for_gifs({
   }
   if (rating) {
     url.searchParams.append("rating", rating);
+  }
+  if (offset) {
+    url.searchParams.append("offset", offset.toString());
   }
 
   const headers = {
@@ -41,7 +47,6 @@ export default async function search_for_gifs({
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("Giphy API response:", data.data);
     return data.data;
   } catch (error) {
     console.error("Error:", error);

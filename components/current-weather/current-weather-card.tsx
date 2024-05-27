@@ -13,6 +13,7 @@ type WeatherProps = {
 
 export type CurrentWeatherProps = {
   location: string;
+  countryCode: string;
   units: "metric" | "imperial";
   currentHour: number;
   currentDate: Date;
@@ -27,22 +28,29 @@ export default function CurrentWeatherCard({
 }) {
   const [, setMessages] = useUIState();
 
-  const { getWeatherForecast, getCurrentWeather } = useActions();
+  const { getWeatherForecastUI, getCurrentWeatherUI } = useActions();
 
   const handleGetWeatherForecast = async (
     location: string,
-    forecast_days: number,
+    forecastDays: number,
+    countryCode: string | undefined,
     units: "metric" | "imperial" | undefined,
   ) => {
-    const response = await getWeatherForecast(location, forecast_days, units);
+    const response = await getWeatherForecastUI(
+      location,
+      forecastDays,
+      countryCode,
+      units,
+    );
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
   const handleGetCurrentWeather = async (
     location: string,
-    units: "metric" | "imperial",
+    countryCode: string | undefined,
+    units: "metric" | "imperial" | undefined,
   ) => {
-    const response = await getCurrentWeather(location, units);
+    const response = await getCurrentWeatherUI(location, countryCode, units);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
 
@@ -51,6 +59,7 @@ export default function CurrentWeatherCard({
       <div className="flex w-full flex-col items-center gap-2">
         <h5 className="text-xs font-medium text-zinc-400">
           Weather Forecast: {currentWeather.location}
+          {currentWeather.countryCode ? `, ${currentWeather.countryCode}` : ""}
         </h5>
         <div className="flex w-full flex-col items-start gap-4 rounded-lg bg-blue-400 p-3 text-white shadow-md md:p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-col gap-1">
@@ -111,6 +120,7 @@ export default function CurrentWeatherCard({
             handleGetWeatherForecast(
               currentWeather.location,
               3,
+              currentWeather.countryCode,
               currentWeather.units,
             )
           }
@@ -142,6 +152,7 @@ export default function CurrentWeatherCard({
             handleGetWeatherForecast(
               currentWeather.location,
               5,
+              currentWeather.countryCode,
               currentWeather.units,
             )
           }
@@ -172,6 +183,7 @@ export default function CurrentWeatherCard({
           onClick={() =>
             handleGetCurrentWeather(
               currentWeather.location === "New York" ? "London" : "New York",
+              currentWeather.countryCode === "US" ? "GB" : "US",
               currentWeather.units,
             )
           }

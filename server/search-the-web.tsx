@@ -4,6 +4,7 @@ interface Request {
   freshness?: freshnessOptions;
   units?: "metric" | "imperial";
   count?: number;
+  offset?: number;
 }
 
 type countryOptions =
@@ -55,12 +56,13 @@ type freshnessOptions =
   | "past-year"
   | "py";
 
-export default async function search_the_web({
+export default async function searchTheWeb({
   query,
   country,
   freshness,
   units,
   count = 5,
+  offset,
 }: Request) {
   "use server";
   console.log("Request received for search_the_web action");
@@ -79,7 +81,7 @@ export default async function search_the_web({
 
   try {
     const url = new URL(
-      `https://api.search.brave.com/res/v1/web/search?q=${query}&text_decorations=0&count=${count}`
+      `https://api.search.brave.com/res/v1/web/search?q=${query}&text_decorations=0&count=${count}`,
     );
     // add optional parameters
     if (country) {
@@ -90,6 +92,9 @@ export default async function search_the_web({
     }
     if (units) {
       url.searchParams.append("units", units);
+    }
+    if (offset) {
+      url.searchParams.append("offset", offset.toString());
     }
 
     const headers = {

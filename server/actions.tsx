@@ -17,15 +17,15 @@ import { z } from "zod";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 
-import get_coordinates from "@/server/get-coordinates";
-import get_current_weather from "@/server/get-current-weather";
-import get_weather_forecast from "@/server/get-weather-forecast";
-import search_the_web from "@/server/search-the-web";
-import search_for_images from "./search-for-images";
-import search_the_news from "@/server/search-the-news";
-import search_for_locations from "@/server/search-for-locations";
-import search_for_movies from "@/server/search-for-movies";
-import search_for_gifs from "@/server/search-for-gifs";
+import getCoordinates from "@/server/get-coordinates";
+import getCurrentWeather from "@/server/get-current-weather";
+import getWeatherForecast from "@/server/get-weather-forecast";
+import searchTheWeb from "@/server/search-the-web";
+import searchForImages from "./search-for-images";
+import searchTheNews from "@/server/search-the-news";
+import searchForLocations from "@/server/search-for-locations";
+import searchForMovies from "@/server/search-for-movies";
+import searchForGifs from "@/server/search-for-gifs";
 
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
 import CurrentWeatherCardSkeleton from "@/components/current-weather/current-weather-card-skeleton";
@@ -40,8 +40,12 @@ import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
 import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
-import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
+import ExampleMessageCardGroup, {
+  ExampleMessageCardGroupProps,
+} from "@/components/example-message/example-message-group";
 import ExampleMessageCardGroupSkeleton from "@/components/example-message/example-message-group-skeleton";
+import { count } from "console";
+import { off } from "process";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -152,7 +156,7 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await get_coordinates({ location, countryCode });
+            const response = await getCoordinates({ location, countryCode });
             history.done([
               ...history.get(),
               {
@@ -205,6 +209,18 @@ async function continueConversation(
                 ],
               },
               {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_coordinates",
+                    result: { error: error },
+                    isError: true,
+                  },
+                ],
+              },
+              {
                 role: "assistant",
                 content: `Sorry, there was an error getting the coordinates for ${location}`,
               },
@@ -223,13 +239,13 @@ async function continueConversation(
           location: z
             .string()
             .describe(
-              "The location to get the current weather for, excluding the country",
+              "The location to get the current weather for, excluding the country. This can also be inferred from the user's location if available.",
             ),
           countryCode: z
             .string()
             .optional()
             .describe(
-              "The country code of the location to get the current weather for. This should be an ISO 3166 country code",
+              "The country code of the location to get the current weather for. This should be an ISO 3166 country code. This can also be inferred from the user's location if available.",
             ),
           units: z
             .enum(["metric", "imperial"])
@@ -247,7 +263,7 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await get_current_weather({
+            const response = await getCurrentWeather({
               location,
               countryCode,
               units,
@@ -306,6 +322,18 @@ async function continueConversation(
                 ],
               },
               {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_current_weather",
+                    result: { error: error },
+                    isError: true,
+                  },
+                ],
+              },
+              {
                 role: "assistant",
                 content: `Sorry, there was an error getting the current weather for ${location}`,
               },
@@ -324,9 +352,9 @@ async function continueConversation(
           location: z
             .string()
             .describe(
-              "The location to get the weather forecast for, excluding the country",
+              "The location to get the weather forecast for, excluding the country. This can also be inferred from the user's location if available.",
             ),
-          forecast_days: z
+          forecastDays: z
             .number()
             .min(1)
             .max(7)
@@ -348,7 +376,7 @@ async function continueConversation(
         }),
         generate: async function* ({
           location,
-          forecast_days,
+          forecastDays,
           countryCode,
           units,
         }) {
@@ -360,9 +388,9 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await get_weather_forecast({
+            const response = await getWeatherForecast({
               location,
-              forecast_days,
+              forecastDays,
               countryCode,
               units,
             });
@@ -377,7 +405,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_weather_forecast",
-                    args: { location, forecast_days, countryCode, units },
+                    args: { location, forecastDays, countryCode, units },
                   },
                 ],
               },
@@ -391,7 +419,8 @@ async function continueConversation(
                     result: {
                       ...response,
                       location,
-                      forecast_days,
+                      forecastDays,
+                      countryCode,
                       units,
                     },
                   },
@@ -399,13 +428,13 @@ async function continueConversation(
               },
               {
                 role: "assistant",
-                content: `Here's the ${forecast_days} day forecast for ${location}: ${JSON.stringify(response)}`,
+                content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
               },
             ]);
 
             return (
               <>
-                Here's the {forecast_days} day forecast for {location}:
+                Here's the {forecastDays} day forecast for {location}:
                 <WeatherForecastCard weatherForecast={response} />
               </>
             );
@@ -419,10 +448,23 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "get_weather_forecast",
-                    args: { location, forecast_days, units },
+                    args: { location, forecastDays, units },
                   },
                 ],
               },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "get_weather_forecast",
+                    result: { error: error },
+                    isError: true,
+                  },
+                ],
+              },
+
               {
                 role: "assistant",
                 content: `Sorry, there was an error getting the weather forecast for ${location}`,
@@ -504,6 +546,14 @@ async function continueConversation(
             .number()
             .optional()
             .describe("The number of search results to return"),
+          offset: z
+            .number()
+            .min(1)
+            .max(20)
+            .optional()
+            .describe(
+              "The number of pages of search results to skip. The number of results per page is equal to the count parameter.",
+            ),
         }),
         generate: async function* ({
           query,
@@ -511,6 +561,7 @@ async function continueConversation(
           freshness,
           units,
           count,
+          offset,
         }) {
           const toolCallId = uuidv4();
           yield (
@@ -520,12 +571,13 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await search_the_web({
+            const response = await searchTheWeb({
               query,
               country,
               freshness,
               units,
               count,
+              offset,
             });
 
             history.done([
@@ -537,7 +589,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_the_web",
-                    args: { query, country, freshness, units, count },
+                    args: { query, country, freshness, units, count, offset },
                   },
                 ],
               },
@@ -555,6 +607,7 @@ async function continueConversation(
                       freshness,
                       units,
                       count,
+                      offset,
                     },
                   },
                 ],
@@ -580,7 +633,19 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_the_web",
-                    args: { query, country, freshness, units, count },
+                    args: { query, country, freshness, units, count, offset },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_web",
+                    result: { error: error },
+                    isError: true,
                   },
                 ],
               },
@@ -645,6 +710,8 @@ async function continueConversation(
             ),
           count: z
             .number()
+            .min(1)
+            .max(100)
             .optional()
             .describe("The number of search results to return"),
         }),
@@ -652,7 +719,7 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield <>Searching for images of {query}...</>;
           try {
-            const response = await search_for_images({
+            const response = await searchForImages({
               query,
               country,
               count,
@@ -722,6 +789,18 @@ async function continueConversation(
                     toolCallId: toolCallId,
                     toolName: "search_for_images",
                     args: { query, country, count },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_images",
+                    result: { error: error },
+                    isError: true,
                   },
                 ],
               },
@@ -796,8 +875,29 @@ async function continueConversation(
             .describe(
               "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
             ),
+          count: z
+            .number()
+            .min(1)
+            .max(100)
+            .optional()
+            .describe("The number of search results to return"),
+          offset: z
+            .number()
+            .min(1)
+            .max(100)
+            .optional()
+            .describe(
+              "The number of pages of search results to skip. The number of results per page is equal to the count parameter.",
+            ),
         }),
-        generate: async function* ({ query, country, freshness, units }) {
+        generate: async function* ({
+          query,
+          country,
+          freshness,
+          units,
+          count,
+          offset,
+        }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -806,12 +906,13 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await search_the_news({
+            const response = await searchTheNews({
               query,
               country,
               freshness,
               units,
-              count: 10,
+              count,
+              offset,
             });
             history.done([
               ...history.get(),
@@ -822,7 +923,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_the_news",
-                    args: { query, country, freshness, units },
+                    args: { query, country, freshness, units, count, offset },
                   },
                 ],
               },
@@ -839,6 +940,8 @@ async function continueConversation(
                       country,
                       freshness,
                       units,
+                      count,
+                      offset,
                     },
                   },
                 ],
@@ -864,7 +967,19 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_the_news",
-                    args: { query, country, freshness, units },
+                    args: { query, country, freshness, units, count, offset },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_the_news",
+                    result: { error: error },
+                    isError: true,
                   },
                 ],
               },
@@ -912,7 +1027,7 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await search_for_locations({
+            const response = await searchForLocations({
               query,
               city,
               category,
@@ -977,6 +1092,18 @@ async function continueConversation(
                 ],
               },
               {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_locations",
+                    result: { error: error },
+                    isError: true,
+                  },
+                ],
+              },
+              {
                 role: "assistant",
                 content: `Sorry, there was an error searching for locations related to ${query} in ${city}`,
               },
@@ -1032,7 +1159,7 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await search_for_movies({
+            const response = await searchForMovies({
               input,
               minimumIMDBRating,
               minimumReleaseYear,
@@ -1131,6 +1258,18 @@ async function continueConversation(
                 ],
               },
               {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_movies",
+                    result: { error: error },
+                    isError: true,
+                  },
+                ],
+              },
+              {
                 role: "assistant",
                 content: `Sorry, there was an error searching for movies related to ${input}`,
               },
@@ -1151,6 +1290,12 @@ async function continueConversation(
             .string()
             .describe("The search query or topic to search for gifs on"),
           limit: z.number().optional().describe("The number of gifs to return"),
+          offset: z
+            .number()
+            .optional()
+            .describe(
+              "The offset of the gifs to return. Specifies the starting position of the results. Can be used to return the next set of gifs.",
+            ),
           rating: z
             .enum(["g", "pg", "pg-13", "r"])
             .optional()
@@ -1158,7 +1303,7 @@ async function continueConversation(
               "The rating of the gifs to return. Can be 'g', 'pg', 'pg-13', or 'r'.",
             ),
         }),
-        generate: async function* ({ query, limit, rating }) {
+        generate: async function* ({ query, limit, offset, rating }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -1167,9 +1312,10 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await search_for_gifs({
+            const response = await searchForGifs({
               query,
               limit,
+              offset,
               rating,
             });
 
@@ -1182,7 +1328,7 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_for_gifs",
-                    args: { query, limit, rating },
+                    args: { query, limit, offset, rating },
                   },
                 ],
               },
@@ -1197,6 +1343,7 @@ async function continueConversation(
                       ...response,
                       query,
                       limit,
+                      offset,
                       rating,
                     },
                   },
@@ -1239,7 +1386,19 @@ async function continueConversation(
                     type: "tool-call",
                     toolCallId: toolCallId,
                     toolName: "search_for_gifs",
-                    args: { query, limit, rating },
+                    args: { query, limit, offset, rating },
+                  },
+                ],
+              },
+              {
+                role: "tool",
+                content: [
+                  {
+                    type: "tool-result",
+                    toolCallId: toolCallId,
+                    toolName: "search_for_gifs",
+                    result: { error: error },
+                    isError: true,
                   },
                 ],
               },
@@ -1287,7 +1446,12 @@ async function createExampleMessages(
         - Search for locations or places to visit
         - Get movies from a database based on an input
         - Search for images on the web for a given topic or query
-        ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}. Try to make the example messages relevant to their location` : ""}`,
+        ${
+          userLocation
+            ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}. Try to make the example messages relevant to their location.
+        Try to use the name of location in the example messages rather than the coordinates`
+            : ""
+        }`,
 
     prompt:
       "Generate 4 example messages to inspire the user to start a conversation with the LLM assistant. Select randomly for the capabilities of the LLM assistant.",
@@ -1308,21 +1472,23 @@ async function createExampleMessages(
     }),
   });
 
+  const result = exampleMessages.object.examples.map((example, index) => ({
+    ...example,
+    index,
+    modelVariable,
+  }));
+
   exampleMessagesUI.done(
     <>
-      <ExampleMessageCardGroup
-        exampleMessages={exampleMessages.object.examples.map(
-          (example: any) => ({ ...example, modelVariable }),
-        )}
-      />
+      <ExampleMessageCardGroup exampleMessages={result} />
     </>,
   );
   return exampleMessagesUI.value;
 }
 
-async function getWeatherForecast(
+async function getWeatherForecastUI(
   location: string,
-  forecast_days: number,
+  forecastDays: number,
   countryCode?: string,
   units?: "metric" | "imperial",
 ) {
@@ -1339,9 +1505,9 @@ async function getWeatherForecast(
   );
   try {
     (async () => {
-      const response = await get_weather_forecast({
+      const response = await getWeatherForecast({
         location,
-        forecast_days,
+        forecastDays,
         countryCode,
         units,
       });
@@ -1350,7 +1516,7 @@ async function getWeatherForecast(
         ...history.get(),
         {
           role: "user",
-          content: `Get the weather forecast for ${location} for ${forecast_days} days`,
+          content: `Get the weather forecast for ${location} for ${forecastDays} days`,
         },
         {
           role: "assistant",
@@ -1359,7 +1525,7 @@ async function getWeatherForecast(
               type: "tool-call",
               toolCallId: toolCallId,
               toolName: "get_weather_forecast",
-              args: { location, forecast_days, countryCode, units },
+              args: { location, forecastDays, countryCode, units },
             },
           ],
         },
@@ -1373,7 +1539,7 @@ async function getWeatherForecast(
               result: {
                 ...response,
                 location,
-                forecast_days,
+                forecastDays,
                 units,
               },
             },
@@ -1381,12 +1547,12 @@ async function getWeatherForecast(
         },
         {
           role: "assistant",
-          content: `Here's the ${forecast_days} day forecast for ${location}: ${JSON.stringify(response)}`,
+          content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
         },
       ]);
       uiStream.done(
         <>
-          Here's the {forecast_days} day forecast for {location}:
+          Here's the {forecastDays} day forecast for {location}:
           <WeatherForecastCard weatherForecast={response} />
         </>,
       );
@@ -1401,7 +1567,7 @@ async function getWeatherForecast(
             type: "tool-call",
             toolCallId: toolCallId,
             toolName: "get_weather_forecast",
-            args: { location, forecast_days, countryCode, units },
+            args: { location, forecastDays, countryCode, units },
           },
         ],
       },
@@ -1423,7 +1589,7 @@ async function getWeatherForecast(
   };
 }
 
-async function getCurrentWeather(
+async function getCurrentWeatherUI(
   location: string,
   countryCode?: string,
   units?: "metric" | "imperial",
@@ -1445,7 +1611,7 @@ async function getCurrentWeather(
   );
   try {
     (async () => {
-      const response = await get_current_weather({
+      const response = await getCurrentWeather({
         location,
         countryCode,
         units,
@@ -1515,9 +1681,6 @@ async function getCurrentWeather(
         content: `Sorry, there was an error getting the current weather for ${location}`,
       },
     ]);
-    uiStream.done(
-      <>Sorry, there was an error getting the current weather for {location}</>,
-    );
   }
 
   return {
@@ -1531,8 +1694,8 @@ export const AI = createAI<ServerMessage[], ClientMessage[]>({
   actions: {
     continueConversation,
     createExampleMessages,
-    getWeatherForecast,
-    getCurrentWeather,
+    getWeatherForecastUI,
+    getCurrentWeatherUI,
   },
   initialAIState: [],
   initialUIState: [],

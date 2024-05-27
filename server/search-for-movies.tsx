@@ -21,7 +21,7 @@ interface Request {
   limit?: number;
 }
 
-export default async function search_for_movies({
+export default async function searchFormMovies({
   input,
   minimumIMDBRating,
   minimumReleaseYear,

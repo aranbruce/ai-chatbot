@@ -43,7 +43,7 @@ type countryOptions =
   | "GB"
   | "US";
 
-export default async function search_for_images({
+export default async function searchForImages({
   query,
   country,
   count = 5,
