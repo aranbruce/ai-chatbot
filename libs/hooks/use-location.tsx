@@ -42,6 +42,7 @@ export default function useLocation() {
           break;
         case error.TIMEOUT:
           setError(new Error("The request to get user location timed out."));
+          console.log("The request to get user location timed out.");
           setIsLoaded(true);
           break;
         default:
