@@ -2,10 +2,10 @@ import LocationCardSkeleton from "./location-card-skeleton";
 
 export default function LocationCardGroupSkeleton() {
   return (
-    <div className="flex flex-col space-y-4">
-      {[...Array(3)].map((_, index) => (
+    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+      {[...Array(2)].map((_, index) => (
         <LocationCardSkeleton key={index} />
       ))}
     </div>
   );
-};
+}
