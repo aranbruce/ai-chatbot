@@ -5,7 +5,7 @@ import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 
-import { generateObject } from "ai";
+import { streamObject } from "ai";
 import {
   createAI,
   createStreamableUI,
@@ -40,12 +40,7 @@ import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
 import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
-import ExampleMessageCardGroup, {
-  ExampleMessageCardGroupProps,
-} from "@/components/example-message/example-message-group";
-import ExampleMessageCardGroupSkeleton from "@/components/example-message/example-message-group-skeleton";
-import { count } from "console";
-import { off } from "process";
+import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -1431,14 +1426,16 @@ async function createExampleMessages(
 ) {
   "use server";
   const exampleMessagesUI = createStreamableUI(
-    <ExampleMessageCardGroupSkeleton />,
+    <ExampleMessageCardGroup exampleMessages={[]} />,
   );
-  const exampleMessages = await generateObject({
-    model: openai("gpt-4o"),
-    system: `
+
+  (async () => {
+    const { partialObjectStream } = await streamObject({
+      model: openai("gpt-4-turbo"),
+      system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
-        The LLM assistant, Pal has the following capabilities:
-        - Display fun or entertaining gifs
+        The LLM assistant has the following capabilities:
+        - Display multiple fun or entertaining gifs
         - Get the current weather for a location
         - Get the weather forecast for a location
         - Search the web for information on a given topic or for a specific query
@@ -1452,37 +1449,46 @@ async function createExampleMessages(
         Try to use the name of location in the example messages rather than the coordinates`
             : ""
         }`,
+      prompt:
+        "Generate 4 example messages to inspire the user to start a conversation with the LLM assistant. Select randomly for the capabilities of the LLM assistant.",
+      temperature: 1,
+      schema: z.object({
+        examples: z.array(
+          z.object({
+            heading: z
+              .string()
+              .describe("A short heading for the example message"),
+            subheading: z
+              .string()
+              .describe(
+                "A short description of the example message. This is the message that will be sent to the LLM. This should be 12-15 words long.",
+              ),
+          }),
+        ),
+      }),
+    });
 
-    prompt:
-      "Generate 4 example messages to inspire the user to start a conversation with the LLM assistant. Select randomly for the capabilities of the LLM assistant.",
-    temperature: 1,
-    schema: z.object({
-      examples: z.array(
-        z.object({
-          heading: z
-            .string()
-            .describe("A short heading for the example message"),
-          subheading: z
-            .string()
-            .describe(
-              "A short description of the example message. This is the message that will be sent to the LLM",
-            ),
-        }),
-      ),
-    }),
-  });
+    for await (const partialObject of partialObjectStream) {
+      const examples = partialObject.examples;
+      // add the model variable to each example
+      if (examples !== undefined) {
+        const result = examples.map((example, index) => ({
+          ...example,
+          index,
+          modelVariable,
+        }));
 
-  const result = exampleMessages.object.examples.map((example, index) => ({
-    ...example,
-    index,
-    modelVariable,
-  }));
+        // check if examples is array and if it is display the ExampleMessageCardGroup
+        if (Array.isArray(result)) {
+          exampleMessagesUI.update(
+            <ExampleMessageCardGroup exampleMessages={result} />,
+          );
+        }
+      }
+    }
 
-  exampleMessagesUI.done(
-    <>
-      <ExampleMessageCardGroup exampleMessages={result} />
-    </>,
-  );
+    exampleMessagesUI.done();
+  })();
   return exampleMessagesUI.value;
 }
 
