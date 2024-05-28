@@ -122,6 +122,13 @@ async function continueConversation(
         return <MarkdownContainer children={content} />;
       } catch (error) {
         console.log("error: ", error);
+        history.done([
+          ...history.get(),
+          {
+            role: "assistant",
+            content: `Sorry, looks like something went wrong`,
+          },
+        ]);
         return <>Sorry, looks like something went wrong</>;
       }
     },
