@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useActions } from "ai/rsc";
 
 import Select, { SelectProps } from "./select";
-import ExampleMessageCardGroupSkeleton from "./example-message/example-message-group-skeleton";
+import ExampleMessageCardGroup from "./example-message/example-message-group";
 
 interface EmptyScreenProps {
   SelectProps: SelectProps;
@@ -65,7 +65,11 @@ export default function EmptyScreen({
           </p>
         </div>
       </div>
-      {!examplesUI ? <ExampleMessageCardGroupSkeleton /> : examplesUI}
+      {!examplesUI ? (
+        <ExampleMessageCardGroup exampleMessages={[]} />
+      ) : (
+        examplesUI
+      )}
     </div>
   );
 }
