@@ -83,7 +83,6 @@ export default function Chat() {
         role: "user",
       },
     ]);
-    // Submit and get response message
     const response = await continueConversation(
       message,
       modelVariable,
