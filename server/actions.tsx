@@ -1438,7 +1438,7 @@ async function createExampleMessages(
 
   (async () => {
     const { partialObjectStream } = await streamObject({
-      model: openai("gpt-4-turbo"),
+      model: openai("gpt-4o"),
       system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
         The LLM assistant has the following capabilities:

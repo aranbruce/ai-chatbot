@@ -8,11 +8,11 @@ interface MessageProps {
   data?: any;
 }
 
-export default function MessageCard({ id, role, content, data }: MessageProps) {
-  return role === "system" ? null : (
+export default function MessageCard({ id, role, content }: MessageProps) {
+  return (
     <div
       key={id}
-      className="messages flex flex-row items-start gap-3 whitespace-pre-wrap"
+      className="animate-message_appear flex flex-row items-start gap-3 whitespace-pre-wrap opacity-0"
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (
