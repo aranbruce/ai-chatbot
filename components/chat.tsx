@@ -38,6 +38,10 @@ const modelVariableOptions = [
     label: "Mistral Large",
   },
   {
+    value: "mistral-small-latest",
+    label: "Mistral Small",
+  },
+  {
     value: "claude-3-opus-20240229",
     label: "Claude 3 Opus",
   },
