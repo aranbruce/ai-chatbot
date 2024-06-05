@@ -5,10 +5,11 @@ import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 
-import { streamObject } from "ai";
+import { CoreMessage, streamObject } from "ai";
 import {
   createAI,
   createStreamableUI,
+  getAIState,
   getMutableAIState,
   streamUI,
 } from "ai/rsc";
@@ -47,34 +48,42 @@ const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export interface ServerMessage {
-  role: "user" | "assistant";
-  content: Array<ServerMessageContent>;
-}
-
-interface ServerMessageContent {
-  type: "text" | "image";
-  text?: string;
-  image?: ArrayBuffer | Uint8Array | Buffer | URL;
-}
-
 export interface ClientMessage {
   id: string;
   role: "user" | "assistant";
   display: React.ReactNode;
+  model: string;
 }
+
+export type AIState = {
+  currentModelVariable: string;
+  messages: CoreMessage[];
+};
+
+export type UIState = ClientMessage[];
 
 async function continueConversation(
   message: string,
-  modelVariable: string,
   userLocation?: { latitude: number; longitude: number },
 ): Promise<ClientMessage> {
   "use server";
 
-  const history = getMutableAIState();
-  history.update([...history.get(), { role: "user", content: message }]);
+  const aiState = getMutableAIState<typeof AI>();
 
-  let model: any = null;
+  aiState.update({
+    ...aiState.get(),
+    messages: [
+      ...aiState.get().messages,
+      {
+        role: "user",
+        content: message,
+      },
+    ],
+  });
+
+  const modelVariable = aiState.get().currentModelVariable;
+  let model: any;
+
   if (!modelVariable) {
     throw new Error("MODEL environment variable is not set");
   } else if (modelVariable.startsWith("gpt-")) {
@@ -110,25 +119,31 @@ async function continueConversation(
       Do not try to use any other tools that are not mentioned here.
       If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
       ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}` : ""}`,
-    messages: history.get(),
+    messages: aiState.get().messages,
     text: ({ content, done }) => {
       try {
         if (done) {
-          history.done((messages: ServerMessage[]) => [
-            ...messages,
-            { role: "assistant", content },
-          ]);
+          aiState.done({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              { role: "assistant", content },
+            ],
+          });
         }
         return <MarkdownContainer children={content} />;
       } catch (error) {
         console.log("error: ", error);
-        history.done([
-          ...history.get(),
-          {
-            role: "assistant",
-            content: `Sorry, looks like something went wrong`,
-          },
-        ]);
+        aiState.done({
+          ...aiState.get(),
+          messages: [
+            ...aiState.get().messages,
+            {
+              role: "assistant",
+              content: `Sorry, looks like something went wrong`,
+            },
+          ],
+        });
         return <>Sorry, looks like something went wrong</>;
       }
     },
@@ -159,37 +174,40 @@ async function continueConversation(
           );
           try {
             const response = await getCoordinates({ location, countryCode });
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "get_coordinates",
-                    args: { location, countryCode },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_coordinates",
-                    result: response,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `The coordinates for ${location} are: ${JSON.stringify(
-                  response,
-                )}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "get_coordinates",
+                      args: { location, countryCode },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "get_coordinates",
+                      result: response,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `The coordinates for ${location} are: ${JSON.stringify(
+                    response,
+                  )}`,
+                },
+              ],
+            });
             return (
               <>
                 The coordinates for {location} are:{" "}
@@ -197,36 +215,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "get_coordinates",
-                    args: { location, countryCode },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_coordinates",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error getting the coordinates for ${location}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "get_coordinates",
+                      args: { location, countryCode },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "get_coordinates",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error getting the coordinates for ${location}`,
+                },
+              ],
+            });
             return (
               <>
                 {`Sorry, there was an error getting the coordinates for ${location}`}
@@ -270,39 +291,42 @@ async function continueConversation(
               countryCode,
               units,
             });
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "get_current_weather",
-                    args: { location, countryCode, units },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_current_weather",
-                    result: {
-                      ...response,
-                      location,
-                      units,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "get_current_weather",
+                      args: { location, countryCode, units },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "get_current_weather",
+                      result: {
+                        ...response,
+                        location,
+                        units,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here's the current weather for {location}:
@@ -310,36 +334,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "get_current_weather",
-                    args: { location, countryCode, units },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_current_weather",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error getting the current weather for ${location}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "get_current_weather",
+                      args: { location, countryCode, units },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "get_current_weather",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error getting the current weather for ${location}`,
+                },
+              ],
+            });
             return (
               <>
                 {`Sorry, there was an error getting the current weather for ${location}`}
@@ -398,42 +425,44 @@ async function continueConversation(
             });
             console.log("response: ", response);
 
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "get_weather_forecast",
-                    args: { location, forecastDays, countryCode, units },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_weather_forecast",
-                    result: {
-                      ...response,
-                      location,
-                      forecastDays,
-                      countryCode,
-                      units,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "get_weather_forecast",
+                      args: { location, forecastDays, countryCode, units },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
-              },
-            ]);
-
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "get_weather_forecast",
+                      result: {
+                        ...response,
+                        location,
+                        forecastDays,
+                        countryCode,
+                        units,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here's the {forecastDays} day forecast for {location}:
@@ -441,37 +470,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "get_weather_forecast",
-                    args: { location, forecastDays, units },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "get_weather_forecast",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-
-              {
-                role: "assistant",
-                content: `Sorry, there was an error getting the weather forecast for ${location}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "get_weather_forecast",
+                      args: { location, forecastDays, units },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "get_weather_forecast",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error getting the weather forecast for ${location}`,
+                },
+              ],
+            });
             return (
               <>
                 Sorry, there was an error getting the weather forecast for{" "}
@@ -582,43 +613,46 @@ async function continueConversation(
               offset,
             });
 
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_web",
-                    args: { query, country, freshness, units, count, offset },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_web",
-                    result: {
-                      ...response,
-                      query,
-                      country,
-                      freshness,
-                      units,
-                      count,
-                      offset,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_web",
+                      args: { query, country, freshness, units, count, offset },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_web",
+                      result: {
+                        ...response,
+                        query,
+                        country,
+                        freshness,
+                        units,
+                        count,
+                        offset,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here are the search results for {query}:
@@ -626,36 +660,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_web",
-                    args: { query, country, freshness, units, count, offset },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_web",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error searching the web for ${query}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_web",
+                      args: { query, country, freshness, units, count, offset },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_web",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error searching the web for ${query}`,
+                },
+              ],
+            });
             return <>Sorry, there was an error searching the web for {query}</>;
           }
         },
@@ -727,40 +764,43 @@ async function continueConversation(
               count,
             });
 
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_images",
-                    args: { query, country, count },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_form_images",
-                    result: {
-                      ...response,
-                      query,
-                      country,
-                      count,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_images",
+                      args: { query, country, count },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here are images of ${query}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_form_images",
+                      result: {
+                        ...response,
+                        query,
+                        country,
+                        count,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here are images of ${query}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here are images of {query}:
@@ -781,36 +821,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_images",
-                    args: { query, country, count },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_images",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error searching the web for ${query}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_images",
+                      args: { query, country, count },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_images",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error searching the web for ${query}`,
+                },
+              ],
+            });
             return <>Sorry, there was an error searching the web for {query}</>;
           }
         },
@@ -916,43 +959,46 @@ async function continueConversation(
               count,
               offset,
             });
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_news",
-                    args: { query, country, freshness, units, count, offset },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_news",
-                    result: {
-                      ...response,
-                      query,
-                      country,
-                      freshness,
-                      units,
-                      count,
-                      offset,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_news",
+                      args: { query, country, freshness, units, count, offset },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here are the latest news articles about ${query}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_news",
+                      result: {
+                        ...response,
+                        query,
+                        country,
+                        freshness,
+                        units,
+                        count,
+                        offset,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here are the latest news articles about ${query}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here are the latest news articles about {query}:
@@ -960,36 +1006,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_news",
-                    args: { query, country, freshness, units, count, offset },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_the_news",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error searching for news about ${query}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_news",
+                      args: { query, country, freshness, units, count, offset },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_the_news",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error searching for news about ${query}`,
+                },
+              ],
+            });
             return (
               <>Sorry, there was an error searching for news about {query}</>
             );
@@ -1036,41 +1085,44 @@ async function continueConversation(
               currency,
             });
 
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_locations",
-                    args: { query, city, category, currency },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_locations",
-                    result: {
-                      ...response,
-                      query,
-                      city,
-                      category,
-                      currency,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_locations",
+                      args: { query, city, category, currency },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_locations",
+                      result: {
+                        ...response,
+                        query,
+                        city,
+                        category,
+                        currency,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here are the search results for {query} in {city}:
@@ -1080,36 +1132,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_locations",
-                    args: { query, city, category, currency },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_locations",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error searching for locations related to ${query} in ${city}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_locations",
+                      args: { query, city, category, currency },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_locations",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error searching for locations related to ${query} in ${city}`,
+                },
+              ],
+            });
             return (
               <>
                 {`Sorry, there was an error searching for locations related to{" "}${query} in ${city}`}
@@ -1170,50 +1225,53 @@ async function continueConversation(
               limit,
             });
 
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_movies",
-                    args: {
-                      input,
-                      minimumIMDBRating,
-                      minimumReleaseYear,
-                      maximumReleaseYear,
-                      director,
-                      limit,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_movies",
+                      args: {
+                        input,
+                        minimumIMDBRating,
+                        minimumReleaseYear,
+                        maximumReleaseYear,
+                        director,
+                        limit,
+                      },
                     },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_movies",
-                    result: {
-                      ...response,
-                      input,
-                      minimumIMDBRating,
-                      minimumReleaseYear,
-                      maximumReleaseYear,
-                      director,
-                      limit,
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_movies",
+                      result: {
+                        ...response,
+                        input,
+                        minimumIMDBRating,
+                        minimumReleaseYear,
+                        maximumReleaseYear,
+                        director,
+                        limit,
+                      },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here are movies related to ${input}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here are movies related to ${input}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <div className="flex flex-col gap-8">
                 {Array.isArray(response) ? (
@@ -1239,43 +1297,46 @@ async function continueConversation(
               </div>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_movies",
-                    args: {
-                      input,
-                      minimumIMDBRating,
-                      minimumReleaseYear,
-                      maximumReleaseYear,
-                      director,
-                      limit,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_movies",
+                      args: {
+                        input,
+                        minimumIMDBRating,
+                        minimumReleaseYear,
+                        maximumReleaseYear,
+                        director,
+                        limit,
+                      },
                     },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_movies",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error searching for movies related to ${input}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_movies",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error searching for movies related to ${input}`,
+                },
+              ],
+            });
             return (
               <>
                 Sorry, there was an error searching for movies related to{" "}
@@ -1321,41 +1382,44 @@ async function continueConversation(
               rating,
             });
 
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_gifs",
-                    args: { query, limit, offset, rating },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_gifs",
-                    result: {
-                      ...response,
-                      query,
-                      limit,
-                      offset,
-                      rating,
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_gifs",
+                      args: { query, limit, offset, rating },
                     },
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Here are the gifs related to ${query}: ${JSON.stringify(response)}`,
-              },
-            ]);
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_gifs",
+                      result: {
+                        ...response,
+                        query,
+                        limit,
+                        offset,
+                        rating,
+                      },
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Here are the gifs related to ${query}: ${JSON.stringify(response)}`,
+                },
+              ],
+            });
             return (
               <>
                 Here are the gifs related to {query}:
@@ -1379,36 +1443,39 @@ async function continueConversation(
               </>
             );
           } catch (error) {
-            history.done([
-              ...history.get(),
-              {
-                role: "assistant",
-                content: [
-                  {
-                    type: "tool-call",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_gifs",
-                    args: { query, limit, offset, rating },
-                  },
-                ],
-              },
-              {
-                role: "tool",
-                content: [
-                  {
-                    type: "tool-result",
-                    toolCallId: toolCallId,
-                    toolName: "search_for_gifs",
-                    result: { error: error },
-                    isError: true,
-                  },
-                ],
-              },
-              {
-                role: "assistant",
-                content: `Sorry, there was an error searching for gifs related to ${query}`,
-              },
-            ]);
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  role: "assistant",
+                  content: [
+                    {
+                      type: "tool-call",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_gifs",
+                      args: { query, limit, offset, rating },
+                    },
+                  ],
+                },
+                {
+                  role: "tool",
+                  content: [
+                    {
+                      type: "tool-result",
+                      toolCallId: toolCallId,
+                      toolName: "search_for_gifs",
+                      result: { error: error },
+                      isError: true,
+                    },
+                  ],
+                },
+                {
+                  role: "assistant",
+                  content: `Sorry, there was an error searching for gifs related to ${query}`,
+                },
+              ],
+            });
             return (
               <>
                 Sorry, there was an error searching for gifs related to {query}
@@ -1420,10 +1487,13 @@ async function continueConversation(
     },
   });
 
+  console.log("currentModelVariable: ", getAIState().currentModelVariable);
+
   return {
     id: uuidv4(),
-    display: result.value,
     role: "assistant",
+    display: result.value,
+    model: getAIState().currentModelVariable,
   };
 }
 
@@ -1507,7 +1577,7 @@ async function getWeatherForecastUI(
 ) {
   "use server";
 
-  const history = getMutableAIState();
+  const aiState = getMutableAIState<typeof AI>();
   const toolCallId = uuidv4();
 
   const uiStream = createStreamableUI(
@@ -1524,13 +1594,59 @@ async function getWeatherForecastUI(
         countryCode,
         units,
       });
-
-      history.done([
-        ...history.get(),
-        {
-          role: "user",
-          content: `Get the weather forecast for ${location} for ${forecastDays} days`,
-        },
+      aiState.done({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            role: "user",
+            content: `Get the weather forecast for ${location} for ${forecastDays} days`,
+          },
+          {
+            role: "assistant",
+            content: [
+              {
+                type: "tool-call",
+                toolCallId: toolCallId,
+                toolName: "get_weather_forecast",
+                args: { location, forecastDays, countryCode, units },
+              },
+            ],
+          },
+          {
+            role: "tool",
+            content: [
+              {
+                type: "tool-result",
+                toolCallId: toolCallId,
+                toolName: "get_weather_forecast",
+                result: {
+                  ...response,
+                  location,
+                  forecastDays,
+                  units,
+                },
+              },
+            ],
+          },
+          {
+            role: "assistant",
+            content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
+          },
+        ],
+      });
+      uiStream.done(
+        <>
+          Here's the {forecastDays} day forecast for {location}:
+          <WeatherForecastCard weatherForecast={response} />
+        </>,
+      );
+    })();
+  } catch (error) {
+    aiState.done({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
         {
           role: "assistant",
           content: [
@@ -1543,52 +1659,11 @@ async function getWeatherForecastUI(
           ],
         },
         {
-          role: "tool",
-          content: [
-            {
-              type: "tool-result",
-              toolCallId: toolCallId,
-              toolName: "get_weather_forecast",
-              result: {
-                ...response,
-                location,
-                forecastDays,
-                units,
-              },
-            },
-          ],
-        },
-        {
           role: "assistant",
-          content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
+          content: `Sorry, there was an error getting the weather forecast for ${location}`,
         },
-      ]);
-      uiStream.done(
-        <>
-          Here's the {forecastDays} day forecast for {location}:
-          <WeatherForecastCard weatherForecast={response} />
-        </>,
-      );
-    })();
-  } catch (error) {
-    history.done([
-      ...history.get(),
-      {
-        role: "assistant",
-        content: [
-          {
-            type: "tool-call",
-            toolCallId: toolCallId,
-            toolName: "get_weather_forecast",
-            args: { location, forecastDays, countryCode, units },
-          },
-        ],
-      },
-      {
-        role: "assistant",
-        content: `Sorry, there was an error getting the weather forecast for ${location}`,
-      },
-    ]);
+      ],
+    });
     uiStream.done(
       <>
         Sorry, there was an error getting the weather forecast for {location}
@@ -1597,8 +1672,9 @@ async function getWeatherForecastUI(
   }
   return {
     id: uuidv4(),
-    display: uiStream.value,
     role: "assistant",
+    display: uiStream.value,
+    model: getAIState().currentModelVariable,
   };
 }
 
@@ -1613,7 +1689,7 @@ async function getCurrentWeatherUI(
     units = "metric";
   }
 
-  const history = getMutableAIState();
+  const aiState = getMutableAIState<typeof AI>();
   const toolCallId = uuidv4();
 
   const uiStream = createStreamableUI(
@@ -1629,12 +1705,60 @@ async function getCurrentWeatherUI(
         countryCode,
         units,
       });
-      history.done([
-        ...history.get(),
-        {
-          role: "user",
-          content: `Get the current weather for ${location}`,
-        },
+      aiState.done({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            role: "user",
+            content: `Get the current weather for ${location}`,
+          },
+          {
+            role: "assistant",
+            content: [
+              {
+                type: "tool-call",
+                toolCallId: toolCallId,
+                toolName: "get_current_weather",
+                args: { location, countryCode, units },
+              },
+            ],
+          },
+          {
+            role: "tool",
+            content: [
+              {
+                type: "tool-result",
+                toolCallId: toolCallId,
+                toolName: "get_current_weather",
+                result: {
+                  ...response,
+                  location,
+                  countryCode,
+                  units,
+                },
+              },
+            ],
+          },
+          {
+            role: "assistant",
+            content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
+          },
+        ],
+      });
+
+      uiStream.done(
+        <>
+          Here's the current weather for {location}:
+          <CurrentWeatherCard currentWeather={response} />
+        </>,
+      );
+    })();
+  } catch (error) {
+    aiState.done({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
         {
           role: "assistant",
           content: [
@@ -1647,69 +1771,28 @@ async function getCurrentWeatherUI(
           ],
         },
         {
-          role: "tool",
-          content: [
-            {
-              type: "tool-result",
-              toolCallId: toolCallId,
-              toolName: "get_current_weather",
-              result: {
-                ...response,
-                location,
-                countryCode,
-                units,
-              },
-            },
-          ],
-        },
-        {
           role: "assistant",
-          content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
+          content: `Sorry, there was an error getting the current weather for ${location}`,
         },
-      ]);
-
-      uiStream.done(
-        <>
-          Here's the current weather for {location}:
-          <CurrentWeatherCard currentWeather={response} />
-        </>,
-      );
-    })();
-  } catch (error) {
-    history.done([
-      ...history.get(),
-      {
-        role: "assistant",
-        content: [
-          {
-            type: "tool-call",
-            toolCallId: toolCallId,
-            toolName: "get_current_weather",
-            args: { location, countryCode, units },
-          },
-        ],
-      },
-      {
-        role: "assistant",
-        content: `Sorry, there was an error getting the current weather for ${location}`,
-      },
-    ]);
+      ],
+    });
   }
 
   return {
     id: uuidv4(),
-    display: uiStream.value,
     role: "assistant",
+    display: uiStream.value,
+    model: getAIState().currentModelVariable,
   };
 }
 
-export const AI = createAI<ServerMessage[], ClientMessage[]>({
+export const AI = createAI<AIState, UIState>({
   actions: {
     continueConversation,
     createExampleMessages,
     getWeatherForecastUI,
     getCurrentWeatherUI,
   },
-  initialAIState: [],
-  initialUIState: [],
+  initialAIState: { currentModelVariable: "gpt-4o", messages: [] } as AIState,
+  initialUIState: [] as UIState,
 });

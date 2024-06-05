@@ -1,18 +1,67 @@
 import { ReactNode } from "react";
 import MarkdownContainer from "./markdown";
+import { LanguageModel } from "ai";
 
 interface MessageProps {
   id: string;
   role: string;
   content: string | ReactNode | undefined;
-  data?: any;
+  model?: string;
 }
 
-export default function MessageCard({ id, role, content }: MessageProps) {
+const modelVariableOptions = [
+  {
+    value: "gpt-4o",
+    label: "GPT 4o",
+  },
+  {
+    value: "gpt-4-turbo",
+    label: "GPT 4 Turbo",
+  },
+  {
+    value: "gpt-3.5-turbo",
+    label: "GPT 3.5 Turbo",
+  },
+  {
+    value: "gemini-1.5-pro-latest",
+    label: "Gemini 1.5 Pro",
+  },
+  {
+    value: "gemini-1.5-flash-latest",
+    label: "Gemini 1.5 Flash",
+  },
+  {
+    value: "mistral-large-latest",
+    label: "Mistral Large",
+  },
+  {
+    value: "claude-3-opus-20240229",
+    label: "Claude 3 Opus",
+  },
+  {
+    value: "claude-3-sonnet-20240229",
+    label: "Claude 3 Sonnet",
+  },
+  {
+    value: "claude-3-haiku-20240307",
+    label: "Claude 3 Haiku",
+  },
+];
+
+export default function MessageCard({
+  id,
+  role,
+  content,
+  model,
+}: MessageProps) {
+  const modelLabel = modelVariableOptions.find(
+    (option) => option.value === model,
+  );
+
   return (
     <div
       key={id}
-      className="animate-message_appear flex flex-row items-start gap-3 whitespace-pre-wrap opacity-0"
+      className="flex animate-message_appear flex-row items-start gap-3 whitespace-pre-wrap opacity-0"
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (
@@ -36,10 +85,9 @@ export default function MessageCard({ id, role, content }: MessageProps) {
       >
         {role !== "user" && (
           <h5 className="text-md pt-1 font-semibold text-zinc-950 dark:text-zinc-300">
-            {role}
+            {modelLabel?.label.toString()}
           </h5>
         )}
-
         <div
           className={`flex flex-col gap-4 text-zinc-950 dark:text-zinc-300 ${role === "user" && "w-auto rounded-xl bg-zinc-200/60 px-4 py-2 dark:bg-zinc-800"}`}
         >
