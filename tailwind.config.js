@@ -25,6 +25,12 @@ module.exports = {
       animation: {
         message_appear: "message_appear 0.1s ease-in-out forwards",
       },
+      backgroundImage: {
+        claude: "url('/images/logos/claude.svg')",
+        gemini: "url('/images/logos/gemini.svg')",
+        mistral: "url('/images/logos/mistral.svg')",
+        openai: "url('/images/logos/openai.svg')",
+      },
     },
   },
   plugins: [],

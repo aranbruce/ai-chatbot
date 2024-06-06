@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useAIState, useActions } from "ai/rsc";
+import { AIState } from "@/server/actions";
 
 import Select from "./select";
 import ExampleMessageCardGroup from "./example-message/example-message-group";
-import { AIState } from "@/server/actions";
 
 interface EmptyScreenProps {
   userLocation?: { latitude: number; longitude: number };
@@ -25,39 +25,48 @@ export default function EmptyScreen({
   const modelVariableOptions = [
     {
       value: "gpt-4o",
-      label: "GPT 4o",
+      label: "4o",
+      provider: "openai",
     },
     {
       value: "gpt-4-turbo",
-      label: "GPT 4 Turbo",
+      label: "4 Turbo",
+      provider: "openai",
     },
     {
       value: "gpt-3.5-turbo",
-      label: "GPT 3.5 Turbo",
+      label: "3.5 Turbo",
+      provider: "openai",
     },
     {
       value: "gemini-1.5-pro-latest",
-      label: "Gemini 1.5 Pro",
+      label: "1.5 Pro",
+      provider: "gemini",
     },
     {
       value: "gemini-1.5-flash-latest",
-      label: "Gemini 1.5 Flash",
+      label: "1.5 Flash",
+      provider: "gemini",
     },
     {
       value: "mistral-large-latest",
-      label: "Mistral Large",
+      label: "Large",
+      provider: "mistral",
     },
     {
       value: "claude-3-opus-20240229",
-      label: "Claude 3 Opus",
+      label: "3 Opus",
+      provider: "claude",
     },
     {
       value: "claude-3-sonnet-20240229",
-      label: "Claude 3 Sonnet",
+      label: "3 Sonnet",
+      provider: "claude",
     },
     {
       value: "claude-3-haiku-20240307",
-      label: "Claude 3 Haiku",
+      label: "3 Haiku",
+      provider: "claude",
     },
   ];
 
@@ -95,6 +104,7 @@ export default function EmptyScreen({
           Select a model
         </p>
         <Select
+          variant="primary"
           options={modelVariableOptions}
           selectedValue={AIState.currentModelVariable}
           setSelectedValue={setSelectedValue}

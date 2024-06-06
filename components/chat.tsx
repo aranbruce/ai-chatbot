@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 
 import { useUIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
@@ -20,7 +20,6 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-    console.log("messages", messages);
   }, [messages]);
 
   const { location, error, isLoaded } = useLocation();

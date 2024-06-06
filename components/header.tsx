@@ -9,7 +9,12 @@ export default function Header() {
         className="focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-500"
       >
         <div className="flex items-center gap-x-[10px] text-2xl font-medium text-zinc-950 dark:text-zinc-50">
-          <Image src="/logo-mark.svg" alt="Pal Logo" width={40} height={40} />
+          <Image
+            src="/images/logo-mark.svg"
+            alt="Pal Logo"
+            width={40}
+            height={40}
+          />
           Pal
         </div>
       </a>
