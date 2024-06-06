@@ -1,4 +1,5 @@
 export interface SelectProps {
+  variant: "primary" | "secondary";
   options: Option[];
   selectedValue: string;
   setSelectedValue: (value: string) => void;
@@ -7,6 +8,7 @@ export interface SelectProps {
 interface Option {
   value: string;
   label: string;
+  provider?: string;
 }
 
 import { Fragment } from "react";
@@ -18,21 +20,35 @@ import {
   Transition,
 } from "@headlessui/react";
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
+const baseClasses =
+  "dark:active-bg-zinc-700 inline-flex pl-1 pr-3 w-full items-center justify-center gap-2 rounded-xl  bg-white  font-medium text-zinc-950 ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
+
+const primaryClasses = `${baseClasses} border border-zinc-200 text-sm`;
+
+const secondaryClasses = `${baseClasses} text-xs`;
 
 export default function Select({
+  variant,
   options,
   selectedValue,
   setSelectedValue,
 }: SelectProps) {
+  const selectedOption = options.find(
+    (option) => option.value === selectedValue,
+  );
   return (
-    <Menu as="div" className="relative inline-block w-40 text-left">
+    <Menu
+      as="div"
+      className={`relative inline-block ${variant === "primary" ? "w-40" : "w-36"} text-left`}
+    >
       <div>
-        <MenuButton className="text-primary-foreground dark:active-bg-zinc-700 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-950 ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600">
-          <div className="w-full text-left text-sm">
-            {options.find((option) => option.value === selectedValue)?.label}
+        <MenuButton
+          className={variant === "primary" ? primaryClasses : secondaryClasses}
+        >
+          <div
+            className={`w-full bg-no-repeat py-2 pl-10 text-left text-sm ${selectedOption?.provider === "openai" ? "bg-openai" : selectedOption?.provider === "anthropic" ? "bg-claude" : selectedOption?.provider === "gemini" ? "bg-gemini" : selectedOption?.provider === "mistral" ? "bg-mistral" : ""}`}
+          >
+            {selectedOption?.label}
           </div>
           <svg
             className="-mr-1 h-5 w-5 text-gray-400"
@@ -57,14 +73,14 @@ export default function Select({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <MenuItems className="absolute right-0 z-10 mt-2 max-h-40 w-full origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800">
+        <MenuItems
+          className={`absolute right-0 z-10 mt-2 ${variant === "primary" ? "max-h-40" : "max-h-20"} w-full origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800`}
+        >
           <div className="py-1">
             {options.map((option) => (
               <MenuItem key={option.value}>
                 <a
-                  className={classNames(
-                    "block cursor-pointer rounded-md px-4 py-2 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300",
-                  )}
+                  className={`${option.provider === "openai" ? "bg-openai" : option.provider === "anthropic" ? "bg-claude" : option.provider === "gemini" ? "bg-gemini" : option.provider === "mistral" ? "bg-mistral" : ""} block cursor-pointer rounded-md bg-no-repeat py-2 pl-10 pr-4 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300`}
                   onClick={() =>
                     setSelectedValue && setSelectedValue(option.value)
                   }

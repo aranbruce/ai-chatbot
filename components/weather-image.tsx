@@ -28,14 +28,14 @@ export default function WeatherImage({
   height,
   width,
   weather,
-}: WeatherImageProps)  {
+}: WeatherImageProps) {
   return (
     <Image
-      src={`/weather/${weather.toLowerCase()}.svg`} // Use the lowercase weather value in the image source URL
+      src={`/images/weather/${weather.toLowerCase()}.svg`} // Use the lowercase weather value in the image source URL
       alt={JSON.stringify(weather)}
       width={width}
       height={height}
       blurDataURL={`/weather/${weather.toLowerCase()}.svg`}
     />
   );
-};
+}

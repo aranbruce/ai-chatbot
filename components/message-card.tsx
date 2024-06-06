@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import MarkdownContainer from "./markdown";
-import { LanguageModel } from "ai";
+import { useAIState } from "ai/rsc";
+import { AIState } from "@/server/actions";
+import Select from "./select";
 
 interface MessageProps {
   id: string;
@@ -12,39 +14,48 @@ interface MessageProps {
 const modelVariableOptions = [
   {
     value: "gpt-4o",
-    label: "GPT 4o",
+    label: "4o",
+    provider: "openai",
   },
   {
     value: "gpt-4-turbo",
-    label: "GPT 4 Turbo",
+    label: "4 Turbo",
+    provider: "openai",
   },
   {
     value: "gpt-3.5-turbo",
-    label: "GPT 3.5 Turbo",
+    label: "3.5 Turbo",
+    provider: "openai",
   },
   {
     value: "gemini-1.5-pro-latest",
-    label: "Gemini 1.5 Pro",
+    label: "1.5 Pro",
+    provider: "gemini",
   },
   {
     value: "gemini-1.5-flash-latest",
-    label: "Gemini 1.5 Flash",
+    label: "1.5 Flash",
+    provider: "gemini",
   },
   {
     value: "mistral-large-latest",
-    label: "Mistral Large",
+    label: "Large",
+    provider: "mistral",
   },
   {
     value: "claude-3-opus-20240229",
-    label: "Claude 3 Opus",
+    label: "3 Opus",
+    provider: "anthropic",
   },
   {
     value: "claude-3-sonnet-20240229",
-    label: "Claude 3 Sonnet",
+    label: "3 Sonnet",
+    provider: "anthropic",
   },
   {
     value: "claude-3-haiku-20240307",
-    label: "Claude 3 Haiku",
+    label: "3 Haiku",
+    provider: "anthropic",
   },
 ];
 
@@ -54,14 +65,23 @@ export default function MessageCard({
   content,
   model,
 }: MessageProps) {
+  const [AIState, setAIState] = useAIState();
+
   const modelLabel = modelVariableOptions.find(
     (option) => option.value === model,
   );
 
+  function setSelectedValue(value: string) {
+    setAIState((AIState: AIState) => ({
+      ...AIState,
+      currentModelVariable: value,
+    }));
+  }
+
   return (
     <div
       key={id}
-      className="flex animate-message_appear flex-row items-start gap-3 whitespace-pre-wrap opacity-0"
+      className="flex  flex-row items-start gap-3 whitespace-pre-wrap"
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (
@@ -97,6 +117,14 @@ export default function MessageCard({
             content
           )}
         </div>
+        {role === "assistant" && (
+          <Select
+            variant="secondary"
+            options={modelVariableOptions}
+            selectedValue={AIState.currentModelVariable}
+            setSelectedValue={setSelectedValue}
+          />
+        )}
       </div>
     </div>
   );
