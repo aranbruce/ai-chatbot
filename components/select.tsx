@@ -21,11 +21,11 @@ import {
 } from "@headlessui/react";
 
 const baseClasses =
-  "dark:active-bg-zinc-700 inline-flex pl-1 pr-3 w-full items-center justify-center gap-2 rounded-xl  bg-white  font-medium text-zinc-950 ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
+  "dark:active-bg-zinc-700 inline-flex pl-1 pr-3 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
 
-const primaryClasses = `${baseClasses} border border-zinc-200 text-sm`;
+const primaryClasses = `${baseClasses} border border-zinc-200 text-sm text-zinc-950 dark:text-zinc-50 `;
 
-const secondaryClasses = `${baseClasses} text-xs`;
+const secondaryClasses = `${baseClasses} text-xs text-zinc-600 dark:text-zinc-200`;
 
 export default function Select({
   variant,
@@ -46,7 +46,7 @@ export default function Select({
           className={variant === "primary" ? primaryClasses : secondaryClasses}
         >
           <div
-            className={`w-full bg-no-repeat py-2 pl-10 text-left text-sm ${selectedOption?.provider === "openai" ? "bg-openai" : selectedOption?.provider === "anthropic" ? "bg-claude" : selectedOption?.provider === "gemini" ? "bg-gemini" : selectedOption?.provider === "mistral" ? "bg-mistral" : ""}`}
+            className={`w-full bg-no-repeat py-2 pl-10 text-left text-sm ${selectedOption?.provider === "openai" ? "bg-openai" : selectedOption?.provider === "claude" ? "bg-claude" : selectedOption?.provider === "gemini" ? "bg-gemini" : selectedOption?.provider === "mistral" ? "bg-mistral" : ""}`}
           >
             {selectedOption?.label}
           </div>
@@ -80,7 +80,7 @@ export default function Select({
             {options.map((option) => (
               <MenuItem key={option.value}>
                 <a
-                  className={`${option.provider === "openai" ? "bg-openai" : option.provider === "anthropic" ? "bg-claude" : option.provider === "gemini" ? "bg-gemini" : option.provider === "mistral" ? "bg-mistral" : ""} block cursor-pointer rounded-md bg-no-repeat py-2 pl-10 pr-4 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300`}
+                  className={`${option.provider === "openai" ? "bg-openai" : option.provider === "claude" ? "bg-claude" : option.provider === "gemini" ? "bg-gemini" : option.provider === "mistral" ? "bg-mistral" : ""} block cursor-pointer rounded-md bg-no-repeat py-2 pl-10 pr-4 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300`}
                   onClick={() =>
                     setSelectedValue && setSelectedValue(option.value)
                   }

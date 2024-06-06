@@ -56,17 +56,17 @@ export default function EmptyScreen({
     {
       value: "claude-3-opus-20240229",
       label: "3 Opus",
-      provider: "anthropic",
+      provider: "claude",
     },
     {
       value: "claude-3-sonnet-20240229",
       label: "3 Sonnet",
-      provider: "anthropic",
+      provider: "claude",
     },
     {
       value: "claude-3-haiku-20240307",
       label: "3 Haiku",
-      provider: "anthropic",
+      provider: "claude",
     },
   ];
 
