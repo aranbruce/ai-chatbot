@@ -1,3 +1,5 @@
+"use client";
+
 export interface SelectProps {
   variant: "primary" | "secondary";
   options: Option[];
@@ -5,10 +7,12 @@ export interface SelectProps {
   setSelectedValue: (value: string) => void;
 }
 
+export type Provider = "openai" | "claude" | "gemini" | "mistral";
+
 interface Option {
   value: string;
   label: string;
-  provider?: string;
+  provider?: Provider;
 }
 
 import { Fragment } from "react";
@@ -19,11 +23,12 @@ import {
   MenuItem,
   Transition,
 } from "@headlessui/react";
+import ProviderImage from "./provider-image";
 
 const baseClasses =
-  "dark:active-bg-zinc-700 inline-flex pl-1 pr-3 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
+  "dark:active-bg-zinc-700 inline-flex px-2 py-2 pr-3 w-full items-center justify-center gap-2 rounded-xl  font-medium ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
 
-const primaryClasses = `${baseClasses} border border-zinc-200 text-sm text-zinc-950 dark:text-zinc-50 `;
+const primaryClasses = `${baseClasses} border border-zinc-200 text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:border-zinc-800 dark:bg-zinc-800`;
 
 const secondaryClasses = `${baseClasses} text-xs text-zinc-600 dark:text-zinc-200`;
 
@@ -45,9 +50,10 @@ export default function Select({
         <MenuButton
           className={variant === "primary" ? primaryClasses : secondaryClasses}
         >
-          <div
-            className={`w-full bg-no-repeat py-2 pl-10 text-left text-sm ${selectedOption?.provider === "openai" ? "bg-openai" : selectedOption?.provider === "claude" ? "bg-claude" : selectedOption?.provider === "gemini" ? "bg-gemini" : selectedOption?.provider === "mistral" ? "bg-mistral" : ""}`}
-          >
+          <div className="flex w-full flex-row items-center gap-2 text-left text-sm">
+            {selectedOption?.provider && (
+              <ProviderImage provider={selectedOption?.provider} />
+            )}
             {selectedOption?.label}
           </div>
           <svg
@@ -80,11 +86,14 @@ export default function Select({
             {options.map((option) => (
               <MenuItem key={option.value}>
                 <a
-                  className={`${option.provider === "openai" ? "bg-openai" : option.provider === "claude" ? "bg-claude" : option.provider === "gemini" ? "bg-gemini" : option.provider === "mistral" ? "bg-mistral" : ""} block cursor-pointer rounded-md bg-no-repeat py-2 pl-10 pr-4 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300`}
+                  className="flex cursor-pointer flex-row items-center gap-2 rounded-md bg-no-repeat px-1 py-2 text-sm text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-white dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus-visible:ring-zinc-300"
                   onClick={() =>
                     setSelectedValue && setSelectedValue(option.value)
                   }
                 >
+                  {option.provider && (
+                    <ProviderImage provider={option.provider} />
+                  )}
                   {option.label}
                 </a>
               </MenuItem>
