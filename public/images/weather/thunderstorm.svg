@@ -57,20 +57,20 @@
 <feBlend mode="normal" in2="shape" result="effect1_innerShadow_114_93"/>
 </filter>
 <linearGradient id="paint0_linear_114_93" x1="3.38654" y1="21.2857" x2="41.24" y2="-7.02149" gradientUnits="userSpaceOnUse">
-<stop stopColor="white"/>
-<stop offset="1" stopColor="white" stop-opacity="0.58"/>
+<stop stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0.58"/>
 </linearGradient>
 <linearGradient id="paint1_linear_114_93" x1="18.4162" y1="37.4863" x2="28.5578" y2="23.4867" gradientUnits="userSpaceOnUse">
-<stop stopColor="#FF9900"/>
-<stop offset="1" stopColor="#FFEE94"/>
+<stop stop-color="#FF9900"/>
+<stop offset="1" stop-color="#FFEE94"/>
 </linearGradient>
 <linearGradient id="paint2_linear_114_93" x1="25.0964" y1="37.736" x2="26.6232" y2="34.8693" gradientUnits="userSpaceOnUse">
-<stop stopColor="#FF9900"/>
-<stop offset="1" stopColor="#FFEE94"/>
+<stop stop-color="#FF9900"/>
+<stop offset="1" stop-color="#FFEE94"/>
 </linearGradient>
 <linearGradient id="paint3_linear_114_93" x1="10.0397" y1="28.6543" x2="11.5666" y2="25.7876" gradientUnits="userSpaceOnUse">
-<stop stopColor="#FF9900"/>
-<stop offset="1" stopColor="#FFEE94"/>
+<stop stop-color="#FF9900"/>
+<stop offset="1" stop-color="#FFEE94"/>
 </linearGradient>
 </defs>
 </svg>

@@ -113,7 +113,7 @@ export default function MessageCard({
           )}
         </div>
         {role === "assistant" && (
-          <div className="flex flex-row gap-1">
+          <div className="mt-2 flex flex-row gap-1">
             <Select
               variant="secondary"
               options={modelVariableOptions}

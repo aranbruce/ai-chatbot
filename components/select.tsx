@@ -26,9 +26,9 @@ import {
 import ProviderImage from "./provider-image";
 
 const baseClasses =
-  "dark:active-bg-zinc-700 inline-flex px-2 py-2 pr-3 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300  dark:border-zinc-800 dark:bg-zinc-800 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
+  "dark:active-bg-zinc-700 inline-flex px-2 py-2 pr-3 w-full items-center justify-center gap-2 rounded-xl  font-medium ring-slate-950/20 transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] active:bg-zinc-200  disabled:pointer-events-none disabled:text-zinc-300 dark:ring-white/40 dark:hover:bg-zinc-800 dark:disabled:text-zinc-600";
 
-const primaryClasses = `${baseClasses} border border-zinc-200 text-sm text-zinc-950 dark:text-zinc-50 `;
+const primaryClasses = `${baseClasses} border border-zinc-200 text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:border-zinc-800 dark:bg-zinc-800`;
 
 const secondaryClasses = `${baseClasses} text-xs text-zinc-600 dark:text-zinc-200`;
 
