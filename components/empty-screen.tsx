@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAIState, useActions } from "ai/rsc";
 import { AIState } from "@/server/actions";
 
-import Select from "./select";
+import Select, { Provider } from "./select";
 import ExampleMessageCardGroup from "./example-message/example-message-group";
 
 interface EmptyScreenProps {
@@ -26,47 +26,47 @@ export default function EmptyScreen({
     {
       value: "gpt-4o",
       label: "4o",
-      provider: "openai",
+      provider: "openai" as Provider,
     },
     {
       value: "gpt-4-turbo",
       label: "4 Turbo",
-      provider: "openai",
+      provider: "openai" as Provider,
     },
     {
       value: "gpt-3.5-turbo",
       label: "3.5 Turbo",
-      provider: "openai",
+      provider: "openai" as Provider,
     },
     {
       value: "gemini-1.5-pro-latest",
       label: "1.5 Pro",
-      provider: "gemini",
+      provider: "gemini" as Provider,
     },
     {
       value: "gemini-1.5-flash-latest",
       label: "1.5 Flash",
-      provider: "gemini",
+      provider: "gemini" as Provider,
     },
     {
       value: "mistral-large-latest",
       label: "Large",
-      provider: "mistral",
+      provider: "mistral" as Provider,
     },
     {
       value: "claude-3-opus-20240229",
       label: "3 Opus",
-      provider: "claude",
+      provider: "claude" as Provider,
     },
     {
       value: "claude-3-sonnet-20240229",
       label: "3 Sonnet",
-      provider: "claude",
+      provider: "claude" as Provider,
     },
     {
       value: "claude-3-haiku-20240307",
       label: "3 Haiku",
-      provider: "claude",
+      provider: "claude" as Provider,
     },
   ];
 

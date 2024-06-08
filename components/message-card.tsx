@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import MarkdownContainer from "./markdown";
 import { useAIState } from "ai/rsc";
 import { AIState } from "@/server/actions";
-import Select from "./select";
-import Image from "next/image";
+import Select, { Provider } from "./select";
+import ProviderImage from "./provider-image";
 
 interface MessageProps {
   id: string;
@@ -16,47 +16,47 @@ const modelVariableOptions = [
   {
     value: "gpt-4o",
     label: "4o",
-    provider: "openai",
+    provider: "openai" as Provider,
   },
   {
     value: "gpt-4-turbo",
     label: "4 Turbo",
-    provider: "openai",
+    provider: "openai" as Provider,
   },
   {
     value: "gpt-3.5-turbo",
     label: "3.5 Turbo",
-    provider: "openai",
+    provider: "openai" as Provider,
   },
   {
     value: "gemini-1.5-pro-latest",
     label: "1.5 Pro",
-    provider: "gemini",
+    provider: "gemini" as Provider,
   },
   {
     value: "gemini-1.5-flash-latest",
     label: "1.5 Flash",
-    provider: "gemini",
+    provider: "gemini" as Provider,
   },
   {
     value: "mistral-large-latest",
     label: "Large",
-    provider: "mistral",
+    provider: "mistral" as Provider,
   },
   {
     value: "claude-3-opus-20240229",
     label: "3 Opus",
-    provider: "claude",
+    provider: "claude" as Provider,
   },
   {
     value: "claude-3-sonnet-20240229",
     label: "3 Sonnet",
-    provider: "claude",
+    provider: "claude" as Provider,
   },
   {
     value: "claude-3-haiku-20240307",
     label: "3 Haiku",
-    provider: "claude",
+    provider: "claude" as Provider,
   },
 ];
 
@@ -66,7 +66,8 @@ export default function MessageCard({
   content,
   model,
 }: MessageProps) {
-  const [AIState, setAIState] = useAIState();
+  const [, setAIState] = useAIState();
+  const [selectModel, setSelectModel] = useState<string>(model || "");
 
   const selectedModel = modelVariableOptions.find(
     (option) => option.value === model,
@@ -77,6 +78,7 @@ export default function MessageCard({
       ...AIState,
       currentModelVariable: value,
     }));
+    setSelectModel(value);
   }
 
   return (
@@ -86,13 +88,10 @@ export default function MessageCard({
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (
-          <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-950 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50">
-            <Image
-              src={`/images/logos/${selectedModel?.provider}.svg`}
-              alt={selectedModel?.label || "AI"}
-              width={32}
-              height={32}
-            />
+          <div className="flex h-9 w-9 shrink-0 select-none items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-950 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50">
+            {selectedModel?.provider && (
+              <ProviderImage provider={selectedModel?.provider} />
+            )}
           </div>
         )}
       </div>
@@ -114,12 +113,14 @@ export default function MessageCard({
           )}
         </div>
         {role === "assistant" && (
-          <Select
-            variant="secondary"
-            options={modelVariableOptions}
-            selectedValue={AIState.currentModelVariable}
-            setSelectedValue={setSelectedValue}
-          />
+          <div className="flex flex-row gap-1">
+            <Select
+              variant="secondary"
+              options={modelVariableOptions}
+              selectedValue={selectModel}
+              setSelectedValue={setSelectedValue}
+            />
+          </div>
         )}
       </div>
     </div>

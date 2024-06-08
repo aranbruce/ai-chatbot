@@ -82,23 +82,26 @@ async function continueConversation(
   });
 
   const modelVariable = aiState.get().currentModelVariable;
-  let model: any;
 
-  if (!modelVariable) {
-    throw new Error("MODEL environment variable is not set");
-  } else if (modelVariable.startsWith("gpt-")) {
-    model = openai(modelVariable);
-  } else if (modelVariable.startsWith("mistral-")) {
-    model = mistral(modelVariable);
-  } else if (modelVariable.startsWith("claude-")) {
-    model = anthropic(modelVariable);
-  } else if (modelVariable.includes("gemini-")) {
-    model = google("models/gemini-pro");
-  } else if (modelVariable.includes("llama3-")) {
-    const model = groq(modelVariable);
-  } else {
-    throw new Error("Model is not a supported model");
+  function getModelFromModelVariable(modelVariable: string) {
+    if (!modelVariable) {
+      throw new Error("MODEL environment variable is not set");
+    } else if (modelVariable.startsWith("gpt-")) {
+      return openai(modelVariable);
+    } else if (modelVariable.startsWith("mistral-")) {
+      return mistral(modelVariable);
+    } else if (modelVariable.startsWith("claude-")) {
+      return anthropic(modelVariable);
+    } else if (modelVariable.includes("gemini-")) {
+      return google("models/gemini-pro");
+    } else if (modelVariable.includes("llama3-")) {
+      return groq(modelVariable);
+    } else {
+      throw new Error("Model is not a supported model");
+    }
   }
+
+  const model: any = getModelFromModelVariable(modelVariable);
 
   const result = await streamUI({
     model,
@@ -1486,8 +1489,6 @@ async function continueConversation(
       },
     },
   });
-
-  console.log("currentModelVariable: ", getAIState().currentModelVariable);
 
   return {
     id: uuidv4(),
