@@ -674,7 +674,13 @@ async function continueConversation(
               ],
             });
             return (
-              <WebResultGroup results={response} summaryUI={summaryUI.value} />
+              <>
+                Here are the search results for {query}:
+                <WebResultGroup
+                  results={response}
+                  summaryUI={summaryUI.value}
+                />
+              </>
             );
           } catch (error) {
             aiState.done({

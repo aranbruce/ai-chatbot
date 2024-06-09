@@ -23,7 +23,7 @@ export default function WebResult({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex min-w-40 flex-col justify-between gap-4 rounded-md border border-zinc-100 bg-zinc-50 p-2 hover:border-zinc-200 hover:bg-zinc-100"
+      className="flex min-w-40 flex-col justify-between gap-4 rounded-md border border-zinc-100 bg-zinc-50 p-2 hover:border-zinc-200 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800 dark:hover:border-zinc-700 dark:hover:bg-zinc-700"
     >
       <h3 className="line-clamp-2 text-xs font-semibold text-zinc-950 dark:text-white">
         {title}
