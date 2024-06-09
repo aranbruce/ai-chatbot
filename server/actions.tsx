@@ -5,7 +5,7 @@ import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 
-import { CoreMessage, streamObject } from "ai";
+import { CoreMessage, streamObject, streamText } from "ai";
 import {
   createAI,
   createStreamableUI,
@@ -51,7 +51,7 @@ const groq = createOpenAI({
 export interface ClientMessage {
   id: string;
   role: "user" | "assistant";
-  display: React.ReactNode;
+  content: React.ReactNode;
   model: string;
 }
 
@@ -69,6 +69,7 @@ async function continueConversation(
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
+  const summaryUI = createStreamableUI(null);
 
   aiState.update({
     ...aiState.get(),
@@ -616,6 +617,22 @@ async function continueConversation(
               offset,
             });
 
+            (async () => {
+              const { textStream } = await streamText({
+                model: getModelFromModelVariable(modelVariable),
+                system: `Create a summary for the the provided web search results based on the following query from the user: ${query}`,
+                prompt: `Here are the web search results: ${JSON.stringify(response)}`,
+              });
+
+              let summaryText = "";
+
+              for await (const delta of textStream) {
+                summaryText += delta;
+                summaryUI.update(<MarkdownContainer children={summaryText} />);
+              }
+              summaryUI.done();
+            })();
+
             aiState.done({
               ...aiState.get(),
               messages: [
@@ -657,10 +674,7 @@ async function continueConversation(
               ],
             });
             return (
-              <>
-                Here are the search results for {query}:
-                <WebResultGroup results={response} />
-              </>
+              <WebResultGroup results={response} summaryUI={summaryUI.value} />
             );
           } catch (error) {
             aiState.done({
@@ -1493,7 +1507,7 @@ async function continueConversation(
   return {
     id: uuidv4(),
     role: "assistant",
-    display: result.value,
+    content: result.value,
     model: getAIState().currentModelVariable,
   };
 }
@@ -1674,7 +1688,7 @@ async function getWeatherForecastUI(
   return {
     id: uuidv4(),
     role: "assistant",
-    display: uiStream.value,
+    content: uiStream.value,
     model: getAIState().currentModelVariable,
   };
 }
@@ -1782,7 +1796,7 @@ async function getCurrentWeatherUI(
   return {
     id: uuidv4(),
     role: "assistant",
-    display: uiStream.value,
+    content: uiStream.value,
     model: getAIState().currentModelVariable,
   };
 }

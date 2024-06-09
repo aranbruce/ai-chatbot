@@ -10,7 +10,7 @@ export interface WebResultProps {
   imageURL?: string;
 }
 
-export default function WebResult ({
+export default function WebResult({
   title,
   description,
   url,
@@ -19,39 +19,27 @@ export default function WebResult ({
   imageURL,
 }: WebResultProps) {
   return (
-    <div className="flex w-full flex-row gap-4">
-      <div className="flex w-full flex-col gap-2">
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex min-w-40 flex-col justify-between gap-4 rounded-md border border-zinc-100 bg-zinc-50 p-2 hover:border-zinc-200 hover:bg-zinc-100"
+    >
+      <h3 className="line-clamp-2 text-xs font-semibold text-zinc-950 dark:text-white">
+        {title}
+      </h3>
+      <div className="flex w-full flex-row gap-2">
         {imageURL && (
           <Image
+            className="rounded-full"
             src={imageURL}
             alt={title}
-            width={80}
-            height={80}
-            className="rounded-lg"
+            width={16}
+            height={16}
           />
         )}
-        <h3 className="text-md font-semibold text-zinc-950 dark:text-white">
-          {title}
-        </h3>
-        <div className="flex w-full flex-row gap-2">
-          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-            {author}
-          </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-300">
-            {new Date(date).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">
-          {decode(description)}
-        </div>
-        <a
-          href={url}
-          target="_blank"
-          className="text-sm font-semibold text-zinc-950 hover:text-zinc-700 dark:text-white dark:hover:text-zinc-200"
-        >
-          Read more
-        </a>
+        <h5 className="text-xs">{author}</h5>
       </div>
-    </div>
+    </a>
   );
-};
+}

@@ -36,7 +36,7 @@ export default function Chat() {
       ...messages,
       {
         id: uuidv4(),
-        display: <>{message}</>,
+        content: <>{message}</>,
         role: "user",
       },
     ]);
@@ -51,7 +51,7 @@ export default function Chat() {
         ref={scrollRef}
         className="flex h-full w-full flex-col overflow-y-scroll px-5 pt-10"
       >
-        <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words ">
+        <div className="stretch mx-auto flex h-full w-full max-w-2xl flex-col break-words">
           {messages.length === 0 ? (
             <EmptyScreen
               userLocation={location ? location : undefined}
@@ -68,7 +68,7 @@ export default function Chat() {
                   key={message.id}
                   id={JSON.stringify(message.id)}
                   role={message.role}
-                  content={message.display}
+                  content={message.content}
                   model={message.model}
                 />
               ))}

@@ -121,7 +121,8 @@ export default async function searchTheWeb({
       description: result.description,
       date: result.page_age,
       author: result.profile?.name,
-      imageURL: result.thumbnail?.src,
+      imageURL: result.profile.img,
+      extra: result.extra_snippets,
     }));
 
     return results;
