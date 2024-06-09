@@ -115,8 +115,8 @@ async function continueConversation(
       If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
       If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
       If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
-      If someone asks you to search the web, you can use the tool \`search_the_web\`.
-      If someone asks you to get the latest news, you can use the tool \`search_the_news\`.
+      If someone asks you to search the web, you can use the tool \`search_the_web\`. Unless the user specifies a number of results, you should return 20 results.
+      If someone asks you to get the latest news, you can use the tool \`search_the_news\`. 
       If someone asks a question about movies, you can use the tool \`search_for_movies\`.
       If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
       If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
@@ -620,7 +620,7 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `Create a summary for the the provided web search results based on the following query from the user: ${query}`,
+                system: `The user has performed a web search for the following query: """${query}""". Summarize the web search provided, providing useful insights into the key takeaways and themes`,
                 prompt: `Here are the web search results: ${JSON.stringify(response)}`,
               });
 
@@ -676,10 +676,7 @@ async function continueConversation(
             return (
               <>
                 Here are the search results for {query}:
-                <WebResultGroup
-                  results={response}
-                  summaryUI={summaryUI.value}
-                />
+                <WebResultGroup results={response} summary={summaryUI.value} />
               </>
             );
           } catch (error) {
@@ -982,6 +979,23 @@ async function continueConversation(
               count,
               offset,
             });
+
+            (async () => {
+              const { textStream } = await streamText({
+                model: getModelFromModelVariable(modelVariable),
+                system: `The user has performed a news search for the following query: """${query}""". Summarize the news results provided, providing useful insights into the key takeaways and themes`,
+                prompt: `Here are the news search results: ${JSON.stringify(response)}`,
+              });
+
+              let summaryText = "";
+
+              for await (const delta of textStream) {
+                summaryText += delta;
+                summaryUI.update(<MarkdownContainer children={summaryText} />);
+              }
+              summaryUI.done();
+            })();
+
             aiState.done({
               ...aiState.get(),
               messages: [
@@ -1025,7 +1039,7 @@ async function continueConversation(
             return (
               <>
                 Here are the latest news articles about {query}:
-                <NewsCardGroup news={response} />
+                <NewsCardGroup results={response} summary={summaryUI.value} />
               </>
             );
           } catch (error) {

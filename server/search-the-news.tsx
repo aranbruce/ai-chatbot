@@ -61,7 +61,7 @@ export default async function searchTheNews({
   country,
   freshness,
   units,
-  count = 5,
+  count = 20,
   offset,
 }: Request) {
   "use server";
@@ -97,7 +97,6 @@ export default async function searchTheNews({
       url.searchParams.append("offset", offset.toString());
     }
 
-    console.log("URL:", url);
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -112,13 +111,14 @@ export default async function searchTheNews({
     const responseJson = await response.json();
     let results = responseJson.results;
 
-    // transform the results to the format expected by the client by only returning title, description, url, date, author, and imageURL
     results = results.map((result: any) => ({
       title: result.title,
       url: result.url,
       description: result.description,
       date: result.page_age,
-      imageURL: result.thumbnail?.src,
+      imageURL: result.meta_url?.favicon,
+      author: result.meta_url?.netloc,
+      extra: result.extra_snippets,
     }));
 
     return results;

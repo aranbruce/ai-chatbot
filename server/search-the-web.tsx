@@ -61,7 +61,7 @@ export default async function searchTheWeb({
   country,
   freshness,
   units,
-  count = 5,
+  count = 20,
   offset,
 }: Request) {
   "use server";
