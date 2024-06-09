@@ -1,11 +1,12 @@
+import React from "react";
 import WebResult from "./web-result";
 import { WebResultProps } from "./web-result";
 
 export default function WebResultGroup({
-  summaryUI,
+  summary,
   results,
 }: {
-  summaryUI: any;
+  summary: React.ReactNode;
   results: WebResultProps[];
 }) {
   return (
@@ -28,7 +29,7 @@ export default function WebResultGroup({
       </div>
       <div className="flex w-full flex-col gap-2">
         <h3 className="text-base font-semibold">Answer</h3>
-        {summaryUI}
+        {summary}
       </div>
     </div>
   );
