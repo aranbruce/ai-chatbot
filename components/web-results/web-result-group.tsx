@@ -25,10 +25,10 @@ export default function WebResultGroup({
             />
           ))}
         </div>
-        <div className="flex w-full flex-col gap-2">
-          <h3 className="text-base font-semibold">Answer</h3>
-          {summaryUI}
-        </div>
+      </div>
+      <div className="flex w-full flex-col gap-2">
+        <h3 className="text-base font-semibold">Answer</h3>
+        {summaryUI}
       </div>
     </div>
   );
