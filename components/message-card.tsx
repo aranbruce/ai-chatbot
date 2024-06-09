@@ -96,7 +96,7 @@ export default function MessageCard({
         )}
       </div>
       <div
-        className={`flex w-full max-w-full flex-col gap-1 ${role === "user" && "items-end"}`}
+        className={`flex w-full min-w-0 max-w-full flex-col gap-1 ${role === "user" && "items-end"}`}
       >
         {role !== "user" && (
           <h5 className="text-md pt-1 font-semibold text-zinc-950 dark:text-zinc-300">

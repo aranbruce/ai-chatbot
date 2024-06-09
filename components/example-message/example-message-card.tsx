@@ -29,7 +29,7 @@ export default function ExampleMessageCard({
       ...messages,
       {
         id: uuidv4(),
-        display: <>{subheading}</>,
+        content: <>{subheading}</>,
         role: "user",
       },
     ]);
