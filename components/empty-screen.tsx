@@ -68,6 +68,11 @@ export default function EmptyScreen({
       label: "3 Haiku",
       provider: "claude" as Provider,
     },
+    {
+      value: "llama3-70b-8192",
+      label: "3-70b",
+      provider: "llama" as Provider,
+    },
   ];
 
   useEffect(() => {

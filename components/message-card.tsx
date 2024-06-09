@@ -58,6 +58,11 @@ const modelVariableOptions = [
     label: "3 Haiku",
     provider: "claude" as Provider,
   },
+  {
+    value: "llama3-70b-8192",
+    label: "3-70b",
+    provider: "llama" as Provider,
+  },
 ];
 
 export default function MessageCard({
@@ -84,7 +89,7 @@ export default function MessageCard({
   return (
     <div
       key={id}
-      className="flex  flex-row items-start gap-3 whitespace-pre-wrap"
+      className="flex flex-row items-start gap-3 whitespace-pre-wrap"
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (
