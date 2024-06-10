@@ -10,7 +10,7 @@ import EmptyScreen from "./empty-screen";
 import { useScrollAnchor } from "@/libs/hooks/use-scroll-anchor";
 import useLocation from "@/libs/hooks/use-location";
 
-import type { ClientMessage } from "../server/actions";
+import type { ClientMessage } from "@/server/actions";
 
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");

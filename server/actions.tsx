@@ -620,7 +620,7 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `The user has performed a web search for the following query: """${query}""". Summarize the web search provided, providing useful insights into the key takeaways and themes`,
+                system: `The user has performed a web search for the following message: <message>${message}</message> and the following query: <query>${query}</query>. Try to use all the relevant web results provided in the search results to respond to the user's message, providing useful and succinct insights.`,
                 prompt: `Here are the web search results: ${JSON.stringify(response)}`,
               });
 
@@ -983,7 +983,7 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `The user has performed a news search for the following query: """${query}""". Summarize the news results provided, providing useful insights into the key takeaways and themes`,
+                system: `The user has performed a news search based on the following message: <message>${message}</message> and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the results to respond to the user's message, providing useful and succinct insights.`,
                 prompt: `Here are the news search results: ${JSON.stringify(response)}`,
               });
 
@@ -1547,11 +1547,11 @@ async function createExampleMessages(
       system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
         The LLM assistant has the following capabilities:
+        - Search for news on the web for a given topic
+        - Search the web for information on a given topic or for a specific query
         - Display multiple fun or entertaining gifs
         - Get the current weather for a location
         - Get the weather forecast for a location
-        - Search the web for information on a given topic or for a specific query
-        - Search for news on the web for a given topic
         - Search for locations or places to visit
         - Get movies from a database based on an input
         - Search for images on the web for a given topic or query

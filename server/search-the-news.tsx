@@ -1,3 +1,5 @@
+import getWebpageContents from "./get-webpage-content";
+
 interface Request {
   query: string;
   country?: countryOptions;
@@ -120,6 +122,12 @@ export default async function searchTheNews({
       author: result.meta_url?.netloc,
       extra: result.extra_snippets,
     }));
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const article = await getWebpageContents(result.url);
+      results[i].article = article.article;
+    }
 
     return results;
   } catch (error) {
