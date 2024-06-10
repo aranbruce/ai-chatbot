@@ -1,3 +1,5 @@
+import getWebpageContents from "./get-webpage-content";
+
 interface Request {
   query: string;
   country?: countryOptions;
@@ -124,6 +126,13 @@ export default async function searchTheWeb({
       imageURL: result.profile.img,
       extra: result.extra_snippets,
     }));
+
+    // for each result call the getWebpageContents function with the url and append the article to the result
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const article = await getWebpageContents(result.url);
+      results[i].article = article.article;
+    }
 
     return results;
   } catch (error) {
