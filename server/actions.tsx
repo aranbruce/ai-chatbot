@@ -31,8 +31,6 @@ import searchForGifs from "@/server/search-for-gifs";
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
 import CurrentWeatherCardSkeleton from "@/components/current-weather/current-weather-card-skeleton";
 import Spinner from "@/components/spinner";
-import NewsCardGroup from "@/components/news-card/news-card-group";
-import NewsCardGroupSkeleton from "@/components/news-card/news-card-group-skeleton";
 import WebResultGroup from "@/components/web-results/web-result-group";
 import WebResultCardGroupSkeleton from "@/components/web-results/web-result-group-skeleton";
 import WeatherForecastCard from "@/components/weather-forecast/weather-forecast-card";
@@ -115,7 +113,7 @@ async function continueConversation(
       If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
       If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
       If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
-      If someone asks you to search the web, you can use the tool \`search_the_web\`. Unless the user specifies a number of results, you should return 20 results.
+      If someone asks you to search the web, you can use the tool \`search_the_web\`. Unless the user specifies a number of results, you should return 8 results.
       If someone asks you to get the latest news, you can use the tool \`search_the_news\`. 
       If someone asks a question about movies, you can use the tool \`search_for_movies\`.
       If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
@@ -967,7 +965,7 @@ async function continueConversation(
           yield (
             <>
               Searching for news about {query}...
-              <NewsCardGroupSkeleton />
+              <WebResultCardGroupSkeleton />
             </>
           );
           try {
@@ -1039,7 +1037,7 @@ async function continueConversation(
             return (
               <>
                 Here are the latest news articles about {query}:
-                <NewsCardGroup results={response} summary={summaryUI.value} />
+                <WebResultGroup results={response} summary={summaryUI.value} />
               </>
             );
           } catch (error) {

@@ -63,7 +63,7 @@ export default async function searchTheWeb({
   country,
   freshness,
   units,
-  count = 20,
+  count = 8,
   offset,
 }: Request) {
   "use server";
@@ -130,8 +130,9 @@ export default async function searchTheWeb({
     // for each result call the getWebpageContents function with the url and append the article to the result
     for (let i = 0; i < results.length; i++) {
       const result = results[i];
-      const article = await getWebpageContents(result.url);
-      results[i].article = article.article;
+      const response = await getWebpageContents(result.url);
+      results[i].article = response;
+      console.log("Article:", response);
     }
 
     return results;

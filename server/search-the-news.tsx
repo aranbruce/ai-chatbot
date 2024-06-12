@@ -63,7 +63,7 @@ export default async function searchTheNews({
   country,
   freshness,
   units,
-  count = 20,
+  count = 8,
   offset,
 }: Request) {
   "use server";
@@ -125,8 +125,8 @@ export default async function searchTheNews({
 
     for (let i = 0; i < results.length; i++) {
       const result = results[i];
-      const article = await getWebpageContents(result.url);
-      results[i].article = article.article;
+      const response = await getWebpageContents(result.url);
+      results[i].article = response;
     }
 
     return results;

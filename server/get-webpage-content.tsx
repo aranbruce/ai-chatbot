@@ -1,58 +1,39 @@
 "use server";
 
-import { JSDOM, VirtualConsole } from "jsdom";
+import puppeteer, { Browser } from "puppeteer";
 
 export default async function getWebpageContents(url: string) {
   "use server";
+  const browser: Browser = await puppeteer.launch({ headless: true });
+
   try {
-    // console.log("Request received for get webpage contents action");
-    const response = await fetch(url);
-
-    if (!url) {
-      throw new Error("Invalid URL");
-    }
-
-    if (!response.ok) {
-      // console.error(`HTTP error! status: ${response.status}`);
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const responseJson = await response.text();
-
-    const virtualConsole = new VirtualConsole();
-    virtualConsole.on("log", () => {});
-    virtualConsole.on("error", () => {});
-
-    const dom = new JSDOM(responseJson, {
-      contentType: "text/html",
-      virtualConsole: virtualConsole,
+    const page = await browser.newPage();
+    await page.goto(url, {
+      // waitUntil: "domcontentloaded",
     });
 
-    let main = dom.window.document.querySelector("main")?.textContent;
-    main = main?.replace(/[\n+\t]/g, "").replace(/\s+/g, " ");
-
-    const selectors = [
-      "article",
-      "div[id*='article']",
-      "div[class*='article']",
-      "div[id*='content']",
-    ];
-
-    let article;
-    for (const selector of selectors) {
-      article = dom?.window?.document?.querySelector(selector)?.textContent;
-      if (article) break;
-    }
-    article = article?.replace(/[\n+\t]/g, "").replace(/\s+/g, " ");
-    if (article) {
-      return { article: article?.slice(0, 5000) };
-    } else if (main) {
-      return { article: main?.slice(0, 5000) };
-    } else {
-      console.error("No article found", url);
-      return { error: "No article found" };
-    }
+    const response = await page.evaluate((url) => {
+      const articles = Array.from(document.querySelectorAll("article"));
+      if (articles.length > 0) {
+        const data = articles.map((article) => ({
+          content: article.innerText.slice(0, 5000),
+        }));
+        return data;
+      } else {
+        const mainContent = document.querySelector("main")?.innerText;
+        return [
+          {
+            content:
+              mainContent?.slice(0, 5000) || `No content found at ${url}`,
+          },
+        ];
+      }
+    }, url);
+    return response;
   } catch (error) {
     console.error("Error:", error);
     return { error: "Error occurred" };
+  } finally {
+    await browser.close();
   }
 }
