@@ -1,6 +1,6 @@
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import WebResultSkeleton from "./web-result-skeleton";
+import SourceCardSkeleton from "@/components/source-card/source-card-skeleton";
 
 export default function WebResultCardGroupSkeleton() {
   return (
@@ -8,9 +8,9 @@ export default function WebResultCardGroupSkeleton() {
       <div className="flex flex-col gap-8">
         <div className="flex w-full flex-col gap-2 overflow-scroll">
           <h3 className="text-base font-semibold">Sources</h3>
-          <div className="flex w-full flex-row gap-2">
-            {[...Array(4)].map((_, index) => (
-              <WebResultSkeleton key={index} />
+          <div className="grid w-full grid-cols-1 flex-row gap-2 overflow-visible sm:grid-cols-3">
+            {[...Array(3)].map((_, index) => (
+              <SourceCardSkeleton key={index} />
             ))}
           </div>
         </div>

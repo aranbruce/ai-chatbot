@@ -63,7 +63,7 @@ export default async function searchTheNews({
   country,
   freshness,
   units,
-  count = 20,
+  count = 8,
   offset,
 }: Request) {
   "use server";
