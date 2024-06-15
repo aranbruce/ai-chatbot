@@ -1,13 +1,15 @@
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import CodeContainer from "@/components/code-container";
 
 export default function MarkdownContainer({ children }: { children: string }) {
+  children = children ?? "";
   return (
     <Markdown
       children={children}
+      remarkPlugins={[remarkGfm]}
       components={{
-        // Map `h1` (`# heading`) to use `h2`s.
         h1: "h2",
         h2(props) {
           const { node, ...rest } = props;
@@ -34,12 +36,16 @@ export default function MarkdownContainer({ children }: { children: string }) {
           return <li className="" {...rest} />;
         },
         a(props) {
-          const { node, ...rest } = props;
+          const { node, title, ...rest } = props;
           return (
             <a
               target="_blank"
               rel="noopener noreferrer"
-              className="text-zinc-950 underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-zinc-50 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-300"
+              className={
+                title === "reference"
+                  ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 p-2 text-xs font-semibold text-zinc-600 no-underline dark:bg-zinc-700 dark:text-zinc-300"
+                  : "text-zinc-950 underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-zinc-50 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-300"
+              }
               {...rest}
             />
           );

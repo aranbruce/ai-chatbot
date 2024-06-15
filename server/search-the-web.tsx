@@ -117,7 +117,8 @@ export default async function searchTheWeb({
     const data = await response.json();
     let results = data.web.results;
 
-    results = results.map((result: any) => ({
+    results = results.map((result: any, index: number) => ({
+      id: index + 1,
       title: result.title,
       url: result.url,
       description: result.description,

@@ -170,7 +170,9 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Getting the coordinates for {location}...
+              <p className="animate-text_loading">
+                Getting the coordinates for {location}...
+              </p>
               <Spinner />
             </>
           );
@@ -283,7 +285,9 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Getting the current weather for {location}...
+              <p className="animate-text_loading">
+                Getting the current weather for {location}...
+              </p>
               <CurrentWeatherCardSkeleton />
             </>
           );
@@ -414,7 +418,9 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Getting the weather forecast for {location}...
+              <p className="animate-text_loading">
+                Getting the weather forecast for {location}...
+              </p>
               <WeatherForecastCardSkeleton />
             </>
           );
@@ -601,7 +607,9 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Searching the web for {query}...
+              <p className="animate-text_loading">
+                Searching the web for {query}...
+              </p>
               <WebResultCardGroupSkeleton />
             </>
           );
@@ -618,8 +626,18 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `The user has performed a web search for the following message: <message>${message}</message> and the following query: <query>${query}</query>. Try to use all the relevant web results provided in the search results to respond to the user's message, providing useful and succinct insights.`,
-                prompt: `Here are the web search results: ${JSON.stringify(response)}`,
+                temperature: 0.1,
+                system: `The user has performed a web search for the following message: <message>${message}</message> 
+                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in 
+                the search results to respond to the user's message, providing useful and succinct insights.
+                Make sure to denote any sources you use as a link with a title of "reference" in the following format: 
+                [result.id](result.url "reference")
+                Where result.id is the value of the id field in the result,
+                result.url is the value of the url field in the result.
+                Do not include a title of "reference" for normal links, only for sources.
+                `,
+
+                prompt: `Here are the web search results: <results>${JSON.stringify(response)}</results>`,
               });
 
               let summaryText = "";
@@ -964,7 +982,7 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Searching for news about {query}...
+              <p className="animate-text_loading">Searching for news...</p>
               <WebResultCardGroupSkeleton />
             </>
           );
@@ -981,7 +999,15 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `The user has performed a news search based on the following message: <message>${message}</message> and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the results to respond to the user's message, providing useful and succinct insights.`,
+                temperature: 0.1,
+                system: `The user has performed a news search based on the following message: <message>${message}</message> 
+                and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the 
+                results to respond to the user's message, providing useful and succinct insights.
+                Make sure to denote any sources you use as a link with a title of "reference" in the following format: 
+                [result.id](result.url "reference")
+                Where result.id is the value of the id field in the result,
+                result.url is the value of the url field in the result.
+                Do not include a title of "reference" for normal links, only for sources.`,
                 prompt: `Here are the news search results: ${JSON.stringify(response)}`,
               });
 
@@ -1108,7 +1134,7 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Searching for locations related to {query} in {city}...
+              <p className="animate-text_loading">Searching for locations...</p>
               <LocationCardGroupSkeleton />
             </>
           );
@@ -1246,7 +1272,7 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Searching for {input} movies...
+              <p className="animate-text_loading">Searching for movies...</p>
               <Spinner />
             </>
           );
@@ -1405,7 +1431,9 @@ async function continueConversation(
           const toolCallId = uuidv4();
           yield (
             <>
-              Searching for gifs related to {query}...
+              <p className="animate-text_loading">
+                Searching for gifs related to {query}...
+              </p>
               <Spinner />
             </>
           );
