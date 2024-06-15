@@ -618,8 +618,12 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `The user has performed a web search for the following message: <message>${message}</message> and the following query: <query>${query}</query>. Try to use all the relevant web results provided in the search results to respond to the user's message, providing useful and succinct insights.`,
-                prompt: `Here are the web search results: ${JSON.stringify(response)}`,
+                system: `The user has performed a web search for the following message: <message>${message}</message> 
+                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in 
+                the search results to respond to the user's message, providing useful and succinct insights. Make sure to
+                denote any sources you use as a link in the following format: 
+                [result.id](result.url "reference").`,
+                prompt: `Here are the web search results: <results>${JSON.stringify(response)}</results>`,
               });
 
               let summaryText = "";
@@ -981,7 +985,10 @@ async function continueConversation(
             (async () => {
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
-                system: `The user has performed a news search based on the following message: <message>${message}</message> and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the results to respond to the user's message, providing useful and succinct insights.`,
+                system: `The user has performed a news search based on the following message: <message>${message}</message> 
+                and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the 
+                results to respond to the user's message, providing useful and succinct insights.
+                Make sure to denote any sources you use as a link in the following format: [result.id](result.url "reference").`,
                 prompt: `Here are the news search results: ${JSON.stringify(response)}`,
               });
 
