@@ -21,9 +21,18 @@ module.exports = {
             transform: "translateY(0)",
           },
         },
+        text_loading: {
+          "0%, 100%": {
+            opacity: 1,
+          },
+          "50%": {
+            opacity: 0,
+          },
+        },
       },
       animation: {
         message_appear: "message_appear 0.1s ease-in-out forwards",
+        text_loading: "text_loading 2s ease-in-out infinite",
       },
     },
   },
