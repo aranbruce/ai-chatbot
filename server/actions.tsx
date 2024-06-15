@@ -1112,10 +1112,17 @@ async function continueConversation(
           query: z
             .string()
             .describe("The search query or topic to search for locations on."),
-          city: z
-            .string()
+          latitude: z
+            .number()
+            .optional()
             .describe(
-              "The city to search for locations in. The can only be a city and cannot be part of a city. For example, 'London' is valid, but 'North London' is not.",
+              "The latitude of the location to search for. This should be a float value.",
+            ),
+          longitude: z
+            .number()
+            .optional()
+            .describe(
+              "The longitude of the location to search for. This should be a float value.",
             ),
           category: z
             .enum(["hotels", "restaurants", "attractions", "geos"])
@@ -1130,7 +1137,13 @@ async function continueConversation(
               "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217.",
             ),
         }),
-        generate: async function* ({ query, city, category, currency }) {
+        generate: async function* ({
+          query,
+          latitude,
+          longitude,
+          category,
+          currency,
+        }) {
           const toolCallId = uuidv4();
           yield (
             <>
@@ -1141,7 +1154,8 @@ async function continueConversation(
           try {
             const response = await searchForLocations({
               query,
-              city,
+              latitude,
+              longitude,
               category,
               currency,
             });
@@ -1157,7 +1171,7 @@ async function continueConversation(
                       type: "tool-call",
                       toolCallId: toolCallId,
                       toolName: "search_for_locations",
-                      args: { query, city, category, currency },
+                      args: { query, latitude, longitude, category, currency },
                     },
                   ],
                 },
@@ -1171,7 +1185,8 @@ async function continueConversation(
                       result: {
                         ...response,
                         query,
-                        city,
+                        latitude,
+                        longitude,
                         category,
                         currency,
                       },
@@ -1186,7 +1201,7 @@ async function continueConversation(
             });
             return (
               <>
-                Here are the search results for {query} in {city}:
+                Here are the search results for {query}:
                 <LocationCardGroup
                   locations={Array.isArray(response) ? response : []}
                 />
@@ -1204,7 +1219,7 @@ async function continueConversation(
                       type: "tool-call",
                       toolCallId: toolCallId,
                       toolName: "search_for_locations",
-                      args: { query, city, category, currency },
+                      args: { query, latitude, longitude, category, currency },
                     },
                   ],
                 },
@@ -1222,13 +1237,13 @@ async function continueConversation(
                 },
                 {
                   role: "assistant",
-                  content: `Sorry, there was an error searching for locations related to ${query} in ${city}`,
+                  content: `Sorry, there was an error searching for locations related to ${query}`,
                 },
               ],
             });
             return (
               <>
-                {`Sorry, there was an error searching for locations related to{" "}${query} in ${city}`}
+                {`Sorry, there was an error searching for locations related to ${query}`}
               </>
             );
           }
