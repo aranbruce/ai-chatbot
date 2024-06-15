@@ -4,7 +4,8 @@ import get_coordinates from "./get-coordinates";
 
 interface Request {
   query: string;
-  city: string;
+  latitude?: number;
+  longitude?: number;
   category?: categoryOptions;
   currency?: string;
 }
@@ -13,7 +14,8 @@ type categoryOptions = "hotels" | "restaurants" | "attractions" | "geos";
 
 export default async function searchForLocations({
   query,
-  city,
+  latitude,
+  longitude,
   category,
   currency,
 }: Request) {
@@ -25,33 +27,25 @@ export default async function searchForLocations({
     return { error: "Invalid currency parameter" };
   }
 
-  // Get the longitude and latitude from the city
-  const { latitude, longitude } = await get_coordinates({ location: city });
-
-  if (!latitude || !longitude) {
-    return { error: "Invalid city" };
-  }
-
   let locations = [];
   const getLocationSummaries = async (
     query: string,
-    city: string,
-    latitude: number,
-    longitude: number,
+    latitude: number | undefined,
+    longitude: number | undefined,
     category: string | undefined,
   ) => {
     try {
       const url = new URL(
         `https://api.content.tripadvisor.com/api/v1/location/search?key=${process.env.TRIPADVISOR_API_KEY}&searchQuery=${query}&language=en`,
       );
-      if (!latitude || !longitude) {
-        url.searchParams.append("searchQuery", `${query} in ${city}`);
-      } else {
+      if (latitude && longitude) {
         url.searchParams.append("latLong", `${latitude},${longitude}`);
       }
       if (category) {
         url.searchParams.append("category", category);
       }
+
+      console.log("URL: ", url);
 
       // Make a request to the TripAdvisor API
       const response = await fetch(url, {
@@ -133,9 +127,8 @@ export default async function searchForLocations({
 
   locations = await getLocationSummaries(
     query,
-    city,
-    latitude,
-    longitude,
+    latitude ? latitude : undefined,
+    longitude ? longitude : undefined,
     category ? category : undefined,
   );
 
