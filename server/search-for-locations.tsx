@@ -18,15 +18,15 @@ interface Request {
 
 type categoryOptions = "hotels" | "restaurants" | "attractions" | "geos";
 
-type Location = {
-  name: string;
-  description: string;
-  rating?: number;
-  priceLevel?: "$" | "$$" | "$$$" | "$$$$";
-  address: string;
-  tripAdvisorLink?: string;
-  photos?: string[];
-};
+// type Location = {
+//   name: string;
+//   description: string;
+//   rating?: number;
+//   priceLevel?: "$" | "$$" | "$$$" | "$$$$";
+//   address: string;
+//   tripAdvisorLink?: string;
+//   photos?: string[];
+// };
 
 export default async function searchForLocations({
   query,

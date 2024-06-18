@@ -35,7 +35,7 @@ export default async function getWebpageContents(url: string) {
     return { article: content.slice(0, 2000) };
   } catch (error) {
     // console.log("Error: ", error);
-    return "";
+    return null;
   }
 
   function extractContent(dom: JSDOM): string {

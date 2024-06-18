@@ -127,7 +127,11 @@ export default async function searchTheNews({
     async function enhanceResultsWithArticles(results: any[]) {
       const promises = results.map(async (result) => {
         const article = await getWebpageContents(result.url);
-        return { ...result, article: article.article };
+        if (article) {
+          return { ...result, article: article?.article };
+        } else {
+          return result;
+        }
       });
 
       return Promise.all(promises);
