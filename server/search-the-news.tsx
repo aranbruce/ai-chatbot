@@ -124,11 +124,16 @@ export default async function searchTheNews({
       extra: result.extra_snippets,
     }));
 
-    for (let i = 0; i < results.length; i++) {
-      const result = results[i];
-      const article = await getWebpageContents(result.url);
-      results[i].article = article.article;
+    async function enhanceResultsWithArticles(results: any[]) {
+      const promises = results.map(async (result) => {
+        const article = await getWebpageContents(result.url);
+        return { ...result, article: article.article };
+      });
+
+      return Promise.all(promises);
     }
+
+    results = await enhanceResultsWithArticles(results);
 
     return results;
   } catch (error) {

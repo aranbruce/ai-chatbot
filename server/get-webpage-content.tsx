@@ -4,19 +4,23 @@ import { JSDOM, VirtualConsole } from "jsdom";
 
 export default async function getWebpageContents(url: string) {
   "use server";
-  try {
-    // console.log("Request received for get webpage contents action");
-    const response = await fetch(url);
 
+  // console.log("Request received for get webpage contents action");
+
+  try {
     if (!url) {
       throw new Error("Invalid URL");
     }
 
+    const response = await fetch(url);
     if (!response.ok) {
-      // console.error(`HTTP error! status: ${response.status}`);
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status} for URL: ${url}`);
     }
+
     const responseJson = await response.text();
+    if (!responseJson) {
+      throw new Error("Empty response");
+    }
 
     const virtualConsole = new VirtualConsole();
     virtualConsole.on("log", () => {});
@@ -24,35 +28,32 @@ export default async function getWebpageContents(url: string) {
 
     const dom = new JSDOM(responseJson, {
       contentType: "text/html",
-      virtualConsole: virtualConsole,
+      virtualConsole,
     });
 
-    let main = dom.window.document.querySelector("main")?.textContent;
-    main = main?.replace(/[\n+\t]/g, "").replace(/\s+/g, " ");
+    const content = extractContent(dom);
+    return { article: content.slice(0, 2000) };
+  } catch (error) {
+    // console.log("Error: ", error);
+    return "";
+  }
 
+  function extractContent(dom: JSDOM): string {
     const selectors = [
+      "main",
       "article",
       "div[id*='article']",
       "div[class*='article']",
-      "div[id*='content']",
     ];
-
-    let article;
     for (const selector of selectors) {
-      article = dom?.window?.document?.querySelector(selector)?.textContent;
-      if (article) break;
+      const content = dom.window.document
+        .querySelector(selector)
+        ?.textContent?.replace(/[\n+\t]/g, "")
+        .replace(/\s+/g, " ");
+      if (content) {
+        return content;
+      }
     }
-    article = article?.replace(/[\n+\t]/g, "").replace(/\s+/g, " ");
-    if (article) {
-      return { article: article?.slice(0, 5000) };
-    } else if (main) {
-      return { article: main?.slice(0, 5000) };
-    } else {
-      console.error("No article found", url);
-      return { error: "No article found" };
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    return { error: "Error occurred" };
+    return "";
   }
 }

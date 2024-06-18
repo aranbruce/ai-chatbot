@@ -18,7 +18,7 @@ import { z } from "zod";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 
-import getCoordinates from "@/server/get-coordinates";
+import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
 import getCurrentWeather from "@/server/get-current-weather";
 import getWeatherForecast from "@/server/get-weather-forecast";
 import searchTheWeb from "@/server/search-the-web";
@@ -177,7 +177,10 @@ async function continueConversation(
             </>
           );
           try {
-            const response = await getCoordinates({ location, countryCode });
+            const response = await getCoordinatesFromLocation({
+              location,
+              countryCode,
+            });
             aiState.done({
               ...aiState.get(),
               messages: [
@@ -1111,7 +1114,9 @@ async function continueConversation(
         parameters: z.object({
           query: z
             .string()
-            .describe("The search query or topic to search for locations on."),
+            .describe(
+              "The search query or topic to search for locations on. This can include the location.",
+            ),
           latitude: z
             .number()
             .optional()
