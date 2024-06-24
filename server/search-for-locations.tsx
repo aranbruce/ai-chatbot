@@ -1,6 +1,12 @@
 "use server";
 
-import get_coordinates from "./get-coordinates";
+import { generateObject } from "ai";
+import getWebpageContents from "./get-webpage-content";
+import searchTheWeb from "./search-the-web";
+import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
+import getLocationFromCoordinates from "./get-location-from-coordinates";
+import searchTripAdvisor from "./search-tripadvisor";
 
 interface Request {
   query: string;
@@ -11,6 +17,16 @@ interface Request {
 }
 
 type categoryOptions = "hotels" | "restaurants" | "attractions" | "geos";
+
+// type Location = {
+//   name: string;
+//   description: string;
+//   rating?: number;
+//   priceLevel?: "$" | "$$" | "$$$" | "$$$$";
+//   address: string;
+//   tripAdvisorLink?: string;
+//   photos?: string[];
+// };
 
 export default async function searchForLocations({
   query,
@@ -24,148 +40,105 @@ export default async function searchForLocations({
 
   // check if currency is valid and follows ISO 4217
   if (currency && !/^[A-Z]{3}$/.test(currency)) {
+    console.log("error: Invalid currency parameter");
     return { error: "Invalid currency parameter" };
   }
-
-  let locations = [];
-  const getLocationSummaries = async (
-    query: string,
-    latitude: number | undefined,
-    longitude: number | undefined,
-    category: string | undefined,
-  ) => {
-    try {
-      const url = new URL(
-        `https://api.content.tripadvisor.com/api/v1/location/search?key=${process.env.TRIPADVISOR_API_KEY}&searchQuery=${query}&language=en`,
-      );
-      if (latitude && longitude) {
-        url.searchParams.append("latLong", `${latitude},${longitude}`);
-      }
-      if (category) {
-        url.searchParams.append("category", category);
-      }
-
-      console.log("URL: ", url);
-
-      // Make a request to the TripAdvisor API
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Accept-Encoding": "gzip",
-        },
+  async function getLocationsFromWebSearch(query: string) {
+    if (latitude && longitude) {
+      // get locations from coordinates
+      const response = await getLocationFromCoordinates({
+        latitude: latitude,
+        longitude: longitude,
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      const data = result.data;
-      return data;
-    } catch (error) {
-      return { error: "Internal server error" };
+      const location = response.location;
+      query = `${query} in ${location}`;
     }
-  };
+    console.log("Query: ", query);
 
-  const getLocationDetails = async (
-    locationId: any,
-    currency: string | undefined,
-  ) => {
-    try {
-      // Get details for each location
-      const url = new URL(
-        `https://api.content.tripadvisor.com/api/v1/location/${locationId}/details?language=en&key=${process.env.TRIPADVISOR_API_KEY}`,
-      );
-      if (currency) {
-        url.searchParams.append("currency", currency);
-      }
-      const locationResponse = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Accept-Encoding": "gzip",
-        },
-      });
-      const locationResult = await locationResponse.json();
-      if (!locationResponse.ok) {
-        throw new Error(`HTTP error! status: ${locationResponse.status}`);
-      }
-      return locationResult;
-    } catch (error) {
-      // Return an error message if an exception occurred
-      return { error: "Internal server error" };
-    }
-  };
-
-  const getLocationPhotos = async (locationId: string) => {
-    try {
-      const url = new URL(
-        `https://api.content.tripadvisor.com/api/v1/location/${locationId}/photos?key=${process.env.TRIPADVISOR_API_KEY}&language=en`,
-      );
-      const locationPhotosResponse = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Accept-Encoding": "gzip",
-        },
-      });
-      if (!locationPhotosResponse.ok) {
-        throw new Error(`HTTP error! status: ${locationPhotosResponse.status}`);
-      }
-      const locationPhotosResult = await locationPhotosResponse.json();
-      const data = locationPhotosResult.data;
-      let photoURLs = [];
-      for (let item of data) {
-        let originalImage = item.images.original;
-        // Now you can use originalImage
-        photoURLs.push(originalImage.url);
-      }
-      return photoURLs;
-    } catch (error) {
-      return { error: "Internal server error" };
-    }
-  };
-
-  locations = await getLocationSummaries(
-    query,
-    latitude ? latitude : undefined,
-    longitude ? longitude : undefined,
-    category ? category : undefined,
-  );
-
-  // Get details for each location and add to the locations array
-  let locationsWithDetails = [];
-  for (const location of locations) {
-    const locationDetails = await getLocationDetails(
-      location.location_id,
-      currency ? currency : undefined,
-    );
-    locationsWithDetails.push(locationDetails);
-  }
-
-  // Get photos for each location and add to the locations array
-  let locationsWithDetailsAndPhotos = [];
-  for (const location of locationsWithDetails) {
-    const locationPhotos = await getLocationPhotos(location.location_id);
-    locationsWithDetailsAndPhotos.push({
-      ...location,
-      photoUrls: locationPhotos,
+    const webPages = await searchTheWeb({
+      query: query,
     });
+
+    const webPageContents = webPages.map(async (webPage: any) => {
+      return await getWebpageContents(webPage.url);
+    });
+    const webSearchLocations = await Promise.all(webPageContents);
+    return webSearchLocations;
   }
 
-  locationsWithDetailsAndPhotos = locationsWithDetailsAndPhotos.map(
-    (location: any) => {
-      return {
-        name: location.name,
-        rating: location.rating,
-        rating_image_url: location.rating_image_url,
-        description: location.description,
-        priceLevel: location.price_level,
-        tripadvisorUrl: location.web_url,
-        address: location.address_obj.address_string,
-        photoUrls: location.photoUrls,
-      };
-    },
-  );
+  // async function formatLocations(data: any) {
+  //   // console.log("Data: ", data);
+  //   try {
+  //     const { object: response } = await generateObject({
+  //       model: openai("gpt-4o"),
+  //       system: `You are a helpful assistant that processes data containing details of different
+  //     locations for a single destination. Your task is to read the data and extract information
+  //     about the locations for that destination. You should return the extracted locations as an
+  //     array of locations containing a "name", "description" "priceLevel" and "address". You should
+  //     only extract the locations from the data and for the destination in the data.
+  //     You should not include any locations that are not in the data provided.
+  //     You should not return any locations that are not in the destination.`,
+  //       prompt: `Here is the data to extract the locations from: <data>${JSON.stringify(data)}</data>`,
+  //       schema: z.object({
+  //         locations: z.array(
+  //           z.object({
+  //             name: z.string().describe("The name of the location."),
+  //             description: z
+  //               .string()
+  //               .describe("The description of the location."),
+  //             priceLevel: z
+  //               .enum([
+  //                 "$",
+  //                 "$$",
+  //                 "$$$",
+  //                 "$$$$",
+  //                 "$-$$",
+  //                 "$$-$$",
+  //                 "$$-$$$",
+  //                 "$$$-$$$$",
+  //               ])
+  //               .describe(
+  //                 "The price level of the location. $: Low, $$: Medium, $$$: High, $$$$: Very High.",
+  //               )
+  //               .optional(),
+  //             address: z
+  //               .string()
+  //               .describe("The address of the location.")
+  //               .optional(),
+  //             tripAdvisorLink: z
+  //               .string()
+  //               .describe("The TripAdvisor link.")
+  //               .optional(),
+  //             photos: z
+  //               .array(z.string())
+  //               .describe("The photos of the location.")
+  //               .optional(),
+  //           }),
+  //         ),
+  //       }),
+  //     });
+  //     // console.log("Response: ", response.locations);
 
-  return locationsWithDetailsAndPhotos;
+  //     return response.locations;
+  //   } catch (error) {
+  //     console.log("Error: ", error);
+  //     return { error: "Internal server error" };
+  //   }
+  // }
+
+  const tripAdvisorLocations = await searchTripAdvisor({
+    query,
+    latitude,
+    longitude,
+    category,
+    currency,
+  });
+
+  // const webSearchLocations = await getLocationsFromWebSearch(query);
+
+  // const allLocations = [...tripAdvisorLocations, ...webSearchLocations];
+
+  // const response = await formatLocations(webSearchLocations);
+
+  return tripAdvisorLocations;
 }

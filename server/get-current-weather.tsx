@@ -1,6 +1,6 @@
 "use server";
 
-import getCoordinates from "./get-coordinates";
+import getCoordinates from "./get-coordinates-from-location";
 
 interface Request {
   location: string;

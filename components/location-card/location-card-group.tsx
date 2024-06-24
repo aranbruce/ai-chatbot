@@ -9,8 +9,8 @@ export default function LocationCardGroup({
 }: LocationCardGroupProps) {
   return (
     <>
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-        {locations.map((location: any, index: number) => (
+      <div className="columns-1 gap-2 space-y-4 sm:columns-2">
+        {locations.map((location: LocationCardProps, index: number) => (
           <LocationCard key={index} location={location} />
         ))}
       </div>

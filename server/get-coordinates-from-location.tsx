@@ -5,13 +5,13 @@ interface Request {
   countryCode?: string;
 }
 
-export default async function getCoordinates({
+export default async function getCoordinatesFromLocation({
   location,
   countryCode,
 }: Request) {
   "use server";
   try {
-    console.log("Request received for get-coordinates action");
+    console.log("Request received for get-coordinates-from-location action");
 
     const url = new URL(
       `http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=${process.env.OPENWEATHER_API_KEY}`,

@@ -128,12 +128,20 @@ export default async function searchTheWeb({
       extra: result.extra_snippets,
     }));
 
-    // for each result call the getWebpageContents function with the url and append the article to the result
-    for (let i = 0; i < results.length; i++) {
-      const result = results[i];
-      const article = await getWebpageContents(result.url);
-      results[i].article = article.article;
+    async function enhanceResultsWithArticles(results: any[]) {
+      const promises = results.map(async (result) => {
+        const article = await getWebpageContents(result.url);
+        if (article) {
+          return { ...result, article: article.article };
+        } else {
+          return result;
+        }
+      });
+
+      return Promise.all(promises);
     }
+
+    results = await enhanceResultsWithArticles(results);
 
     return results;
   } catch (error) {
