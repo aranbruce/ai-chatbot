@@ -32,25 +32,26 @@ export default function WebResultGroup({
                 imageURL={result.imageURL}
               />
             ))}
-
-          <button
-            className="flex min-w-0 flex-col justify-between gap-3 rounded-md border border-zinc-100 bg-zinc-50 p-2 text-sm font-semibold text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-700"
-            onClick={() => setShowAll(!showAll)}
-          >
-            <span className="flex w-full flex-row gap-2">
-              {[...results.slice(2, 8)].map((result, index) => (
-                <img
-                  key={index}
-                  src={result.imageURL}
-                  alt={result.title}
-                  width={16}
-                  height={16}
-                  className="rounded-full"
-                />
-              ))}
-            </span>
-            Show {showAll ? "less" : `+${results.length - 2} more`}
-          </button>
+          {results.length > 2 && (
+            <button
+              className="flex min-w-0 flex-col justify-between gap-3 rounded-md border border-zinc-100 bg-zinc-50 p-2 text-sm font-semibold text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-700"
+              onClick={() => setShowAll(!showAll)}
+            >
+              <span className="flex w-full flex-row gap-2">
+                {[...results.slice(2, 8)].map((result, index) => (
+                  <img
+                    key={index}
+                    src={result.imageURL}
+                    alt={result.title}
+                    width={16}
+                    height={16}
+                    className="rounded-full"
+                  />
+                ))}
+              </span>
+              Show {showAll ? "less" : `+${results.length - 2} more`}
+            </button>
+          )}
         </div>
       </div>
       <div className="flex w-full flex-col gap-2">

@@ -1,6 +1,8 @@
 "use server";
 
 import { JSDOM, VirtualConsole } from "jsdom";
+import TurndownService from "turndown";
+var turndownService = new TurndownService();
 
 export default async function getWebpageContents(url: string) {
   "use server";
@@ -32,28 +34,39 @@ export default async function getWebpageContents(url: string) {
     });
 
     const content = extractContent(dom);
-    return { article: content.slice(0, 2000) };
+    if (content === null) {
+      throw new Error("No content found");
+    }
+    return { article: content.slice(0, 5000) };
   } catch (error) {
     // console.log("Error: ", error);
     return null;
   }
 
-  function extractContent(dom: JSDOM): string {
-    const selectors = [
-      "main",
-      "article",
-      "div[id*='article']",
-      "div[class*='article']",
-    ];
-    for (const selector of selectors) {
-      const content = dom.window.document
-        .querySelector(selector)
-        ?.textContent?.replace(/[\n+\t]/g, "")
-        .replace(/\s+/g, " ");
-      if (content) {
-        return content;
-      }
+  function extractContent(dom: JSDOM) {
+    const markdown = turndownService.turndown(dom.window.document.body);
+
+    let textContent = "";
+
+    function extractText(node: Element) {
+      node.childNodes.forEach((child) => {
+        if (child.nodeType === dom.window.Node.TEXT_NODE) {
+          if (child.textContent) {
+            textContent += child.textContent
+              .replace(/[\n+\t]/g, "")
+              .replace(/\s+/g, " ");
+          }
+        } else if (child.nodeType === dom.window.Node.ELEMENT_NODE) {
+          const element = child as Element;
+          if (element.tagName !== "SCRIPT" && element.tagName !== "STYLE") {
+            extractText(element);
+          }
+        }
+      });
     }
-    return "";
+
+    extractText(dom.window.document.body);
+    textContent = turndownService.turndown(textContent);
+    return textContent || null;
   }
 }

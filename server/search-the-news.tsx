@@ -128,12 +128,11 @@ export default async function searchTheNews({
       const promises = results.map(async (result) => {
         const article = await getWebpageContents(result.url);
         if (article) {
-          return { ...result, article: article?.article };
+          return { ...result, article: article };
         } else {
           return result;
         }
       });
-
       return Promise.all(promises);
     }
 
@@ -142,6 +141,6 @@ export default async function searchTheNews({
     return results;
   } catch (error) {
     console.error("Error:", error);
-    return { error: `Error occurred: ${error}` };
+    return null;
   }
 }

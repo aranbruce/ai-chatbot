@@ -23,7 +23,7 @@ module.exports = {
         },
         text_loading: {
           "0%, 100%": {
-            opacity: 1,
+            opacity: 0.5,
           },
           "50%": {
             opacity: 0,
