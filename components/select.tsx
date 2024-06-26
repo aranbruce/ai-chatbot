@@ -7,7 +7,7 @@ export interface SelectProps {
   setSelectedValue: (value: string) => void;
 }
 
-export type Provider = "openai" | "claude" | "gemini" | "mistral" | "llama";
+type Provider = "openai" | "claude" | "gemini" | "mistral" | "llama";
 
 interface Option {
   value: string;

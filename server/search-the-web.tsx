@@ -132,7 +132,7 @@ export default async function searchTheWeb({
       const promises = results.map(async (result) => {
         const article = await getWebpageContents(result.url);
         if (article) {
-          return { ...result, article: article.article };
+          return { ...result, article: article };
         } else {
           return result;
         }

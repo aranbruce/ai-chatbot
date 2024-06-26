@@ -1,7 +1,6 @@
 "use server";
 
 import { generateObject } from "ai";
-import getWebpageContents from "./get-webpage-content";
 import searchTheWeb from "./search-the-web";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
@@ -43,28 +42,28 @@ export default async function searchForLocations({
     console.log("error: Invalid currency parameter");
     return { error: "Invalid currency parameter" };
   }
-  async function getLocationsFromWebSearch(query: string) {
-    if (latitude && longitude) {
-      // get locations from coordinates
-      const response = await getLocationFromCoordinates({
-        latitude: latitude,
-        longitude: longitude,
-      });
-      const location = response.location;
-      query = `${query} in ${location}`;
-    }
-    console.log("Query: ", query);
+  // async function getLocationsFromWebSearch(query: string) {
+  //   if (latitude && longitude) {
+  //     // get locations from coordinates
+  //     const response = await getLocationFromCoordinates({
+  //       latitude: latitude,
+  //       longitude: longitude,
+  //     });
+  //     const location = response.location;
+  //     query = `${query} in ${location}`;
+  //   }
+  //   console.log("Query: ", query);
 
-    const webPages = await searchTheWeb({
-      query: query,
-    });
+  //   const webPages = await searchTheWeb({
+  //     query: query,
+  //   });
 
-    const webPageContents = webPages.map(async (webPage: any) => {
-      return await getWebpageContents(webPage.url);
-    });
-    const webSearchLocations = await Promise.all(webPageContents);
-    return webSearchLocations;
-  }
+  //   const webPageContents = webPages.map(async (webPage: any) => {
+  //     return await getWebpageContents(webPage.url);
+  //   });
+  //   const webSearchLocations = await Promise.all(webPageContents);
+  //   return webSearchLocations;
+  // }
 
   // async function formatLocations(data: any) {
   //   // console.log("Data: ", data);

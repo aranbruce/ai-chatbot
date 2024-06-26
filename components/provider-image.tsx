@@ -1,4 +1,4 @@
-import { Provider } from "./select";
+import { Provider } from "../libs/models";
 
 interface ProviderImageProps {
   provider: Provider;
