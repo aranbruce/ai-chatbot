@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-import { useUIState, useActions } from "ai/rsc";
+import { useUIState, useAIState, useActions } from "ai/rsc";
 import { v4 as uuidv4 } from "uuid";
 import PromptForm from "./prompt-form";
 import MessageCard from "./message-card";
@@ -10,13 +10,14 @@ import EmptyScreen from "./empty-screen";
 import { useScrollAnchor } from "@/libs/hooks/use-scroll-anchor";
 import useLocation from "@/libs/hooks/use-location";
 
-import type { ClientMessage } from "@/server/actions";
+import type { AIState, ClientMessage } from "@/server/actions";
 
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useUIState();
+  const [aiState, setAIState] = useAIState();
+
   const { continueConversation } = useActions();
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     scrollToBottom();
@@ -28,9 +29,12 @@ export default function Chat() {
     useScrollAnchor();
 
   async function sendMessage(message: string) {
-    if (isLoading || !message) return;
-    setIsLoading(true);
+    if (!aiState.isFinished || !message) return;
     setInputValue("");
+    setAIState((AIState: AIState) => ({
+      ...AIState,
+      isFinished: false,
+    }));
 
     setMessages((messages: ClientMessage[]) => [
       ...messages,
@@ -42,7 +46,6 @@ export default function Chat() {
     ]);
     const response = await continueConversation(message, location);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
-    setIsLoading(false);
   }
 
   return (

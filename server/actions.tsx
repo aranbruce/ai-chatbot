@@ -55,6 +55,7 @@ export interface ClientMessage {
 
 export type AIState = {
   currentModelVariable: string;
+  isFinished: boolean;
   messages: CoreMessage[];
 };
 
@@ -630,10 +631,10 @@ async function continueConversation(
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
                 temperature: 0.1,
-                system: `The user has performed a web search for the following message: <message>${message}</message> 
-                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in 
+                system: `The user has performed a web search for the following message: <message>${message}</message>
+                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in
                 the search results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use as a link with a title of "reference" in the following format: 
+                Make sure to denote any sources you use as a link with a title of "reference" in the following format:
                 [result.id](result.url "reference")
                 Where result.id is the value of the id field in the result,
                 result.url is the value of the url field in the result.
@@ -1003,10 +1004,10 @@ async function continueConversation(
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
                 temperature: 0.1,
-                system: `The user has performed a news search based on the following message: <message>${message}</message> 
-                and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the 
+                system: `The user has performed a news search based on the following message: <message>${message}</message>
+                and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the
                 results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use as a link with a title of "reference" in the following format: 
+                Make sure to denote any sources you use as a link with a title of "reference" in the following format:
                 [result.id](result.url "reference")
                 Where result.id is the value of the id field in the result,
                 result.url is the value of the url field in the result.
@@ -1568,6 +1569,12 @@ async function continueConversation(
         },
       },
     },
+    onFinish: () => {
+      aiState.done({
+        ...aiState.get(),
+        isFinished: true,
+      });
+    },
   });
 
   return {
@@ -1874,6 +1881,10 @@ export const AI = createAI<AIState, UIState>({
     getWeatherForecastUI,
     getCurrentWeatherUI,
   },
-  initialAIState: { currentModelVariable: "gpt-4o", messages: [] } as AIState,
+  initialAIState: {
+    currentModelVariable: "gpt-4o",
+    isFinished: true,
+    messages: [],
+  } as AIState,
   initialUIState: [] as UIState,
 });
