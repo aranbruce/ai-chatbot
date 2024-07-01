@@ -128,6 +128,7 @@ async function continueConversation(
         if (done) {
           aiState.done({
             ...aiState.get(),
+            isFinished: true,
             messages: [
               ...aiState.get().messages,
               { role: "assistant", content },
@@ -139,6 +140,7 @@ async function continueConversation(
         console.log("error: ", error);
         aiState.done({
           ...aiState.get(),
+          isFinished: true,
           messages: [
             ...aiState.get().messages,
             {
@@ -184,6 +186,7 @@ async function continueConversation(
             });
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -225,6 +228,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -303,6 +307,7 @@ async function continueConversation(
             });
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -346,6 +351,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -439,6 +445,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -484,6 +491,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -655,6 +663,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -702,6 +711,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -806,6 +816,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -863,6 +874,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1026,6 +1038,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1073,6 +1086,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1168,6 +1182,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1216,6 +1231,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1309,6 +1325,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1381,6 +1398,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1468,6 +1486,7 @@ async function continueConversation(
 
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1529,6 +1548,7 @@ async function continueConversation(
           } catch (error) {
             aiState.done({
               ...aiState.get(),
+              isFinished: true,
               messages: [
                 ...aiState.get().messages,
                 {
@@ -1568,12 +1588,6 @@ async function continueConversation(
           }
         },
       },
-    },
-    onFinish: () => {
-      aiState.done({
-        ...aiState.get(),
-        isFinished: true,
-      });
     },
   });
 
@@ -1684,6 +1698,7 @@ async function getWeatherForecastUI(
       });
       aiState.done({
         ...aiState.get(),
+        isFinished: true,
         messages: [
           ...aiState.get().messages,
           {
@@ -1733,6 +1748,7 @@ async function getWeatherForecastUI(
   } catch (error) {
     aiState.done({
       ...aiState.get(),
+      isFinished: true,
       messages: [
         ...aiState.get().messages,
         {
@@ -1795,6 +1811,7 @@ async function getCurrentWeatherUI(
       });
       aiState.done({
         ...aiState.get(),
+        isFinished: true,
         messages: [
           ...aiState.get().messages,
           {
@@ -1845,6 +1862,7 @@ async function getCurrentWeatherUI(
   } catch (error) {
     aiState.done({
       ...aiState.get(),
+      isFinished: true,
       messages: [
         ...aiState.get().messages,
         {
