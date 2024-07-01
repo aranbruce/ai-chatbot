@@ -1684,6 +1684,7 @@ async function getWeatherForecastUI(
       });
       aiState.done({
         ...aiState.get(),
+        isFinished: true,
         messages: [
           ...aiState.get().messages,
           {
@@ -1733,6 +1734,7 @@ async function getWeatherForecastUI(
   } catch (error) {
     aiState.done({
       ...aiState.get(),
+      isFinished: true,
       messages: [
         ...aiState.get().messages,
         {
@@ -1795,6 +1797,7 @@ async function getCurrentWeatherUI(
       });
       aiState.done({
         ...aiState.get(),
+        isFinished: true,
         messages: [
           ...aiState.get().messages,
           {
@@ -1845,6 +1848,7 @@ async function getCurrentWeatherUI(
   } catch (error) {
     aiState.done({
       ...aiState.get(),
+      isFinished: true,
       messages: [
         ...aiState.get().messages,
         {

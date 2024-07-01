@@ -1,8 +1,8 @@
 "use client";
 
-import { useActions, useUIState } from "ai/rsc";
+import { useActions, useUIState, useAIState } from "ai/rsc";
 
-import type { ClientMessage } from "../../server/actions";
+import type { ClientMessage, AIState } from "../../server/actions";
 
 import WeatherImage, { WeatherTypeProps } from "../weather-image";
 
@@ -27,6 +27,7 @@ export default function CurrentWeatherCard({
   currentWeather: CurrentWeatherProps;
 }) {
   const [, setMessages] = useUIState();
+  const [, setAIState] = useAIState();
 
   const { getWeatherForecastUI, getCurrentWeatherUI } = useActions();
 
@@ -36,6 +37,10 @@ export default function CurrentWeatherCard({
     countryCode: string | undefined,
     units: "metric" | "imperial" | undefined,
   ) => {
+    setAIState((AIState: AIState) => ({
+      ...AIState,
+      isFinished: false,
+    }));
     const response = await getWeatherForecastUI(
       location,
       forecastDays,
@@ -50,6 +55,10 @@ export default function CurrentWeatherCard({
     countryCode: string | undefined,
     units: "metric" | "imperial" | undefined,
   ) => {
+    setAIState((AIState: AIState) => ({
+      ...AIState,
+      isFinished: false,
+    }));
     const response = await getCurrentWeatherUI(location, countryCode, units);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   };
@@ -115,7 +124,7 @@ export default function CurrentWeatherCard({
       </div>
       <div className="flex flex-row flex-wrap items-center gap-2">
         <button
-          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40 "
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40"
           onClick={() =>
             handleGetWeatherForecast(
               currentWeather.location,
@@ -147,7 +156,7 @@ export default function CurrentWeatherCard({
           3 day forecast
         </button>
         <button
-          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40 "
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40"
           onClick={() =>
             handleGetWeatherForecast(
               currentWeather.location,
@@ -179,7 +188,7 @@ export default function CurrentWeatherCard({
           5 day forecast
         </button>
         <button
-          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40 "
+          className="flex w-fit flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-600 ring-slate-950/20 hover:bg-zinc-100 focus:outline-none focus-visible:ring-[3px] dark:ring-white/40"
           onClick={() =>
             handleGetCurrentWeather(
               currentWeather.location === "New York" ? "London" : "New York",
