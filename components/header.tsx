@@ -3,7 +3,7 @@ import Button from "./button";
 
 export default function Header() {
   return (
-    <header className="flex h-fit w-full shrink-0 items-center justify-between bg-white px-4 py-2 dark:bg-zinc-950">
+    <nav className="fixed left-0 right-0 top-0 z-10 flex h-fit w-full shrink-0 items-center justify-between bg-gradient-to-b from-white to-transparent px-4 py-2 backdrop-blur-[1px] dark:from-zinc-950">
       <a
         href="/"
         className="focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-500"
@@ -57,6 +57,6 @@ export default function Header() {
           <div className="hidden sm:block">Buy me a coffee</div>
         </Button>
       </div>
-    </header>
+    </nav>
   );
 }

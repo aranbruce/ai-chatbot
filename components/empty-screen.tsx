@@ -51,7 +51,7 @@ export default function EmptyScreen({
   }
 
   return (
-    <div className="flex h-full min-h-fit flex-col justify-between gap-1">
+    <div className="mx-auto flex h-full w-full max-w-2xl flex-col justify-between gap-16">
       <div className="flex flex-col items-center gap-2">
         <p className="text-sm text-zinc-500 dark:text-zinc-300">
           Select a model
@@ -72,12 +72,12 @@ export default function EmptyScreen({
             How can I help today?
           </p>
         </div>
+        {!examplesUI ? (
+          <ExampleMessageCardGroup exampleMessages={[]} />
+        ) : (
+          examplesUI
+        )}
       </div>
-      {!examplesUI ? (
-        <ExampleMessageCardGroup exampleMessages={[]} />
-      ) : (
-        examplesUI
-      )}
     </div>
   );
 }
