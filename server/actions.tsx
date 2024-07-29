@@ -1636,7 +1636,7 @@ async function createExampleMessages(
           z.object({
             heading: z
               .string()
-              .describe("A short heading for the example message"),
+              .describe("A short heading for the example message of 4-5 words"),
             subheading: z
               .string()
               .describe(
@@ -1900,7 +1900,7 @@ export const AI = createAI<AIState, UIState>({
     getCurrentWeatherUI,
   },
   initialAIState: {
-    currentModelVariable: "gpt-4o",
+    currentModelVariable: "gpt-4o-mini",
     isFinished: true,
     messages: [],
   } as AIState,

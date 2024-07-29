@@ -2,6 +2,11 @@ export type Provider = "openai" | "claude" | "gemini" | "mistral" | "llama";
 
 export const modelVariableOptions = [
   {
+    value: "gpt-4o-mini",
+    label: "4o Mini",
+    provider: "openai" as Provider,
+  },
+  {
     value: "gpt-4o",
     label: "4o",
     provider: "openai" as Provider,

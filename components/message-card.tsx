@@ -37,7 +37,7 @@ export default function MessageCard({
   return (
     <div
       key={id}
-      className="flex animate-message_appear flex-row items-start gap-3 whitespace-pre-wrap"
+      className="flex animate-message_appear flex-row items-start gap-3 whitespace-pre-wrap pb-8"
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (

@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useScrollAnchor = () => {
@@ -68,7 +66,7 @@ export const useScrollAnchor = () => {
         },
         {
           rootMargin: "0px 0px -112px 0px",
-        }
+        },
       );
 
       observer.observe(visibilityRef.current);
