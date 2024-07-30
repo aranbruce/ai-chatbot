@@ -56,7 +56,6 @@ export interface ClientMessage {
 export type AIState = {
   currentModelVariable: string;
   isFinished: boolean;
-  files: FileList | undefined;
   messages: CoreMessage[];
 };
 
@@ -1904,7 +1903,6 @@ export const AI = createAI<AIState, UIState>({
   initialAIState: {
     currentModelVariable: "gpt-4o-mini",
     isFinished: true,
-    files: undefined,
     messages: [],
   } as AIState,
   initialUIState: [] as UIState,
