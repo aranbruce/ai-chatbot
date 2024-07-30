@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
-import { v4 as uuidv4 } from "uuid";
+import { generateId } from "ai";
 import PromptForm from "@/components/prompt-form";
 import MessageCard from "@/components/message-card";
 import EmptyScreen from "@/components/empty-screen";
@@ -40,7 +40,7 @@ export default function Chat() {
     setMessages((messages: ClientMessage[]) => [
       ...messages,
       {
-        id: uuidv4(),
+        id: generateId(),
         content: <>{message}</>,
         role: "user",
       },
@@ -50,7 +50,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="w-full overflow-scroll" ref={scrollRef}>
+    <div className="h-svh w-full overflow-scroll" ref={scrollRef}>
       <div
         ref={messagesRef}
         className="mx-auto max-w-2xl px-4 pb-[200px] pt-32"

@@ -16,7 +16,7 @@ import {
 
 import { z } from "zod";
 import Image from "next/image";
-import { v4 as uuidv4 } from "uuid";
+import { generateId } from "ai";
 
 import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
 import getCurrentWeather from "@/server/get-current-weather";
@@ -56,6 +56,7 @@ export interface ClientMessage {
 export type AIState = {
   currentModelVariable: string;
   isFinished: boolean;
+  files: FileList | undefined;
   messages: CoreMessage[];
 };
 
@@ -170,7 +171,7 @@ async function continueConversation(
             ),
         }),
         generate: async function* ({ location, countryCode }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">
@@ -290,7 +291,7 @@ async function continueConversation(
             ),
         }),
         generate: async function* ({ location, countryCode, units }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">
@@ -425,7 +426,7 @@ async function continueConversation(
           countryCode,
           units,
         }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">
@@ -616,7 +617,7 @@ async function continueConversation(
           count,
           offset,
         }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">
@@ -642,10 +643,11 @@ async function continueConversation(
                 system: `The user has performed a web search for the following message: <message>${message}</message>
                 and the following query: <query>${query}</query>. Try to use all the relevant web results provided in
                 the search results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use as a link with a title of "reference" in the following format:
+                Make sure to denote any sources you use the number for that source's result.id with a link with a title of "reference" in the following format:
                 [result.id](result.url "reference")
                 Where result.id is the value of the id field in the result,
                 result.url is the value of the url field in the result.
+                Do not use "source" for the result.id, only the number.
                 Do not include a title of "reference" for normal links, only for sources.
                 `,
 
@@ -805,7 +807,7 @@ async function continueConversation(
             .describe("The number of search results to return"),
         }),
         generate: async function* ({ query, country, count }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield <>Searching for images of {query}...</>;
           try {
             const response = await searchForImages({
@@ -995,7 +997,7 @@ async function continueConversation(
           count,
           offset,
         }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">Searching for news...</p>
@@ -1164,7 +1166,7 @@ async function continueConversation(
           category,
           currency,
         }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">Searching for locations...</p>
@@ -1306,7 +1308,7 @@ async function continueConversation(
           director,
           limit,
         }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">Searching for movies...</p>
@@ -1467,7 +1469,7 @@ async function continueConversation(
             ),
         }),
         generate: async function* ({ query, limit, offset, rating }) {
-          const toolCallId = uuidv4();
+          const toolCallId = generateId();
           yield (
             <>
               <p className="animate-text_loading">
@@ -1592,7 +1594,7 @@ async function continueConversation(
   });
 
   return {
-    id: uuidv4(),
+    id: generateId(),
     role: "assistant",
     content: result.value,
     model: getAIState().currentModelVariable,
@@ -1680,7 +1682,7 @@ async function getWeatherForecastUI(
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
-  const toolCallId = uuidv4();
+  const toolCallId = generateId();
 
   const uiStream = createStreamableUI(
     <>
@@ -1775,7 +1777,7 @@ async function getWeatherForecastUI(
     );
   }
   return {
-    id: uuidv4(),
+    id: generateId(),
     role: "assistant",
     content: uiStream.value,
     model: getAIState().currentModelVariable,
@@ -1794,7 +1796,7 @@ async function getCurrentWeatherUI(
   }
 
   const aiState = getMutableAIState<typeof AI>();
-  const toolCallId = uuidv4();
+  const toolCallId = generateId();
 
   const uiStream = createStreamableUI(
     <>
@@ -1885,7 +1887,7 @@ async function getCurrentWeatherUI(
   }
 
   return {
-    id: uuidv4(),
+    id: generateId(),
     role: "assistant",
     content: uiStream.value,
     model: getAIState().currentModelVariable,
@@ -1902,6 +1904,7 @@ export const AI = createAI<AIState, UIState>({
   initialAIState: {
     currentModelVariable: "gpt-4o-mini",
     isFinished: true,
+    files: undefined,
     messages: [],
   } as AIState,
   initialUIState: [] as UIState,

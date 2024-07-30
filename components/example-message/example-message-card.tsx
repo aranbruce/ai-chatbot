@@ -1,7 +1,7 @@
 "use client";
 
 import { useActions, useUIState } from "ai/rsc";
-import { v4 as uuidv4 } from "uuid";
+import { generateId } from "ai";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -28,7 +28,7 @@ export default function ExampleMessageCard({
     setMessages((messages: ClientMessage[]) => [
       ...messages,
       {
-        id: uuidv4(),
+        id: generateId(),
         content: <>{subheading}</>,
         role: "user",
       },
