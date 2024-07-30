@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { generateId } from "ai";
