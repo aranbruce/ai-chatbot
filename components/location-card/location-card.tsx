@@ -20,14 +20,14 @@ export default function LocationCard({
     <div className="flex h-fit flex-col justify-between gap-4 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex flex-col">
         {Array.isArray(location.photoUrls) && (
-          <div className="flex flex-row items-center gap-4 overflow-x-scroll">
+          <div className="flex snap-x snap-mandatory flex-row items-center gap-4 overflow-x-scroll">
             {location.photoUrls.map((url, index) => (
               <img
                 key={index}
                 src={url}
                 alt={location.name}
                 height={144}
-                className="h-36 w-full shrink-0"
+                className="h-36 w-full shrink-0 snap-center"
                 style={{ objectFit: "cover" }}
               />
             ))}

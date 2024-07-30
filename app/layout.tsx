@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="bg-white dark:bg-zinc-950">
-      <body className={GeistSans.className}>
+      <body className={`${GeistSans.className} h-dvh overflow-hidden`}>
         <AI>
           <Header />
           {children}

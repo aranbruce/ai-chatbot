@@ -4,7 +4,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 export default function LocationCardSkeleton() {
   return (
     <SkeletonTheme baseColor="#d4d4d8" highlightColor="#f4f4f5">
-      <div className="flex flex-col rounded-lg border border-zinc-200 bg-white leading-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white leading-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <Skeleton
           height={140}
           borderRadius={0}
