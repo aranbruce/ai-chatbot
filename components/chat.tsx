@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { PutBlobResult } from "@vercel/blob";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { generateId } from "ai";
@@ -17,6 +18,9 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useUIState();
   const [aiState, setAIState] = useAIState();
+  const [blob, setBlob] = useState<PutBlobResult | null>(null);
+
+  const inputFileRef = useRef<HTMLInputElement>(null);
 
   const { continueConversation } = useActions();
 
@@ -45,9 +49,32 @@ export default function Chat() {
         role: "user",
       },
     ]);
-    const response = await continueConversation(message, location);
+    const response = blob
+      ? await continueConversation(message, location, blob.url)
+      : await continueConversation(message, location);
+
     setMessages((messages: ClientMessage[]) => [...messages, response]);
+    if (blob) {
+      setBlob(null);
+    }
   }
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = inputFileRef.current?.files?.[0];
+    if (file) {
+      const response = await fetch(`/api/upload?filename=${file.name}`, {
+        method: "POST",
+        body: file,
+      });
+
+      const newBlob = (await response.json()) as PutBlobResult;
+
+      setBlob(newBlob);
+      console.log("imageURL: ", newBlob.url);
+    }
+  };
 
   return (
     <div className="h-svh w-full overflow-scroll" ref={scrollRef}>
@@ -107,6 +134,8 @@ export default function Chat() {
         inputValue={inputValue}
         setInputValue={setInputValue}
         handleSubmit={sendMessage}
+        handleFileUpload={handleFileUpload}
+        inputFileRef={inputFileRef}
       />
     </div>
   );

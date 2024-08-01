@@ -64,22 +64,47 @@ export type UIState = ClientMessage[];
 async function continueConversation(
   message: string,
   userLocation?: { latitude: number; longitude: number },
+  imageURL?: string,
 ): Promise<ClientMessage> {
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
   const summaryUI = createStreamableUI(null);
 
-  aiState.update({
-    ...aiState.get(),
-    messages: [
-      ...aiState.get().messages,
-      {
-        role: "user",
-        content: message,
-      },
-    ],
-  });
+  console.log("imageURL: ", imageURL);
+
+  if (imageURL) {
+    aiState.update({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: message,
+            },
+            {
+              type: "image",
+              image: imageURL,
+            },
+          ],
+        },
+      ],
+    });
+  } else {
+    aiState.update({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+  }
 
   const modelVariable = aiState.get().currentModelVariable;
 

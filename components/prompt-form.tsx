@@ -1,3 +1,8 @@
+// "use client";
+
+// import { useState, useRef } from "react";
+// import type { PutBlobResult } from "@vercel/blob";
+
 import Textarea from "./textarea";
 import Button from "./button";
 import Spinner from "./spinner";
@@ -8,12 +13,16 @@ interface PromptFormProps {
   inputValue: string;
   setInputValue: (value: string) => void;
   handleSubmit: (message: string) => void;
+  handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  inputFileRef: React.RefObject<HTMLInputElement>;
 }
 
 export default function PromptForm({
   inputValue,
   setInputValue,
   handleSubmit,
+  handleFileUpload,
+  inputFileRef,
 }: PromptFormProps) {
   const [aiState] = useAIState();
 
@@ -23,6 +32,24 @@ export default function PromptForm({
       event.currentTarget.form?.requestSubmit();
     }
   };
+
+  // const handleFileUpload = async (
+  //   event: React.ChangeEvent<HTMLInputElement>,
+  // ) => {
+  //   const file = inputFileRef.current?.files?.[0];
+  //   if (file) {
+  //     const response = await fetch(`/api/upload?filename=${file.name}`, {
+  //       method: "POST",
+  //       body: file,
+  //     });
+
+  //     const newBlob = (await response.json()) as PutBlobResult;
+
+  //     setBlob(newBlob);
+  //     console.log("imageURL: ", newBlob.url);
+  //   }
+  // };
+
   return (
     <div className="fixed bottom-0 flex w-full flex-col items-center justify-center bg-gradient-to-t from-white via-white to-transparent backdrop-blur-[1px] dark:from-zinc-950 dark:via-zinc-950">
       <div className="w-full space-y-4 px-4 pb-4 pt-2 md:mx-5 md:max-w-2xl">
@@ -38,6 +65,14 @@ export default function PromptForm({
           className="relative"
         >
           <div className="relative flex w-full grow flex-col overflow-hidden rounded-[1.75rem] border border-zinc-200/50 bg-zinc-100 pr-1 ring-slate-950/30 ring-offset-[3px] ring-offset-white transition focus-within:ring-[3px] has-[button:focus]:ring-0 dark:border-zinc-200/10 dark:bg-zinc-900 dark:ring-white/40 dark:ring-offset-zinc-950">
+            {/* add a button to upload an image file or pdf */}
+            <input
+              type="file"
+              ref={inputFileRef}
+              id="file"
+              name="file"
+              onChange={handleFileUpload}
+            />
             <Textarea
               placeholder="Send a message..."
               value={inputValue}
