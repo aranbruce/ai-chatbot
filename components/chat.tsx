@@ -77,7 +77,7 @@ export default function Chat() {
         )}
       </div>
       {!isAtBottom && messages.length && (
-        <div className="fixed inset-x-0 bottom-32 mx-auto w-[42px]">
+        <div className="fixed inset-x-0 bottom-[120px] mx-auto w-[42px] drop-shadow-sm">
           <Button
             rounded
             variant="secondary"

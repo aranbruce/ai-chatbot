@@ -642,12 +642,27 @@ async function continueConversation(
                 system: `The user has performed a web search for the following message: <message>${message}</message>
                 and the following query: <query>${query}</query>. Try to use all the relevant web results provided in
                 the search results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use the number for that source's result.id with a link with a title of "reference" in the following format:
-                [result.id](result.url "reference")
+                Make sure to denote any sources you use the number for that source's result.id with a link with a title of "source" in the following format:
+                [result.id](result.url "source")
                 Where result.id is the value of the id field in the result,
                 result.url is the value of the url field in the result.
-                Do not use "source" for the result.id, only the number.
-                Do not include a title of "reference" for normal links, only for sources.
+                Only the number use the source number for the source link.
+                Do not include a title of "source" for normal links, only for sources.
+                Source Examples:
+                """
+                [1](https://example.com "source")
+                [2](https://example.com "source")
+                [3](https://example.com "source")
+                """
+                Normal Link Example:
+                """
+                [Link text](https://example.com)
+                """
+                Incorrect Example:
+                """
+                [BBC News](https://bbc.co.uk "source")
+                """
+                
                 `,
 
                 prompt: `Here are the web search results: <results>${JSON.stringify(response)}</results>`,
@@ -1017,14 +1032,31 @@ async function continueConversation(
               const { textStream } = await streamText({
                 model: getModelFromModelVariable(modelVariable),
                 temperature: 0.1,
-                system: `The user has performed a news search based on the following message: <message>${message}</message>
-                and the following query: <query>${query}</query>. Try to use all the relevant news results provided in the
-                results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use as a link with a title of "reference" in the following format:
-                [result.id](result.url "reference")
+                system: `
+                The user has performed a web search for the following message: <message>${message}</message>
+                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in
+                the search results to respond to the user's message, providing useful and succinct insights.
+                Make sure to denote any sources you use the number for that source's result.id with a link with a title of "source" in the following format:
+                [result.id](result.url "source")
                 Where result.id is the value of the id field in the result,
                 result.url is the value of the url field in the result.
-                Do not include a title of "reference" for normal links, only for sources.`,
+                Only the number use the source number for the source link.
+                Do not include a title of "source" for normal links, only for sources.
+                Source Examples:
+                """
+                [1](https://example.com "source")
+                [2](https://example.com "source")
+                [3](https://example.com "source")
+                """
+                Normal Link Example:
+                """
+                [Link text](https://example.com)
+                """
+                Incorrect Example:
+                """
+                [BBC News](https://bbc.co.uk "source")
+                
+                """`,
                 prompt: `Here are the news search results: ${JSON.stringify(response)}`,
               });
 
@@ -1615,22 +1647,23 @@ async function createExampleMessages(
       system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
         The LLM assistant has the following capabilities:
-        - Search for news on the web for a given topic
-        - Search the web for information on a given topic or for a specific query
-        - Display multiple fun or entertaining gifs
-        - Get the current weather for a location
-        - Get the weather forecast for a location
-        - Search for locations or places to visit
-        - Get movies from a database based on an input
-        - Search for images on the web for a given topic or query
+        - 🗞️ Search for news on the web for a given topic
+        - 🔎 Search the web for information on a given topic or for a specific query
+        - 🌄 Display multiple fun or entertaining gifs
+        - 🌤️ Get the current weather for a location
+        - ⛅️ Get the weather forecast for a location
+        - 🌍 Search for locations or places to visit
+        - 🍿 Get movies from a database based on an input
+        - 📸 Search for images on the web for a given topic or query
         ${
           userLocation
             ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}. Try to make the example messages relevant to their location.
         Try to use the name of location in the example messages rather than the coordinates`
             : ""
         }`,
-      prompt:
-        "Generate 4 example messages to inspire the user to start a conversation with the LLM assistant. Select randomly for the capabilities of the LLM assistant.",
+      prompt: `Generate 4 example messages to inspire the user to start a conversation with the LLM assistant using.
+        Select randomly for the capabilities of the LLM assistant.
+        Include emojis at the start of each example message to make them more engaging.`,
       temperature: 1,
       schema: z.object({
         examples: z.array(
