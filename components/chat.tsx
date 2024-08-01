@@ -35,6 +35,10 @@ export default function Chat() {
 
   async function sendMessage(message: string) {
     if (!aiState.isFinished || !message) return;
+    const fileURL = blob ? blob.url : undefined;
+    if (blob) {
+      setBlob(null);
+    }
     setInputValue("");
     if (inputFileRef.current) {
       inputFileRef.current.value = "";
@@ -54,13 +58,10 @@ export default function Chat() {
       },
     ]);
     const response = blob
-      ? await continueConversation(message, location, blob.url)
+      ? await continueConversation(message, location, fileURL)
       : await continueConversation(message, location);
 
     setMessages((messages: ClientMessage[]) => [...messages, response]);
-    if (blob) {
-      setBlob(null);
-    }
   }
 
   const handleFileUpload = async (
@@ -76,6 +77,7 @@ export default function Chat() {
       const newBlob = (await response.json()) as PutBlobResult;
 
       setBlob(newBlob);
+      console.log(newBlob);
     }
   };
 
@@ -114,6 +116,7 @@ export default function Chat() {
         scrollToBottom={scrollToBottom}
         handleFileUpload={handleFileUpload}
         inputFileRef={inputFileRef}
+        fileUpload={blob as PutBlobResult}
       />
     </div>
   );

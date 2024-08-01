@@ -55,7 +55,7 @@ export default function Textarea({
       ref={textareaRef}
       id="message"
       name={name}
-      className="text-md w-full resize-none bg-transparent py-4 pr-12 text-zinc-950 placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-600"
+      className="text-md w-full resize-none bg-transparent py-4 pl-3 pr-12 text-zinc-950 placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-600"
       rows={1}
       inputMode={"text"}
       placeholder={placeholder}
