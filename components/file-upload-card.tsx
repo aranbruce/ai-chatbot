@@ -1,6 +1,5 @@
 import { PutBlobResult } from "@vercel/blob";
 import Spinner from "@/components/spinner";
-import Button from "@/components/button";
 
 type FileUploadCardProps = {
   fileUpload: FileUpload | null;
