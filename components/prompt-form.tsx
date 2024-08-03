@@ -2,10 +2,8 @@ import Textarea from "./textarea";
 import Button from "./button";
 import Spinner from "./spinner";
 
-import type { PutBlobResult } from "@vercel/blob";
-
 import { useAIState } from "ai/rsc";
-import FileUploadCard from "@/components/file-upload-card";
+import FileUploadCard, { FileUpload } from "@/components/file-upload-card";
 import FileUploadButton from "@/components/file-upload-button";
 
 interface PromptFormProps {
@@ -16,9 +14,8 @@ interface PromptFormProps {
   scrollToBottom: () => void;
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   inputFileRef: React.RefObject<HTMLInputElement>;
-  uploadingFile: File | null;
-  uploadedFile: PutBlobResult;
-  setUploadedFile: (file: PutBlobResult | null) => void;
+  fileUpload: FileUpload | null;
+  setFileUpload: (file: FileUpload | null) => void;
 }
 
 export default function PromptForm({
@@ -29,9 +26,8 @@ export default function PromptForm({
   isAtBottom,
   scrollToBottom,
   inputFileRef,
-  uploadingFile,
-  uploadedFile,
-  setUploadedFile,
+  fileUpload,
+  setFileUpload,
 }: PromptFormProps) {
   const [aiState] = useAIState();
 
@@ -85,11 +81,10 @@ export default function PromptForm({
             className="relative"
           >
             <div className="relative flex w-full grow flex-col overflow-hidden rounded-[1.75rem] border border-zinc-200/50 bg-zinc-100 pr-1 ring-slate-950/30 ring-offset-[3px] ring-offset-white transition focus-within:ring-[3px] has-[button:focus]:ring-0 dark:border-zinc-200/10 dark:bg-zinc-900 dark:ring-white/40 dark:ring-offset-zinc-950">
-              {!uploadingFile && !uploadedFile ? null : (
+              {fileUpload && (
                 <FileUploadCard
-                  uploadingFile={uploadingFile}
-                  uploadedFile={uploadedFile}
-                  setUploadedFile={setUploadedFile}
+                  fileUpload={fileUpload}
+                  setFileUpload={setFileUpload}
                 />
               )}
               <div className="flex flex-row items-end">

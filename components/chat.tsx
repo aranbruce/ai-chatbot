@@ -8,9 +8,10 @@ import { generateId } from "ai";
 import PromptForm from "@/components/prompt-form";
 import MessageCard from "@/components/message-card";
 import EmptyScreen from "@/components/empty-screen";
-import Button from "@/components/button";
 import { useScrollAnchor } from "@/libs/hooks/use-scroll-anchor";
 import useLocation from "@/libs/hooks/use-location";
+
+import { FileUpload } from "./file-upload-card";
 
 import type { AIState, ClientMessage } from "@/server/actions";
 
@@ -18,8 +19,7 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useUIState();
   const [aiState, setAIState] = useAIState();
-  const [uploadedFile, setUploadedFile] = useState<PutBlobResult | null>(null);
-  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+  const [fileUpload, setFileUpload] = useState<FileUpload | null>(null);
 
   const inputFileRef = useRef<HTMLInputElement>(null);
 
@@ -27,7 +27,6 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-    console.log("messages: ", messages);
   }, [messages]);
 
   const { location, error, isLoaded } = useLocation();
@@ -36,10 +35,10 @@ export default function Chat() {
     useScrollAnchor();
 
   async function sendMessage(message: string) {
-    if (!aiState.isFinished || !message || uploadingFile) return;
-    const fileURL = uploadedFile ? uploadedFile.url : undefined;
-    if (uploadedFile) {
-      setUploadedFile(null);
+    if (!aiState.isFinished || !message || fileUpload?.isUploading) return;
+    const fileURL = fileUpload ? fileUpload.url : undefined;
+    if (fileUpload) {
+      setFileUpload(null);
     }
     setInputValue("");
     if (inputFileRef.current) {
@@ -56,34 +55,46 @@ export default function Chat() {
       {
         id: generateId(),
         content: <>{message}</>,
-        file: uploadedFile ? uploadedFile : undefined,
+        file: fileUpload ? fileUpload : undefined,
         role: "user",
       },
     ]);
-    const response = uploadedFile
+    const response = fileUpload
       ? await continueConversation(message, location, fileURL)
       : await continueConversation(message, location);
 
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   }
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = inputFileRef.current?.files?.[0];
     if (file) {
-      setUploadingFile(file);
+      const newFile: FileUpload = {
+        ...file,
+        name: file.name,
+        size: file.size,
+        isUploading: true,
+        url: "",
+        downloadUrl: "",
+        pathname: "",
+        contentDisposition: "",
+      };
+      setFileUpload(newFile);
       const response = await fetch(`/api/upload?filename=${file.name}`, {
         method: "POST",
         body: file,
       });
 
       const newBlob = (await response.json()) as PutBlobResult;
-
-      setUploadedFile(newBlob);
-      setUploadingFile(null);
+      const uploadedFile: FileUpload = {
+        ...newBlob,
+        name: file.name,
+        size: file.size,
+        isUploading: false,
+      };
+      setFileUpload(uploadedFile);
     }
-  };
+  }
 
   return (
     <div className="h-svh w-full overflow-scroll" ref={scrollRef}>
@@ -121,9 +132,8 @@ export default function Chat() {
         scrollToBottom={scrollToBottom}
         handleFileUpload={handleFileUpload}
         inputFileRef={inputFileRef}
-        uploadingFile={uploadingFile as File}
-        uploadedFile={uploadedFile as PutBlobResult}
-        setUploadedFile={setUploadedFile}
+        fileUpload={fileUpload}
+        setFileUpload={setFileUpload}
       />
     </div>
   );
