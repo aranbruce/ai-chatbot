@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { PutBlobResult } from "@vercel/blob";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { generateId } from "ai";
@@ -17,11 +18,16 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useUIState();
   const [aiState, setAIState] = useAIState();
+  const [uploadedFile, setUploadedFile] = useState<PutBlobResult | null>(null);
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+
+  const inputFileRef = useRef<HTMLInputElement>(null);
 
   const { continueConversation } = useActions();
 
   useEffect(() => {
     scrollToBottom();
+    console.log("messages: ", messages);
   }, [messages]);
 
   const { location, error, isLoaded } = useLocation();
@@ -30,8 +36,16 @@ export default function Chat() {
     useScrollAnchor();
 
   async function sendMessage(message: string) {
-    if (!aiState.isFinished || !message) return;
+    if (!aiState.isFinished || !message || uploadingFile) return;
+    const fileURL = uploadedFile ? uploadedFile.url : undefined;
+    if (uploadedFile) {
+      setUploadedFile(null);
+    }
     setInputValue("");
+    if (inputFileRef.current) {
+      inputFileRef.current.value = "";
+    }
+
     setAIState((AIState: AIState) => ({
       ...AIState,
       isFinished: false,
@@ -42,12 +56,34 @@ export default function Chat() {
       {
         id: generateId(),
         content: <>{message}</>,
+        file: uploadedFile ? uploadedFile : undefined,
         role: "user",
       },
     ]);
-    const response = await continueConversation(message, location);
+    const response = uploadedFile
+      ? await continueConversation(message, location, fileURL)
+      : await continueConversation(message, location);
+
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   }
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = inputFileRef.current?.files?.[0];
+    if (file) {
+      setUploadingFile(file);
+      const response = await fetch(`/api/upload?filename=${file.name}`, {
+        method: "POST",
+        body: file,
+      });
+
+      const newBlob = (await response.json()) as PutBlobResult;
+
+      setUploadedFile(newBlob);
+      setUploadingFile(null);
+    }
+  };
 
   return (
     <div className="h-svh w-full overflow-scroll" ref={scrollRef}>
@@ -63,6 +99,7 @@ export default function Chat() {
                 id={JSON.stringify(message.id)}
                 role={message.role}
                 content={message.content}
+                file={message.file}
                 model={message.model}
               />
             ))}
@@ -76,37 +113,17 @@ export default function Chat() {
           />
         )}
       </div>
-      {!isAtBottom && messages.length && (
-        <div className="fixed inset-x-0 bottom-[120px] mx-auto w-[42px] drop-shadow-sm">
-          <Button
-            rounded
-            variant="secondary"
-            onClick={() => {
-              scrollToBottom();
-            }}
-            ariaLabel={"Scroll to bottom"}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 15 15"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M7.5 2C7.77614 2 8 2.22386 8 2.5L8 11.2929L11.1464 8.14645C11.3417 7.95118 11.6583 7.95118 11.8536 8.14645C12.0488 8.34171 12.0488 8.65829 11.8536 8.85355L7.85355 12.8536C7.75979 12.9473 7.63261 13 7.5 13C7.36739 13 7.24021 12.9473 7.14645 12.8536L3.14645 8.85355C2.95118 8.65829 2.95118 8.34171 3.14645 8.14645C3.34171 7.95118 3.65829 7.95118 3.85355 8.14645L7 11.2929L7 2.5C7 2.22386 7.22386 2 7.5 2Z"
-                fill="currentColor"
-                fillRule="evenodd"
-                clipRule="evenodd"
-              ></path>
-            </svg>
-          </Button>
-        </div>
-      )}
       <PromptForm
         inputValue={inputValue}
         setInputValue={setInputValue}
         handleSubmit={sendMessage}
+        isAtBottom={isAtBottom}
+        scrollToBottom={scrollToBottom}
+        handleFileUpload={handleFileUpload}
+        inputFileRef={inputFileRef}
+        uploadingFile={uploadingFile as File}
+        uploadedFile={uploadedFile as PutBlobResult}
+        setUploadedFile={setUploadedFile}
       />
     </div>
   );

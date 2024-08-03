@@ -17,6 +17,7 @@ import {
 import { z } from "zod";
 import Image from "next/image";
 import { generateId } from "ai";
+import { PutBlobResult } from "@vercel/blob";
 
 import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
 import getCurrentWeather from "@/server/get-current-weather";
@@ -50,6 +51,7 @@ export interface ClientMessage {
   id: string;
   role: "user" | "assistant";
   content: React.ReactNode;
+  file?: PutBlobResult;
   model: string;
 }
 
@@ -64,22 +66,47 @@ export type UIState = ClientMessage[];
 async function continueConversation(
   message: string,
   userLocation?: { latitude: number; longitude: number },
+  imageURL?: string,
 ): Promise<ClientMessage> {
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
   const summaryUI = createStreamableUI(null);
 
-  aiState.update({
-    ...aiState.get(),
-    messages: [
-      ...aiState.get().messages,
-      {
-        role: "user",
-        content: message,
-      },
-    ],
-  });
+  console.log("imageURL: ", imageURL);
+
+  if (imageURL) {
+    aiState.update({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: message,
+            },
+            {
+              type: "image",
+              image: imageURL,
+            },
+          ],
+        },
+      ],
+    });
+  } else {
+    aiState.update({
+      ...aiState.get(),
+      messages: [
+        ...aiState.get().messages,
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+  }
 
   const modelVariable = aiState.get().currentModelVariable;
 
@@ -110,6 +137,7 @@ async function continueConversation(
     system: `
       You are an AI designed to help users with their queries. You can perform tools like searching the web,
       help users find information from the web, get the weather or find out the latest news.
+      If asked to describe an image or asked about an image that the user has been provided, assume the user is visually impaired and provide a description of the image.
       If you need to get the coordinates of a location, you can use the tool \`get_coordinates\`.
       If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
       If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
