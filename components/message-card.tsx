@@ -5,11 +5,13 @@ import { AIState } from "@/server/actions";
 import Select from "./select";
 import ProviderImage from "./provider-image";
 import { modelVariableOptions } from "@/libs/models";
+import { PutBlobResult } from "@vercel/blob";
 
 interface MessageProps {
   id: string;
   role: string;
   content: string | ReactNode | undefined;
+  file?: PutBlobResult;
   model?: string;
 }
 
@@ -17,6 +19,7 @@ export default function MessageCard({
   id,
   role,
   content,
+  file,
   model,
 }: MessageProps) {
   const [, setAIState] = useAIState();
@@ -49,12 +52,15 @@ export default function MessageCard({
         )}
       </div>
       <div
-        className={`flex w-full min-w-0 max-w-full flex-col gap-1 ${role === "user" && "items-end"}`}
+        className={`flex w-full min-w-0 max-w-full flex-col gap-2 ${role === "user" && "items-end"}`}
       >
         {role !== "user" && (
           <h5 className="text-md pt-1 font-semibold text-zinc-950 dark:text-zinc-300">
             {selectedModel?.label.toString()}
           </h5>
+        )}
+        {file && (
+          <img src={file.url} alt="file" className="h-32 w-auto rounded-lg" />
         )}
         <div
           className={`flex flex-col gap-4 text-zinc-950 dark:text-zinc-300 ${role === "user" && "w-auto rounded-xl bg-zinc-200/60 px-4 py-2 dark:bg-zinc-800"}`}

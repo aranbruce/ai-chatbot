@@ -1,3 +1,5 @@
+import { ButtonHTMLAttributes } from "react";
+
 interface ButtonProps {
   onClick?: () => void;
   children: React.ReactNode;
@@ -7,6 +9,7 @@ interface ButtonProps {
   rounded?: boolean;
   openInNewTab?: boolean;
   variant?: "primary" | "secondary";
+  type?: ButtonHTMLAttributes<HTMLButtonElement>["type"];
 }
 
 export default function Button({
@@ -18,6 +21,7 @@ export default function Button({
   rounded,
   openInNewTab,
   variant = "primary",
+  type = "submit",
 }: ButtonProps) {
   const primaryClassNames =
     "text-white font-semibold dark:text-zinc-950 bg-zinc-950 dark:bg-zinc-50 hover:bg-zinc-700 dark:hover:bg-zinc-300 active:bg-zinc-800 dark:active-bg-zinc-900";
@@ -49,6 +53,7 @@ export default function Button({
   ) : (
     <button
       onClick={onClick}
+      type={type}
       disabled={disabled}
       aria-label={ariaLabel}
       className={classNames}

@@ -18,7 +18,8 @@ export default function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useUIState();
   const [aiState, setAIState] = useAIState();
-  const [blob, setBlob] = useState<PutBlobResult | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<PutBlobResult | null>(null);
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
 
   const inputFileRef = useRef<HTMLInputElement>(null);
 
@@ -26,6 +27,7 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom();
+    console.log("messages: ", messages);
   }, [messages]);
 
   const { location, error, isLoaded } = useLocation();
@@ -34,10 +36,10 @@ export default function Chat() {
     useScrollAnchor();
 
   async function sendMessage(message: string) {
-    if (!aiState.isFinished || !message) return;
-    const fileURL = blob ? blob.url : undefined;
-    if (blob) {
-      setBlob(null);
+    if (!aiState.isFinished || !message || uploadingFile) return;
+    const fileURL = uploadedFile ? uploadedFile.url : undefined;
+    if (uploadedFile) {
+      setUploadedFile(null);
     }
     setInputValue("");
     if (inputFileRef.current) {
@@ -54,10 +56,11 @@ export default function Chat() {
       {
         id: generateId(),
         content: <>{message}</>,
+        file: uploadedFile ? uploadedFile : undefined,
         role: "user",
       },
     ]);
-    const response = blob
+    const response = uploadedFile
       ? await continueConversation(message, location, fileURL)
       : await continueConversation(message, location);
 
@@ -69,6 +72,7 @@ export default function Chat() {
   ) => {
     const file = inputFileRef.current?.files?.[0];
     if (file) {
+      setUploadingFile(file);
       const response = await fetch(`/api/upload?filename=${file.name}`, {
         method: "POST",
         body: file,
@@ -76,8 +80,8 @@ export default function Chat() {
 
       const newBlob = (await response.json()) as PutBlobResult;
 
-      setBlob(newBlob);
-      console.log(newBlob);
+      setUploadedFile(newBlob);
+      setUploadingFile(null);
     }
   };
 
@@ -95,6 +99,7 @@ export default function Chat() {
                 id={JSON.stringify(message.id)}
                 role={message.role}
                 content={message.content}
+                file={message.file}
                 model={message.model}
               />
             ))}
@@ -116,7 +121,9 @@ export default function Chat() {
         scrollToBottom={scrollToBottom}
         handleFileUpload={handleFileUpload}
         inputFileRef={inputFileRef}
-        fileUpload={blob as PutBlobResult}
+        uploadingFile={uploadingFile as File}
+        uploadedFile={uploadedFile as PutBlobResult}
+        setUploadedFile={setUploadedFile}
       />
     </div>
   );

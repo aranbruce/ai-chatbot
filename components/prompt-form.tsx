@@ -5,6 +5,8 @@ import Spinner from "./spinner";
 import type { PutBlobResult } from "@vercel/blob";
 
 import { useAIState } from "ai/rsc";
+import FileUploadCard from "@/components/file-upload-card";
+import FileUploadButton from "@/components/file-upload-button";
 
 interface PromptFormProps {
   inputValue: string;
@@ -14,7 +16,9 @@ interface PromptFormProps {
   scrollToBottom: () => void;
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   inputFileRef: React.RefObject<HTMLInputElement>;
-  fileUpload: PutBlobResult;
+  uploadingFile: File | null;
+  uploadedFile: PutBlobResult;
+  setUploadedFile: (file: PutBlobResult | null) => void;
 }
 
 export default function PromptForm({
@@ -25,7 +29,9 @@ export default function PromptForm({
   isAtBottom,
   scrollToBottom,
   inputFileRef,
-  fileUpload,
+  uploadingFile,
+  uploadedFile,
+  setUploadedFile,
 }: PromptFormProps) {
   const [aiState] = useAIState();
 
@@ -67,27 +73,6 @@ export default function PromptForm({
       )}
       <div className="relative bottom-0 flex w-full flex-col items-center justify-center bg-gradient-to-t from-white via-white to-transparent backdrop-blur-[1px] dark:from-zinc-950 dark:via-zinc-950">
         <div className="w-full space-y-4 px-4 pb-4 pt-2 md:mx-5 md:max-w-2xl">
-          {fileUpload && (
-            <div className="flex w-full flex-row flex-wrap justify-start">
-              <div className="flex w-fit flex-row items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-800 dark:text-white">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 15 15"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M3.5 2C3.22386 2 3 2.22386 3 2.5V12.5C3 12.7761 3.22386 13 3.5 13H11.5C11.7761 13 12 12.7761 12 12.5V6H8.5C8.22386 6 8 5.77614 8 5.5V2H3.5ZM9 2.70711L11.2929 5H9V2.70711ZM2 2.5C2 1.67157 2.67157 1 3.5 1H8.5C8.63261 1 8.75979 1.05268 8.85355 1.14645L12.8536 5.14645C12.9473 5.24021 13 5.36739 13 5.5V12.5C13 13.3284 12.3284 14 11.5 14H3.5C2.67157 14 2 13.3284 2 12.5V2.5Z"
-                    fill="currentColor"
-                  />
-                </svg>
-                {fileUpload.pathname}
-              </div>
-            </div>
-          )}
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -100,50 +85,18 @@ export default function PromptForm({
             className="relative"
           >
             <div className="relative flex w-full grow flex-col overflow-hidden rounded-[1.75rem] border border-zinc-200/50 bg-zinc-100 pr-1 ring-slate-950/30 ring-offset-[3px] ring-offset-white transition focus-within:ring-[3px] has-[button:focus]:ring-0 dark:border-zinc-200/10 dark:bg-zinc-900 dark:ring-white/40 dark:ring-offset-zinc-950">
-              <div className="flex flex-row items-start">
-                <div className="ml-2 mt-3">
-                  <label
-                    htmlFor="file"
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50"
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <rect
-                        x="5.25"
-                        y="0.5"
-                        width="1.5"
-                        height="11"
-                        rx="0.75"
-                        fill="currentColor"
-                      />
-                      <rect
-                        x="11.5"
-                        y="5.25"
-                        width="1.5"
-                        height="11"
-                        rx="0.75"
-                        transform="rotate(90 11.5 5.25)"
-                        fill="currentColor"
-                      />
-                    </svg>
-
-                    <input
-                      className="hidden"
-                      type="file"
-                      ref={inputFileRef}
-                      aria-label="Upload file"
-                      id="file"
-                      name="file"
-                      accept=".png, .jpeg, .jpg, .gif, .webp"
-                      onChange={handleFileUpload}
-                    />
-                  </label>
-                </div>
+              {!uploadingFile && !uploadedFile ? null : (
+                <FileUploadCard
+                  uploadingFile={uploadingFile}
+                  uploadedFile={uploadedFile}
+                  setUploadedFile={setUploadedFile}
+                />
+              )}
+              <div className="flex flex-row items-end">
+                <FileUploadButton
+                  inputFileRef={inputFileRef}
+                  handleFileUpload={handleFileUpload}
+                />
                 <Textarea
                   placeholder="Send a message..."
                   value={inputValue}
