@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { Analytics } from "@vercel/analytics/react";
+import { CSPostHogProvider } from "./providers";
 
 import Header from "@/components/header";
 import { AI } from "../server/actions";
@@ -19,13 +20,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="bg-white dark:bg-zinc-950">
-      <body className={`${GeistSans.className} h-dvh overflow-hidden`}>
-        <AI>
-          <Header />
-          {children}
-          <Analytics />
-        </AI>
-      </body>
+      <CSPostHogProvider>
+        <body className={`${GeistSans.className} h-dvh overflow-hidden`}>
+          <AI>
+            <Header />
+            {children}
+            <Analytics />
+          </AI>
+        </body>
+      </CSPostHogProvider>
     </html>
   );
 }
