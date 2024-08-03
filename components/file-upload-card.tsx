@@ -3,15 +3,19 @@ import Spinner from "@/components/spinner";
 import Button from "@/components/button";
 
 type FileUploadCardProps = {
-  uploadingFile: File | null;
-  uploadedFile: PutBlobResult;
-  setUploadedFile: (file: PutBlobResult | null) => void;
+  fileUpload: FileUpload | null;
+  setFileUpload: (file: FileUpload | null) => void;
 };
 
+export interface FileUpload extends PutBlobResult {
+  name: string;
+  size: number;
+  isUploading: boolean;
+}
+
 export default function FileUploadCard({
-  uploadingFile,
-  uploadedFile,
-  setUploadedFile,
+  fileUpload,
+  setFileUpload,
 }: FileUploadCardProps) {
   return (
     <div className="m-2 flex w-full flex-row flex-wrap justify-start">
@@ -53,17 +57,15 @@ export default function FileUploadCard({
             />
           </svg>
         </div>
-        {uploadingFile
-          ? uploadingFile.name
-          : uploadedFile && uploadedFile.pathname}
-        {uploadingFile && <Spinner />}
-        {uploadedFile && !uploadingFile && (
+        {fileUpload && fileUpload.name}
+        {fileUpload?.isUploading && <Spinner />}
+        {fileUpload && !fileUpload.isUploading && (
           <button
             type="button"
             aria-label="Remove file"
             className="absolute right-[-16px] top-[-8px] flex h-7 w-7 items-center justify-center rounded-full border border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-700 dark:text-zinc-300"
             onClick={() => {
-              setUploadedFile(null);
+              setFileUpload(null);
             }}
           >
             <svg
