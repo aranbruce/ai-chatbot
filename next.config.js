@@ -6,6 +6,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "shhreo786rnzz9iu.public.blob.vercel-storage.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "m.media-amazon.com",
         port: "",
         pathname: "/images/**",
@@ -58,10 +64,6 @@ const nextConfig = {
     return [
       {
         source: "/ingest/static/:path*",
-        destination: "https://eu-assets.i.posthog.com/static/:path*",
-      },
-      {
-        source: "/ingest/ingest/static/:path*",
         destination: "https://eu-assets.i.posthog.com/static/:path*",
       },
       {

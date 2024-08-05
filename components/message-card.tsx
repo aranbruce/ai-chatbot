@@ -1,11 +1,14 @@
 import { ReactNode, useState } from "react";
-import MarkdownContainer from "./markdown";
+import Image from "next/image";
 import { useAIState } from "ai/rsc";
-import { AIState } from "@/server/actions";
-import Select from "./select";
-import ProviderImage from "./provider-image";
-import { modelVariableOptions } from "@/libs/models";
 import { PutBlobResult } from "@vercel/blob";
+
+import { AIState } from "@/server/actions";
+import { modelVariableOptions } from "@/libs/models";
+
+import Select from "@/components/select";
+import MarkdownContainer from "@/components/markdown";
+import ProviderImage from "@/components/provider-image";
 
 interface MessageProps {
   id: string;
@@ -60,7 +63,13 @@ export default function MessageCard({
           </h5>
         )}
         {file && (
-          <img src={file.url} alt="file" className="h-32 w-auto rounded-lg" />
+          <Image
+            src={file.url}
+            alt="file"
+            height={160}
+            width={160}
+            className="w-auto rounded-lg"
+          />
         )}
         <div
           className={`flex flex-col gap-4 text-zinc-950 dark:text-zinc-300 ${role === "user" && "w-auto rounded-xl bg-zinc-200/60 px-4 py-2 dark:bg-zinc-800"}`}
