@@ -7,7 +7,6 @@ import { google } from "@ai-sdk/google";
 
 import { CoreMessage, streamObject, streamText } from "ai";
 import {
-  createAI,
   createStreamableUI,
   getAIState,
   getMutableAIState,
@@ -41,6 +40,19 @@ import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
 import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
+import { AI } from "@/app/ai";
+import {
+  exampleMessageSchema,
+  getCoordinatesRequestSchema,
+  getCurrentWeatherRequestSchema,
+  getWeatherForecastRequestSchema,
+  searchForGifsRequestSchema,
+  searchForLocationRequestSchema,
+  searchForMoviesRequestSchema,
+  searchTheNewsRequestSchema,
+  searchTheWebRequestSchema,
+} from "@/libs/schema";
+import { ExampleMessageCardProps } from "@/components/example-message/example-message-card";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -63,7 +75,7 @@ export type AIState = {
 
 export type UIState = ClientMessage[];
 
-async function continueConversation(
+export async function continueConversation(
   message: string,
   userLocation?: { latitude: number; longitude: number },
   imageURL?: string,
@@ -133,6 +145,7 @@ async function continueConversation(
   const result = await streamUI({
     model,
     initial: <Spinner />,
+    abortSignal: aiState.get().abortSignal,
     temperature: 0.1,
     system: `
       You are an AI designed to help users with their queries. You can perform tools like searching the web,
@@ -184,19 +197,7 @@ async function continueConversation(
       get_coordinates: {
         description:
           "Get the coordinates (latitude and longitude) of a location",
-        parameters: z.object({
-          location: z
-            .string()
-            .describe(
-              "The location to get the current weather for, excluding the country",
-            ),
-          countryCode: z
-            .string()
-            .optional()
-            .describe(
-              "The country code of the location to get the coordinates for. This should be an ISO 3166 country code",
-            ),
-        }),
+        parameters: getCoordinatesRequestSchema,
         generate: async function* ({ location, countryCode }) {
           const toolCallId = generateId();
           yield (
@@ -298,25 +299,7 @@ async function continueConversation(
       },
       get_current_weather: {
         description: "Get the current weather forecast for a location",
-        parameters: z.object({
-          location: z
-            .string()
-            .describe(
-              "The location to get the current weather for, excluding the country. This can also be inferred from the user's location if available.",
-            ),
-          countryCode: z
-            .string()
-            .optional()
-            .describe(
-              "The country code of the location to get the current weather for. This should be an ISO 3166 country code. This can also be inferred from the user's location if available.",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric.",
-            ),
-        }),
+        parameters: getCurrentWeatherRequestSchema,
         generate: async function* ({ location, countryCode, units }) {
           const toolCallId = generateId();
           yield (
@@ -421,32 +404,7 @@ async function continueConversation(
       },
       get_weather_forecast: {
         description: "Get the weather forecast for a location",
-        parameters: z.object({
-          location: z
-            .string()
-            .describe(
-              "The location to get the weather forecast for, excluding the country. This can also be inferred from the user's location if available.",
-            ),
-          forecastDays: z
-            .number()
-            .min(1)
-            .max(7)
-            .describe(
-              "The number of days to forecast the weather for. Max 7 days",
-            ),
-          countryCode: z
-            .string()
-            .optional()
-            .describe(
-              "The country code of the location to get the weather forecast for. This should be an ISO 3166 country code",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
-            ),
-        }),
+        parameters: getWeatherForecastRequestSchema,
         generate: async function* ({
           location,
           forecastDays,
@@ -469,8 +427,6 @@ async function continueConversation(
               countryCode,
               units,
             });
-            console.log("response: ", response);
-
             aiState.done({
               ...aiState.get(),
               isFinished: true,
@@ -563,79 +519,7 @@ async function continueConversation(
       search_the_web: {
         description:
           "Search the web for information on a given topic or for a specific query",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for news on"),
-          country: z
-            .enum([
-              "AR",
-              "AU",
-              "AT",
-              "BE",
-              "BR",
-              "CA",
-              "CL",
-              "DK",
-              "FI",
-              "FR",
-              "DE",
-              "HK",
-              "IN",
-              "ID",
-              "IT",
-              "JP",
-              "KR",
-              "MY",
-              "MX",
-              "NL",
-              "NZ",
-              "NO",
-              "CN",
-              "PL",
-              "PT",
-              "PH",
-              "RU",
-              "SA",
-              "ZA",
-              "ES",
-              "SE",
-              "CH",
-              "TW",
-              "TH",
-              "TR",
-              "GB",
-              "US",
-            ])
-            .optional()
-            .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
-            ),
-          freshness: z
-            .enum(["past-day", "past-week", "past-month", "past-year"])
-            .optional()
-            .describe(
-              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
-            ),
-          count: z
-            .number()
-            .optional()
-            .describe("The number of search results to return"),
-          offset: z
-            .number()
-            .min(1)
-            .max(20)
-            .optional()
-            .describe(
-              "The number of pages of search results to skip. The number of results per page is equal to the count parameter.",
-            ),
-        }),
+        parameters: searchTheWebRequestSchema,
         generate: async function* ({
           query,
           country,
@@ -956,81 +840,7 @@ async function continueConversation(
       },
       search_the_news: {
         description: "Search for news on the web for a given topic",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for news on"),
-          country: z
-            .enum([
-              "AR",
-              "AU",
-              "AT",
-              "BE",
-              "BR",
-              "CA",
-              "CL",
-              "DK",
-              "FI",
-              "FR",
-              "DE",
-              "HK",
-              "IN",
-              "ID",
-              "IT",
-              "JP",
-              "KR",
-              "MY",
-              "MX",
-              "NL",
-              "NZ",
-              "NO",
-              "CN",
-              "PL",
-              "PT",
-              "PH",
-              "RU",
-              "SA",
-              "ZA",
-              "ES",
-              "SE",
-              "CH",
-              "TW",
-              "TH",
-              "TR",
-              "GB",
-              "US",
-            ])
-            .optional()
-            .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
-            ),
-          freshness: z
-            .enum(["past-day", "past-week", "past-month", "past-year"])
-            .optional()
-            .describe(
-              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
-            ),
-          count: z
-            .number()
-            .min(1)
-            .max(100)
-            .optional()
-            .describe("The number of search results to return"),
-          offset: z
-            .number()
-            .min(1)
-            .max(100)
-            .optional()
-            .describe(
-              "The number of pages of search results to skip. The number of results per page is equal to the count parameter.",
-            ),
-        }),
+        parameters: searchTheNewsRequestSchema,
         generate: async function* ({
           query,
           country,
@@ -1187,37 +997,7 @@ async function continueConversation(
       },
       search_for_locations: {
         description: "Search for locations or places to visit",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe(
-              "The search query or topic to search for locations on. This can include the location.",
-            ),
-          latitude: z
-            .number()
-            .optional()
-            .describe(
-              "The latitude of the location to search for. This should be a float value.",
-            ),
-          longitude: z
-            .number()
-            .optional()
-            .describe(
-              "The longitude of the location to search for. This should be a float value.",
-            ),
-          category: z
-            .enum(["hotels", "restaurants", "attractions", "geos"])
-            .optional()
-            .describe(
-              "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'.",
-            ),
-          currency: z
-            .string()
-            .optional()
-            .describe(
-              "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217.",
-            ),
-        }),
+        parameters: searchForLocationRequestSchema,
         generate: async function* ({
           query,
           latitude,
@@ -1334,31 +1114,7 @@ async function continueConversation(
       },
       search_for_movies: {
         description: "Get movies from a database based on an input",
-        parameters: z.object({
-          input: z
-            .string()
-            .describe("A description of the type of movies to search for"),
-          minimumIMDBRating: z
-            .number()
-            .optional()
-            .describe("The minimum IMDB rating of the movies to search for"),
-          minimumReleaseYear: z
-            .number()
-            .optional()
-            .describe("The minimum release year of the movies to search for"),
-          maximumReleaseYear: z
-            .number()
-            .optional()
-            .describe("The maximum release year of the movies to search for"),
-          director: z
-            .string()
-            .optional()
-            .describe("The director of the movies to search for"),
-          limit: z
-            .number()
-            .optional()
-            .describe("The number of movies to return"),
-        }),
+        parameters: searchForMoviesRequestSchema,
         generate: async function* ({
           input,
           minimumIMDBRating,
@@ -1509,24 +1265,7 @@ async function continueConversation(
       },
       search_for_gifs: {
         description: "Search for gifs on the web",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for gifs on"),
-          limit: z.number().optional().describe("The number of gifs to return"),
-          offset: z
-            .number()
-            .optional()
-            .describe(
-              "The offset of the gifs to return. Specifies the starting position of the results. Can be used to return the next set of gifs.",
-            ),
-          rating: z
-            .enum(["g", "pg", "pg-13", "r"])
-            .optional()
-            .describe(
-              "The rating of the gifs to return. Can be 'g', 'pg', 'pg-13', or 'r'.",
-            ),
-        }),
+        parameters: searchForGifsRequestSchema,
         generate: async function* ({ query, limit, offset, rating }) {
           const toolCallId = generateId();
           yield (
@@ -1650,6 +1389,13 @@ async function continueConversation(
         },
       },
     },
+    onFinish: ({ usage }) => {
+      const { promptTokens, completionTokens, totalTokens } = usage;
+      // your own logic, e.g. for saving the chat history or recording usage
+      console.log("Prompt tokens:", promptTokens);
+      console.log("Completion tokens:", completionTokens);
+      console.log("Total tokens:", totalTokens);
+    },
   });
 
   return {
@@ -1660,7 +1406,7 @@ async function continueConversation(
   };
 }
 
-async function createExampleMessages(
+export async function createExampleMessages(
   modelVariable: string,
   userLocation?: { latitude: number; longitude: number },
 ) {
@@ -1670,8 +1416,9 @@ async function createExampleMessages(
   );
 
   (async () => {
-    const { partialObjectStream } = await streamObject({
+    const { elementStream: examples } = await streamObject({
       model: openai("gpt-4o"),
+      output: "array",
       system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
         The LLM assistant has the following capabilities:
@@ -1693,39 +1440,20 @@ async function createExampleMessages(
         Select randomly for the capabilities of the LLM assistant.
         Include emojis at the start of each example message to make them more engaging.`,
       temperature: 1,
-      schema: z.object({
-        examples: z.array(
-          z.object({
-            heading: z
-              .string()
-              .describe("A short heading for the example message of 4-5 words"),
-            subheading: z
-              .string()
-              .describe(
-                "A short description of the example message. This is the message that will be sent to the LLM. This should be 12-15 words long.",
-              ),
-          }),
-        ),
-      }),
+      schema: exampleMessageSchema,
     });
-
-    for await (const partialObject of partialObjectStream) {
-      const examples = partialObject.examples;
-      // add the model variable to each example
-      if (examples !== undefined) {
-        const result = examples.map((example, index) => ({
-          ...example,
-          index,
-          modelVariable,
-        }));
-
-        // check if examples is array and if it is display the ExampleMessageCardGroup
-        if (Array.isArray(result)) {
-          exampleMessagesUI.update(
-            <ExampleMessageCardGroup exampleMessages={result} />,
-          );
-        }
-      }
+    const exampleArray: ExampleMessageCardProps[] = [];
+    for await (const example of examples) {
+      // update example to include model variable
+      const generatedExample = {
+        ...example,
+        modelVariable: modelVariable,
+        index: exampleArray.length,
+      };
+      exampleArray.push(generatedExample);
+      exampleMessagesUI.update(
+        <ExampleMessageCardGroup exampleMessages={exampleArray} />,
+      );
     }
 
     exampleMessagesUI.done();
@@ -1733,7 +1461,7 @@ async function createExampleMessages(
   return exampleMessagesUI.value;
 }
 
-async function getWeatherForecastUI(
+export async function getWeatherForecastUI(
   location: string,
   forecastDays: number,
   countryCode?: string,
@@ -1844,7 +1572,7 @@ async function getWeatherForecastUI(
   };
 }
 
-async function getCurrentWeatherUI(
+export async function getCurrentWeatherUI(
   location: string,
   countryCode?: string,
   units?: "metric" | "imperial",
@@ -1953,18 +1681,3 @@ async function getCurrentWeatherUI(
     model: getAIState().currentModelVariable,
   };
 }
-
-export const AI = createAI<AIState, UIState>({
-  actions: {
-    continueConversation,
-    createExampleMessages,
-    getWeatherForecastUI,
-    getCurrentWeatherUI,
-  },
-  initialAIState: {
-    currentModelVariable: "gpt-4o-mini",
-    isFinished: true,
-    messages: [],
-  } as AIState,
-  initialUIState: [] as UIState,
-});

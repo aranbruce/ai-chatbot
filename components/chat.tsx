@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { generateId } from "ai";
 import PromptForm from "@/components/prompt-form";
-import MessageCard from "@/components/message-card";
+import MessageList from "@/components/message-list";
 import EmptyScreen from "@/components/empty-screen";
 import { useScrollAnchor } from "@/libs/hooks/use-scroll-anchor";
 import useLocation from "@/libs/hooks/use-location";
@@ -32,36 +32,37 @@ export default function Chat() {
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor();
 
-  async function sendMessage(message: string) {
-    if (!aiState.isFinished || !message || fileUpload?.isUploading) return;
-    const fileURL = fileUpload ? fileUpload.url : undefined;
-    if (fileUpload) {
-      setFileUpload(null);
-    }
-    setInputValue("");
+  function resetFileUpload() {
+    setFileUpload(null);
     if (inputFileRef.current) {
       inputFileRef.current.value = "";
     }
+  }
 
-    setAIState((AIState: AIState) => ({
-      ...AIState,
-      isFinished: false,
-    }));
+  function addMessage(message: ClientMessage) {
+    setMessages((messages: ClientMessage[]) => [...messages, message]);
+  }
 
-    setMessages((messages: ClientMessage[]) => [
-      ...messages,
-      {
-        id: generateId(),
-        content: <>{message}</>,
-        file: fileUpload ? fileUpload : undefined,
-        role: "user",
-      },
-    ]);
-    const response = fileUpload
-      ? await continueConversation(message, location, fileURL)
-      : await continueConversation(message, location);
+  async function sendMessage(message: string) {
+    if (!aiState.isFinished || !message || fileUpload?.isUploading) return;
 
-    setMessages((messages: ClientMessage[]) => [...messages, response]);
+    resetFileUpload();
+    setInputValue("");
+
+    setAIState((AIState: AIState) => ({ ...AIState, isFinished: false }));
+
+    addMessage({
+      id: generateId(),
+      content: <>{message}</>,
+      file: fileUpload ? fileUpload : undefined,
+      role: "user",
+      model: aiState.currentModelVariable,
+    });
+
+    const fileURL = fileUpload ? fileUpload.url : undefined;
+    const response = await continueConversation(message, location, fileURL);
+
+    addMessage(response);
   }
 
   return (
@@ -71,19 +72,7 @@ export default function Chat() {
         className="mx-auto max-w-2xl px-4 pb-[200px] pt-32"
       >
         {messages.length ? (
-          <>
-            {messages.map((message: ClientMessage) => (
-              <MessageCard
-                key={message.id}
-                id={JSON.stringify(message.id)}
-                role={message.role}
-                content={message.content}
-                file={message.file}
-                model={message.model}
-              />
-            ))}
-            <div className="h-px w-full" ref={visibilityRef} />
-          </>
+          <MessageList messages={messages} visibilityRef={visibilityRef} />
         ) : (
           <EmptyScreen
             userLocation={location ? location : undefined}
