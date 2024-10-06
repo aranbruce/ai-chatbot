@@ -32,6 +32,10 @@ export default async function searchFormMovies({
   "use server";
   console.log("Request received for movies-vector-db action");
 
+  if (!minimumIMDBRating) {
+    minimumIMDBRating = 6;
+  }
+
   try {
     const { embedding } = await embed({
       model: openai.embedding("text-embedding-ada-002"),

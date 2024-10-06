@@ -54,7 +54,7 @@ export default function WeatherForecastCard({
   };
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-4">
       <div className="flex w-full flex-col items-center gap-2">
         <h5 className="w-full text-center text-xs font-medium text-zinc-400">
           {weatherForecast.forecastDays} Day Weather Forecast for{" "}
@@ -126,6 +126,6 @@ export default function WeatherForecastCard({
           Current weather in {weatherForecast.location}
         </button>
       </div>
-    </>
+    </div>
   );
 }

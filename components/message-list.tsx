@@ -17,6 +17,8 @@ const MessageList: React.FC<MessageListProps> = ({
         id={JSON.stringify(message.id)}
         role={message.role}
         content={message.content}
+        display={message.display}
+        spinner={message.spinner}
         file={message.file}
         model={message.model}
       />

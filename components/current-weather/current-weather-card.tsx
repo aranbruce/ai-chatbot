@@ -64,7 +64,7 @@ export default function CurrentWeatherCard({
   };
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-4">
       <div className="flex w-full flex-col items-center gap-2">
         <h5 className="text-xs font-medium text-zinc-400">
           Weather Forecast: {currentWeather.location}
@@ -220,6 +220,6 @@ export default function CurrentWeatherCard({
           {currentWeather.location === "New York" ? "London" : "New York"}
         </button>
       </div>
-    </>
+    </div>
   );
 }

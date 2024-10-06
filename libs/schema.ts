@@ -318,3 +318,64 @@ export const searchForGifsRequestSchema = z.object({
 });
 
 export type SearchForGifsRequest = z.infer<typeof searchForGifsRequestSchema>;
+
+const countryCodeSchema = z.enum([
+  "AR",
+  "AU",
+  "AT",
+  "BE",
+  "BR",
+  "CA",
+  "CL",
+  "DK",
+  "FI",
+  "FR",
+  "DE",
+  "HK",
+  "IN",
+  "ID",
+  "IT",
+  "JP",
+  "KR",
+  "MY",
+  "MX",
+  "NL",
+  "NZ",
+  "NO",
+  "CN",
+  "PL",
+  "PT",
+  "PH",
+  "RU",
+  "SA",
+  "ZA",
+  "ES",
+  "SE",
+  "CH",
+  "TW",
+  "TH",
+  "TR",
+  "GB",
+  "US",
+]);
+
+export type CountryCode = z.infer<typeof countryCodeSchema>;
+
+export const searchForImagesRequestSchema = z.object({
+  query: z.string().describe("The search query or topic to search for news on"),
+  country: countryCodeSchema
+    .optional()
+    .describe(
+      "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
+    ),
+  count: z
+    .number()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe("The number of search results to return"),
+});
+
+export type SearchForImagesRequest = z.infer<
+  typeof searchForImagesRequestSchema
+>;

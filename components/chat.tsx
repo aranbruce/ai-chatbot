@@ -53,14 +53,13 @@ export default function Chat() {
 
     addMessage({
       id: generateId(),
-      content: <>{message}</>,
-      file: fileUpload ? fileUpload : undefined,
       role: "user",
+      content: message,
+      file: fileUpload ? fileUpload : undefined,
       model: aiState.currentModelVariable,
     });
 
-    const fileURL = fileUpload ? fileUpload.url : undefined;
-    const response = await continueConversation(message, location, fileURL);
+    const response = await continueConversation(message, location, fileUpload);
 
     addMessage(response);
   }
