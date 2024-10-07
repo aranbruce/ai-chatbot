@@ -242,6 +242,7 @@ export async function continueConversation(
               offset,
             }) {
               displayStream.update(<WebResultCardGroupSkeleton />);
+              contentStream.update(<Spinner />);
               const result = await searchTheWeb({
                 query,
                 country,
@@ -265,7 +266,8 @@ export async function continueConversation(
               count,
               offset,
             }) {
-              contentStream.update(`Searching for news on ${query}...`);
+              displayStream.update(<WebResultCardGroupSkeleton />);
+              contentStream.update(<Spinner />);
               const result = await searchTheNews({
                 query,
                 country,
