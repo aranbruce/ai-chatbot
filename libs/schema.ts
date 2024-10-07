@@ -18,6 +18,57 @@ export const exampleMessageSchemaObject = z.object({
 
 export type ExampleMessage = z.infer<typeof exampleMessageSchema>;
 
+export const countryCodeSchema = z.enum([
+  "AR",
+  "AU",
+  "AT",
+  "BE",
+  "BR",
+  "CA",
+  "CL",
+  "DK",
+  "FI",
+  "FR",
+  "DE",
+  "HK",
+  "IN",
+  "ID",
+  "IT",
+  "JP",
+  "KR",
+  "MY",
+  "MX",
+  "NL",
+  "NZ",
+  "NO",
+  "CN",
+  "PL",
+  "PT",
+  "PH",
+  "RU",
+  "SA",
+  "ZA",
+  "ES",
+  "SE",
+  "CH",
+  "TW",
+  "TH",
+  "TR",
+  "GB",
+  "US",
+]);
+
+export type CountryCode = z.infer<typeof countryCodeSchema>;
+
+export const freshnessOptionsSchema = z.enum([
+  "past-day",
+  "past-week",
+  "past-month",
+  "past-year",
+]);
+
+export type FreshnessOptions = z.infer<typeof freshnessOptionsSchema>;
+
 export const getCoordinatesRequestSchema = z.object({
   location: z
     .string()
@@ -89,52 +140,12 @@ export type GetWeatherForecastRequest = z.infer<
 
 export const searchTheWebRequestSchema = z.object({
   query: z.string().describe("The search query or topic to search for news on"),
-  country: z
-    .enum([
-      "AR",
-      "AU",
-      "AT",
-      "BE",
-      "BR",
-      "CA",
-      "CL",
-      "DK",
-      "FI",
-      "FR",
-      "DE",
-      "HK",
-      "IN",
-      "ID",
-      "IT",
-      "JP",
-      "KR",
-      "MY",
-      "MX",
-      "NL",
-      "NZ",
-      "NO",
-      "CN",
-      "PL",
-      "PT",
-      "PH",
-      "RU",
-      "SA",
-      "ZA",
-      "ES",
-      "SE",
-      "CH",
-      "TW",
-      "TH",
-      "TR",
-      "GB",
-      "US",
-    ])
+  country: countryCodeSchema
     .optional()
     .describe(
       "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
     ),
-  freshness: z
-    .enum(["past-day", "past-week", "past-month", "past-year"])
+  freshness: freshnessOptionsSchema
     .optional()
     .describe(
       "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
@@ -163,52 +174,12 @@ export type SearchTheWebRequest = z.infer<typeof searchTheWebRequestSchema>;
 
 export const searchTheNewsRequestSchema = z.object({
   query: z.string().describe("The search query or topic to search for news on"),
-  country: z
-    .enum([
-      "AR",
-      "AU",
-      "AT",
-      "BE",
-      "BR",
-      "CA",
-      "CL",
-      "DK",
-      "FI",
-      "FR",
-      "DE",
-      "HK",
-      "IN",
-      "ID",
-      "IT",
-      "JP",
-      "KR",
-      "MY",
-      "MX",
-      "NL",
-      "NZ",
-      "NO",
-      "CN",
-      "PL",
-      "PT",
-      "PH",
-      "RU",
-      "SA",
-      "ZA",
-      "ES",
-      "SE",
-      "CH",
-      "TW",
-      "TH",
-      "TR",
-      "GB",
-      "US",
-    ])
+  country: countryCodeSchema
     .optional()
     .describe(
       "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
     ),
-  freshness: z
-    .enum(["past-day", "past-week", "past-month", "past-year"])
+  freshness: freshnessOptionsSchema
     .optional()
     .describe(
       "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
@@ -236,6 +207,16 @@ export const searchTheNewsRequestSchema = z.object({
 });
 
 export type SearchTheNewsRequest = z.infer<typeof searchTheNewsRequestSchema>;
+
+export const getWebpageContentRequestSchema = z.object({
+  urls: z.array(
+    z.string().describe("The URL of the webpage to get the content for"),
+  ),
+});
+
+export type GetWebpageContentRequest = z.infer<
+  typeof getWebpageContentRequestSchema
+>;
 
 export const searchForLocationRequestSchema = z.object({
   query: z
@@ -318,48 +299,6 @@ export const searchForGifsRequestSchema = z.object({
 });
 
 export type SearchForGifsRequest = z.infer<typeof searchForGifsRequestSchema>;
-
-const countryCodeSchema = z.enum([
-  "AR",
-  "AU",
-  "AT",
-  "BE",
-  "BR",
-  "CA",
-  "CL",
-  "DK",
-  "FI",
-  "FR",
-  "DE",
-  "HK",
-  "IN",
-  "ID",
-  "IT",
-  "JP",
-  "KR",
-  "MY",
-  "MX",
-  "NL",
-  "NZ",
-  "NO",
-  "CN",
-  "PL",
-  "PT",
-  "PH",
-  "RU",
-  "SA",
-  "ZA",
-  "ES",
-  "SE",
-  "CH",
-  "TW",
-  "TH",
-  "TR",
-  "GB",
-  "US",
-]);
-
-export type CountryCode = z.infer<typeof countryCodeSchema>;
 
 export const searchForImagesRequestSchema = z.object({
   query: z.string().describe("The search query or topic to search for news on"),

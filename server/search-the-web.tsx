@@ -1,62 +1,13 @@
-import getWebpageContents from "./get-webpage-content";
+import { CountryCode, FreshnessOptions } from "@/libs/schema";
 
 interface Request {
   query: string;
-  country?: countryOptions;
-  freshness?: freshnessOptions;
+  country?: CountryCode;
+  freshness?: FreshnessOptions;
   units?: "metric" | "imperial";
   count?: number;
   offset?: number;
 }
-
-type countryOptions =
-  | "AR"
-  | "AU"
-  | "AT"
-  | "BE"
-  | "BR"
-  | "CA"
-  | "CL"
-  | "DK"
-  | "FI"
-  | "FR"
-  | "DE"
-  | "HK"
-  | "IN"
-  | "ID"
-  | "IT"
-  | "JP"
-  | "KR"
-  | "MY"
-  | "MX"
-  | "NL"
-  | "NZ"
-  | "NO"
-  | "CN"
-  | "PL"
-  | "PT"
-  | "PH"
-  | "RU"
-  | "SA"
-  | "ZA"
-  | "ES"
-  | "SE"
-  | "CH"
-  | "TW"
-  | "TH"
-  | "TR"
-  | "GB"
-  | "US";
-
-type freshnessOptions =
-  | "past-day"
-  | "pd"
-  | "past-week"
-  | "pw"
-  | "past-month"
-  | "pm"
-  | "past-year"
-  | "py";
 
 export default async function searchTheWeb({
   query,
@@ -69,18 +20,19 @@ export default async function searchTheWeb({
   "use server";
   console.log("Request received for search_the_web action");
 
+  let freshnessParam = "";
+
   if (freshness) {
     if (freshness === "past-day") {
-      freshness = "pd";
+      freshnessParam = "pd";
     } else if (freshness === "past-week") {
-      freshness = "pw";
+      freshnessParam = "pw";
     } else if (freshness === "past-month") {
-      freshness = "pm";
+      freshnessParam = "pm";
     } else if (freshness === "past-year") {
-      freshness = "py";
+      freshnessParam = "py";
     }
   }
-
   try {
     const url = new URL(
       `https://api.search.brave.com/res/v1/web/search?q=${query}&text_decorations=0&count=${count}`,
@@ -127,21 +79,6 @@ export default async function searchTheWeb({
       imageURL: result.profile.img,
       extra: result.extra_snippets,
     }));
-
-    async function enhanceResultsWithArticles(results: any[]) {
-      const promises = results.map(async (result) => {
-        const article = await getWebpageContents(result.url);
-        if (article) {
-          return { ...result, article: article };
-        } else {
-          return result;
-        }
-      });
-
-      return Promise.all(promises);
-    }
-
-    results = await enhanceResultsWithArticles(results);
 
     return results;
   } catch (error) {

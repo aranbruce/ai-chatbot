@@ -1,47 +1,10 @@
+import { CountryCode } from "@/libs/schema";
+
 interface Request {
   query: string;
-  country?: countryOptions;
+  country?: CountryCode;
   count?: number;
 }
-
-type countryOptions =
-  | "AR"
-  | "AU"
-  | "AT"
-  | "BE"
-  | "BR"
-  | "CA"
-  | "CL"
-  | "DK"
-  | "FI"
-  | "FR"
-  | "DE"
-  | "HK"
-  | "IN"
-  | "ID"
-  | "IT"
-  | "JP"
-  | "KR"
-  | "MY"
-  | "MX"
-  | "NL"
-  | "NZ"
-  | "NO"
-  | "CN"
-  | "PL"
-  | "PT"
-  | "PH"
-  | "RU"
-  | "SA"
-  | "ZA"
-  | "ES"
-  | "SE"
-  | "CH"
-  | "TW"
-  | "TH"
-  | "TR"
-  | "GB"
-  | "US";
 
 export default async function searchForImages({
   query,

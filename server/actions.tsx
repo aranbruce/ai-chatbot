@@ -14,8 +14,9 @@ import {
   generateId,
 } from "ai";
 import { createStreamableUI, getAIState, getMutableAIState } from "ai/rsc";
-
 import { PutBlobResult } from "@vercel/blob";
+
+import { AI } from "@/app/ai";
 
 import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
 import getCurrentWeather from "@/server/get-current-weather";
@@ -26,6 +27,7 @@ import searchTheNews from "@/server/search-the-news";
 import searchForLocations from "@/server/search-for-locations";
 import searchForMovies from "@/server/search-for-movies";
 import searchForGifs from "@/server/search-for-gifs";
+import getWebpageContents from "@/server/get-webpage-content";
 
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
 import CurrentWeatherCardSkeleton from "@/components/current-weather/current-weather-card-skeleton";
@@ -39,12 +41,13 @@ import LocationCardGroup from "@/components/location-card/location-card-group";
 import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
 import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
-import { AI } from "@/app/ai";
+
 import {
   exampleMessageSchema,
   getCoordinatesRequestSchema,
   getCurrentWeatherRequestSchema,
   getWeatherForecastRequestSchema,
+  getWebpageContentRequestSchema,
   searchForGifsRequestSchema,
   searchForImagesRequestSchema,
   searchForLocationRequestSchema,
@@ -52,6 +55,7 @@ import {
   searchTheNewsRequestSchema,
   searchTheWebRequestSchema,
 } from "@/libs/schema";
+
 import { ExampleMessageCardProps } from "@/components/example-message/example-message-card";
 
 const groq = createOpenAI({
@@ -160,8 +164,10 @@ export async function continueConversation(
           If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
           If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
           If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
-          If someone asks you to search the web, you can use the tool \`search_the_web\`. Unless the user specifies a number of results, you should return 8 results.
-          If someone asks you to get the latest news, you can use the tool \`search_the_news\`. 
+          If someone asks you to get the content of a webpage, you can use the tool \`get_webpage_content\`.
+          If someone asks you to search the web for information on a given topic, you can use the tool \`return_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
+          If someone asks you to search the web for news on a given topic, you can use the tool \`return_news_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
+          You should call the \`get_webpage_content\` after getting results from the \`return_web_results\` or \`return_news_web_results\` tools.
           If someone asks a question about movies, you can use the tool \`search_for_movies\`.
           If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
           If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
@@ -215,9 +221,17 @@ export async function continueConversation(
               return result;
             },
           }),
-          search_the_web: tool({
+          get_webpage_content: tool({
+            description: "Get the content of a webpage",
+            parameters: getWebpageContentRequestSchema,
+            execute: async function ({ urls }: { urls: string[] }) {
+              const result = await getWebpageContents(urls);
+              return result;
+            },
+          }),
+          return_web_results: tool({
             description:
-              "Search the web for information on a given topic or for a specific query",
+              "Returns a list of websites that contain information on a given topic",
             parameters: searchTheWebRequestSchema,
             execute: async function ({
               query,
@@ -239,18 +253,9 @@ export async function continueConversation(
               return result;
             },
           }),
-          search_for_images: tool({
+          return_news_web_results: tool({
             description:
-              "Search for images on the web for a given topic or query",
-            parameters: searchForImagesRequestSchema,
-            execute: async function ({ query, country, count }) {
-              contentStream.update(`Searching for images of ${query}...`);
-              const result = await searchForImages({ query, country, count });
-              return result;
-            },
-          }),
-          search_the_news: tool({
-            description: "Search the web for news on a given topic",
+              "Get a list of websites that contain news on a given topic",
             parameters: searchTheNewsRequestSchema,
             execute: async function ({
               query,
@@ -272,7 +277,18 @@ export async function continueConversation(
               return result;
             },
           }),
-          searchForGifs: tool({
+          search_for_images: tool({
+            description:
+              "Search for images on the web for a given topic or query",
+            parameters: searchForImagesRequestSchema,
+            execute: async function ({ query, country, count }) {
+              contentStream.update(`Searching for images of ${query}...`);
+              const result = await searchForImages({ query, country, count });
+              return result;
+            },
+          }),
+
+          search_for_gifs: tool({
             description:
               "Search for gifs on the web for a given topic or query",
             parameters: searchForGifsRequestSchema,
@@ -287,7 +303,7 @@ export async function continueConversation(
               return result;
             },
           }),
-          searchForLocations: tool({
+          search_for_locations: tool({
             description: "Search for locations or places to visit",
             parameters: searchForLocationRequestSchema,
             execute: async function ({
@@ -309,7 +325,7 @@ export async function continueConversation(
               return result;
             },
           }),
-          searchForMovies: tool({
+          search_for_movies: tool({
             description: "Search for movies based on an input",
             parameters: searchForMoviesRequestSchema,
             execute: async function ({
@@ -338,74 +354,82 @@ export async function continueConversation(
 
         onStepFinish({ toolCalls, toolResults, usage }) {
           console.log("step finished");
+          console.log("Tool Calls: ", toolCalls);
           if (toolCalls.length === 0) {
             return;
           }
+
           const toolResultsUI = toolResults.map((toolResult) => {
-            if (toolResult.toolName === "get_current_weather") {
-              return <CurrentWeatherCard currentWeather={toolResult.result} />;
-            } else if (toolResult.toolName === "get_weather_forecast") {
-              return (
-                <WeatherForecastCard weatherForecast={toolResult.result} />
-              );
-            } else if (toolResult.toolName === "search_the_web") {
-              return <WebResultGroup results={toolResult.result} />;
-            } else if (toolResult.toolName === "search_for_images") {
-              return (
-                <div className="grid grid-cols-2 gap-4">
-                  {toolResult.result.map((result: any, index: number) => (
-                    <div key={index} className="flex flex-col gap-2">
-                      <a href={result.url} target="_blank" rel="noreferrer">
-                        <img
-                          className="rounded-md"
-                          src={result.src}
-                          alt={result.title}
-                        />
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              );
-            } else if (toolResult.toolName === "search_the_news") {
-              return <WebResultGroup results={toolResult.result} />;
-            } else if (toolResult.toolName === "searchForGifs") {
-              return (
-                <div className="grid grid-cols-2 gap-4">
-                  {toolResult.result.map((result: any, index: number) => (
-                    <div key={index} className="flex flex-col gap-2">
-                      <a href={result.url} target="_blank" rel="noreferrer">
-                        <img
-                          className="rounded-md"
-                          src={result.images.original.url}
-                          alt={result.title}
-                        />
-                        <h4 className="text-sm text-zinc-500">
-                          {JSON.stringify(result.title)}
-                        </h4>
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              );
-            } else if (toolResult.toolName === "searchForLocations") {
-              return Array.isArray(toolResult.result) ? (
-                <LocationCardGroup locations={toolResult.result} />
-              ) : (
-                <div>Error: {toolResult.result.error}</div>
-              );
-            } else if (toolResult.toolName === "searchForMovies") {
-              return (
-                <div className="flex flex-col gap-8">
-                  {Array.isArray(toolResult.result) ? (
-                    toolResult.result.map((movie: MovieCardProps) => (
-                      <MovieCard {...movie} />
-                    ))
-                  ) : (
-                    <div>Error: {toolResult.result.error}</div>
-                  )}
-                </div>
-              );
-            } else return null;
+            switch (toolResult.toolName) {
+              case "get_current_weather":
+                return (
+                  <>
+                    <CurrentWeatherCard currentWeather={toolResult.result} />
+                  </>
+                );
+              case "get_weather_forecast":
+                return (
+                  <WeatherForecastCard weatherForecast={toolResult.result} />
+                );
+              case "return_web_results":
+              case "return_news_web_results":
+                return <WebResultGroup results={toolResult.result} />;
+              case "search_for_images":
+                return (
+                  <div className="grid grid-cols-2 gap-4">
+                    {toolResult.result.map((result: any, index: number) => (
+                      <div key={index} className="flex flex-col gap-2">
+                        <a href={result.url} target="_blank" rel="noreferrer">
+                          <img
+                            className="rounded-md"
+                            src={result.src}
+                            alt={result.title}
+                          />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                );
+              case "search_for_gifs":
+                return (
+                  <div className="grid grid-cols-2 gap-4">
+                    {toolResult.result.map((result: any, index: number) => (
+                      <div key={index} className="flex flex-col gap-2">
+                        <a href={result.url} target="_blank" rel="noreferrer">
+                          <img
+                            className="rounded-md"
+                            src={result.images.original.url}
+                            alt={result.title}
+                          />
+                          <h4 className="text-sm text-zinc-500">
+                            {result.title}
+                          </h4>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                );
+              case "search_for_locations":
+                return Array.isArray(toolResult.result) ? (
+                  <LocationCardGroup locations={toolResult.result} />
+                ) : (
+                  <div>Error: {toolResult.result.error}</div>
+                );
+              case "search_for_movies":
+                return (
+                  <div className="flex flex-col gap-8">
+                    {Array.isArray(toolResult.result) ? (
+                      toolResult.result.map((movie: MovieCardProps, index) => (
+                        <MovieCard key={index} {...movie} />
+                      ))
+                    ) : (
+                      <div>Error: {toolResult.result.error}</div>
+                    )}
+                  </div>
+                );
+              default:
+                return null;
+            }
           });
 
           displayStream.update(
@@ -543,10 +567,10 @@ export async function createExampleMessages(userLocation?: {
       const exampleArray: ExampleMessageCardProps[] = [];
       for await (const example of examples) {
         // update example to include model variable
-        const generatedExample = {
+        const generatedExample: ExampleMessageCardProps = {
           ...example,
-          modelVariable: modelVariable,
           index: exampleArray.length,
+          modelVariable: modelVariable,
         };
         exampleArray.push(generatedExample);
         exampleMessagesUI.update(

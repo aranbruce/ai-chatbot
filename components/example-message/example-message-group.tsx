@@ -2,13 +2,13 @@ import ExampleMessageCard, {
   ExampleMessageCardProps,
 } from "./example-message-card";
 
-export interface ExampleMessageCardGroupProps {
-  exampleMessages: ExampleMessageCardProps[];
-}
+// make ExampleMessageCardGroupProps an array
 
 export default function ExampleMessageCardGroup({
   exampleMessages,
-}: ExampleMessageCardGroupProps) {
+}: {
+  exampleMessages: ExampleMessageCardProps[];
+}) {
   return (
     <div className="grid w-full grid-cols-2 gap-2 px-4 sm:px-0 md:grid-cols-2">
       {Array.from({ length: 4 }).map((_, index) => {
