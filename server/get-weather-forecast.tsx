@@ -1,20 +1,14 @@
 "use server";
 
+import { GetWeatherForecastRequest } from "@/libs/schema";
 import get_coordinates from "./get-coordinates-from-location";
-
-interface Request {
-  location: string;
-  forecastDays: number;
-  countryCode?: string;
-  units?: "metric" | "imperial" | undefined;
-}
 
 export default async function getWeatherForecast({
   location,
   forecastDays,
   countryCode,
   units,
-}: Request) {
+}: GetWeatherForecastRequest) {
   "use server";
   console.log("Request received for the weather-forecast action");
 

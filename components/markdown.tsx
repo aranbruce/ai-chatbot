@@ -24,16 +24,28 @@ export default function MarkdownContainer({ children }: { children: string }) {
           return <h4 className="text-md font-semibold" {...rest} />;
         },
         ol(props) {
-          const { node, ...rest } = props;
-          return <ol className="flex flex-col flex-wrap gap-4" {...rest} />;
+          const { node } = props;
+          return (
+            <div className="flex flex-col flex-wrap gap-4">
+              {props.children}
+            </div>
+          );
         },
         ul(props) {
-          const { node, ...rest } = props;
-          return <ul className="flex flex-col flex-wrap gap-4" {...rest} />;
+          const { node } = props;
+          return (
+            <div className="flex flex-col flex-wrap gap-4">
+              {props.children}
+            </div>
+          );
         },
         li(props) {
           const { node, ...rest } = props;
-          return <li className="" {...rest} />;
+          return <div className="contents">{props.children}</div>;
+        },
+        strong(props) {
+          const { node, ...rest } = props;
+          return <strong className="contents font-semibold" {...rest} />;
         },
         a(props) {
           const { node, title, ...rest } = props;

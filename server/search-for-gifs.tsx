@@ -1,18 +1,19 @@
 "use server";
 
-interface Request {
-  query: string;
-  limit?: number;
-  offset?: number;
-  rating?: string;
-}
+import { SearchForGifsRequest } from "@/libs/schema";
+
+export type GifResult = {
+  imageTitle: string;
+  imageSrc: string;
+  websiteUrl: string;
+};
 
 export default async function search_for_gifs({
   query,
   limit = 5,
   offset,
   rating,
-}: Request) {
+}: SearchForGifsRequest) {
   "use server";
   console.log("Request received for search_for_gifs action");
   console.log("Query:", query);
@@ -46,8 +47,16 @@ export default async function search_for_gifs({
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    return data.data;
+    const result = await response.json();
+    let data = result.data;
+
+    data = data.map((result: any) => ({
+      imageTitle: result.title,
+      imageSrc: result.images.original.url,
+      websiteUrl: result.url,
+    }));
+
+    return data as GifResult[];
   } catch (error) {
     console.error("Error:", error);
     return { error: `Error occurred: ${error}` };
