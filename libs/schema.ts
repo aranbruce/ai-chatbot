@@ -12,6 +12,7 @@ export const exampleMessageSchema = z.object({
 });
 
 export const exampleMessagesSchema = z.array(exampleMessageSchema);
+
 export const exampleMessageSchemaObject = z.object({
   examples: exampleMessagesSchema,
 });
@@ -60,6 +61,10 @@ export const countryCodeSchema = z.enum([
 
 export type CountryCode = z.infer<typeof countryCodeSchema>;
 
+export const unitsSchema = z.enum(["metric", "imperial"]);
+
+export type Units = z.infer<typeof unitsSchema>;
+
 export const freshnessOptionsSchema = z.enum([
   "past-day",
   "past-week",
@@ -69,21 +74,35 @@ export const freshnessOptionsSchema = z.enum([
 
 export type FreshnessOptions = z.infer<typeof freshnessOptionsSchema>;
 
-export const getCoordinatesRequestSchema = z.object({
+export const getCoordinatesFromLocationRequestSchema = z.object({
   location: z
     .string()
     .describe(
       "The location to get the current weather for, excluding the country",
     ),
-  countryCode: z
-    .string()
+  countryCode: countryCodeSchema
     .optional()
     .describe(
       "The country code of the location to get the coordinates for. This should be an ISO 3166 country code",
     ),
 });
 
-export type GetCoordinatesRequest = z.infer<typeof getCoordinatesRequestSchema>;
+export type GetCoordinatesFromLocationRequest = z.infer<
+  typeof getCoordinatesFromLocationRequestSchema
+>;
+
+export const getLocationFromCoordinatesRequestSchema = z.object({
+  latitude: z
+    .number()
+    .describe("The latitude of the location to get the name of"),
+  longitude: z
+    .number()
+    .describe("The longitude of the location to get the name of"),
+});
+
+export type GetLocationFromCoordinatesRequest = z.infer<
+  typeof getLocationFromCoordinatesRequestSchema
+>;
 
 export const getCurrentWeatherRequestSchema = z.object({
   location: z
@@ -91,14 +110,12 @@ export const getCurrentWeatherRequestSchema = z.object({
     .describe(
       "The location to get the current weather for, excluding the country. This can also be inferred from the user's location if available.",
     ),
-  countryCode: z
-    .string()
+  countryCode: countryCodeSchema
     .optional()
     .describe(
       "The country code of the location to get the current weather for. This should be an ISO 3166 country code. This can also be inferred from the user's location if available.",
     ),
-  units: z
-    .enum(["metric", "imperial"])
+  units: unitsSchema
     .optional()
     .describe(
       "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric.",
@@ -120,14 +137,12 @@ export const getWeatherForecastRequestSchema = z.object({
     .min(1)
     .max(7)
     .describe("The number of days to forecast the weather for. Max 7 days"),
-  countryCode: z
-    .string()
+  countryCode: countryCodeSchema
     .optional()
     .describe(
       "The country code of the location to get the weather forecast for. This should be an ISO 3166 country code",
     ),
-  units: z
-    .enum(["metric", "imperial"])
+  units: unitsSchema
     .optional()
     .describe(
       "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
@@ -138,7 +153,7 @@ export type GetWeatherForecastRequest = z.infer<
   typeof getWeatherForecastRequestSchema
 >;
 
-export const searchTheWebRequestSchema = z.object({
+export const getWebResultsRequestSchema = z.object({
   query: z.string().describe("The search query or topic to search for news on"),
   country: countryCodeSchema
     .optional()
@@ -150,8 +165,7 @@ export const searchTheWebRequestSchema = z.object({
     .describe(
       "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
     ),
-  units: z
-    .enum(["metric", "imperial"])
+  units: unitsSchema
     .optional()
     .describe(
       "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
@@ -170,9 +184,9 @@ export const searchTheWebRequestSchema = z.object({
     ),
 });
 
-export type SearchTheWebRequest = z.infer<typeof searchTheWebRequestSchema>;
+export type GetWebResultsRequest = z.infer<typeof getWebResultsRequestSchema>;
 
-export const searchTheNewsRequestSchema = z.object({
+export const getNewsResultsRequestSchema = z.object({
   query: z.string().describe("The search query or topic to search for news on"),
   country: countryCodeSchema
     .optional()
@@ -184,8 +198,7 @@ export const searchTheNewsRequestSchema = z.object({
     .describe(
       "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
     ),
-  units: z
-    .enum(["metric", "imperial"])
+  units: unitsSchema
     .optional()
     .describe(
       "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
@@ -206,52 +219,20 @@ export const searchTheNewsRequestSchema = z.object({
     ),
 });
 
-export type SearchTheNewsRequest = z.infer<typeof searchTheNewsRequestSchema>;
+export type GetNewsResultsRequest = z.infer<typeof getNewsResultsRequestSchema>;
 
 export const getWebpageContentRequestSchema = z.object({
   urls: z.array(
-    z.string().describe("The URL of the webpage to get the content for"),
+    z
+      .string()
+      .describe(
+        "A complete list of URLs of the webpages to get the content for. All URLs should be contained in a single array.",
+      ),
   ),
 });
 
 export type GetWebpageContentRequest = z.infer<
   typeof getWebpageContentRequestSchema
->;
-
-export const searchForLocationRequestSchema = z.object({
-  query: z
-    .string()
-    .describe(
-      "The search query or topic to search for locations on. This can include the location.",
-    ),
-  latitude: z
-    .number()
-    .optional()
-    .describe(
-      "The latitude of the location to search for. This should be a float value.",
-    ),
-  longitude: z
-    .number()
-    .optional()
-    .describe(
-      "The longitude of the location to search for. This should be a float value.",
-    ),
-  category: z
-    .enum(["hotels", "restaurants", "attractions", "geos"])
-    .optional()
-    .describe(
-      "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'.",
-    ),
-  currency: z
-    .string()
-    .optional()
-    .describe(
-      "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217.",
-    ),
-});
-
-export type SearchForLocationRequest = z.infer<
-  typeof searchForLocationRequestSchema
 >;
 
 export const searchForMoviesRequestSchema = z.object({

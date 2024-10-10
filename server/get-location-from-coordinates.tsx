@@ -1,14 +1,11 @@
 "use server";
 
-interface Request {
-  latitude: number;
-  longitude: number;
-}
+import { GetLocationFromCoordinatesRequest } from "@/libs/schema";
 
 export default async function getLocationFromCoordinates({
   latitude,
   longitude,
-}: Request) {
+}: GetLocationFromCoordinatesRequest) {
   "use server";
   try {
     console.log("Request received for get-location-from-coordinates action");

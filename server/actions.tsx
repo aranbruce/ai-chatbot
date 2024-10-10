@@ -19,44 +19,41 @@ import { PutBlobResult } from "@vercel/blob";
 import { AI } from "@/app/ai";
 
 import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
+import getLocationFromCoordinates from "@/server/get-location-from-coordinates";
 import getCurrentWeather from "@/server/get-current-weather";
 import getWeatherForecast from "@/server/get-weather-forecast";
-import searchTheWeb from "@/server/search-the-web";
-import searchForImages from "./search-for-images";
-import searchTheNews from "@/server/search-the-news";
-import searchForLocations from "@/server/search-for-locations";
+import getWebResults from "@/server/get-web-results";
+import getNewsResults from "@/server/get-news-results";
+import searchForImages, { ImageResult } from "./search-for-images";
 import searchForMovies from "@/server/search-for-movies";
-import searchForGifs from "@/server/search-for-gifs";
+import searchForGifs, { GifResult } from "@/server/search-for-gifs";
 import getWebpageContents from "@/server/get-webpage-content";
 
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
-import CurrentWeatherCardSkeleton from "@/components/current-weather/current-weather-card-skeleton";
 import Spinner from "@/components/spinner";
 import WebResultGroup from "@/components/web-results/web-result-group";
-import WebResultCardGroupSkeleton from "@/components/web-results/web-result-group-skeleton";
 import WeatherForecastCard from "@/components/weather-forecast/weather-forecast-card";
-import WeatherForecastCardSkeleton from "@/components/weather-forecast/weather-forecast-card-skeleton";
 import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
-import LocationCardGroup from "@/components/location-card/location-card-group";
-import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
 import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
 
+import { ExampleMessageCardProps } from "@/components/example-message/example-message-card";
+
 import {
+  CountryCode,
   exampleMessageSchema,
-  getCoordinatesRequestSchema,
+  getCoordinatesFromLocationRequestSchema,
+  getLocationFromCoordinatesRequestSchema,
   getCurrentWeatherRequestSchema,
   getWeatherForecastRequestSchema,
   getWebpageContentRequestSchema,
   searchForGifsRequestSchema,
   searchForImagesRequestSchema,
-  searchForLocationRequestSchema,
   searchForMoviesRequestSchema,
-  searchTheNewsRequestSchema,
-  searchTheWebRequestSchema,
+  getWebResultsRequestSchema,
+  getNewsResultsRequestSchema,
+  Units,
 } from "@/libs/schema";
-
-import { ExampleMessageCardProps } from "@/components/example-message/example-message-card";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -165,21 +162,23 @@ export async function continueConversation(
           If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
           If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
           If someone asks you to get the content of a webpage, you can use the tool \`get_webpage_content\`.
-          If someone asks you to search the web for information on a given topic, you can use the tool \`return_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
-          If someone asks you to search the web for news on a given topic, you can use the tool \`return_news_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
-          You should call the \`get_webpage_content\` after getting results from the \`return_web_results\` or \`return_news_web_results\` tools.
+          If someone asks you to search the web for information on a given topic, you can use the tool \`get_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
+          If someone asks you to search the web for news on a given topic, you can use the tool \`get_news_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
+          You should call the \`get_webpage_content\` after getting results from the \`get_web_results\` or \`get_news_web_results\` tools.
           If someone asks a question about movies, you can use the tool \`search_for_movies\`.
-          If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
           If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
+          When you have called the \`search_for_images\` tools, only reply with some suggested related search queries. Do not show each image in your response.
+          When you have called the \`search_for_gifs\` tools, only reply with some suggested related search queries. Do not show each gif in your response.
+          Whe you have called the \`search_for_movies\` tools, Recommend the top 3 movies. Do not show each movie in your response.
           Do not try to use any other tools that are not mentioned here.
           If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
           ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}` : ""}`,
         messages: [...history],
         tools: {
-          get_coordinates: tool({
+          get_coordinates_from_location: tool({
             description:
               "Get the coordinates (latitude and longitude) of a location",
-            parameters: getCoordinatesRequestSchema,
+            parameters: getCoordinatesFromLocationRequestSchema,
             execute: async function ({ location, countryCode }) {
               const result = await getCoordinatesFromLocation({
                 location,
@@ -188,12 +187,22 @@ export async function continueConversation(
               return result;
             },
           }),
+          //
+          //   description:
+          //     "Get the name of a location based on the latitude and longitude",
+          //   parameters: getLocationFromCoordinatesRequestSchema,
+          //   execute: async function ({ latitude, longitude }) {
+          //     const result = await getLocationFromCoordinates({
+          //       latitude,
+          //       longitude,
+          //     });
+          //     return result;
+          //   },
+          // }),
           get_current_weather: tool({
             description: "Get the current weather forecast for a location",
             parameters: getCurrentWeatherRequestSchema,
             execute: async function ({ location, countryCode, units }) {
-              displayStream.update(<CurrentWeatherCardSkeleton />);
-
               const result = await getCurrentWeather({
                 location,
                 countryCode,
@@ -211,7 +220,6 @@ export async function continueConversation(
               countryCode,
               units,
             }) {
-              displayStream.update(<WeatherForecastCardSkeleton />);
               const result = await getWeatherForecast({
                 location,
                 forecastDays,
@@ -229,10 +237,10 @@ export async function continueConversation(
               return result;
             },
           }),
-          return_web_results: tool({
+          get_web_results: tool({
             description:
-              "Returns a list of websites that contain information on a given topic",
-            parameters: searchTheWebRequestSchema,
+              "Returns a list of websites that contain information on a given topic. It should be used for web searches",
+            parameters: getWebResultsRequestSchema,
             execute: async function ({
               query,
               country,
@@ -241,9 +249,7 @@ export async function continueConversation(
               count,
               offset,
             }) {
-              displayStream.update(<WebResultCardGroupSkeleton />);
-              contentStream.update(<Spinner />);
-              const result = await searchTheWeb({
+              const result = await getWebResults({
                 query,
                 country,
                 freshness,
@@ -254,10 +260,10 @@ export async function continueConversation(
               return result;
             },
           }),
-          return_news_web_results: tool({
+          get_news_web_results: tool({
             description:
-              "Get a list of websites that contain news on a given topic",
-            parameters: searchTheNewsRequestSchema,
+              "Get a list of websites that contain news on a given topic. It should be used for news searches",
+            parameters: getNewsResultsRequestSchema,
             execute: async function ({
               query,
               country,
@@ -266,9 +272,7 @@ export async function continueConversation(
               count,
               offset,
             }) {
-              displayStream.update(<WebResultCardGroupSkeleton />);
-              contentStream.update(<Spinner />);
-              const result = await searchTheNews({
+              const result = await getNewsResults({
                 query,
                 country,
                 freshness,
@@ -305,28 +309,6 @@ export async function continueConversation(
               return result;
             },
           }),
-          search_for_locations: tool({
-            description: "Search for locations or places to visit",
-            parameters: searchForLocationRequestSchema,
-            execute: async function ({
-              query,
-              latitude,
-              longitude,
-              category,
-              currency,
-            }) {
-              contentStream.update(`Searching for locations of ${query}...`);
-              displayStream.update(<LocationCardGroupSkeleton />);
-              const result = await searchForLocations({
-                query,
-                latitude,
-                longitude,
-                category,
-                currency,
-              });
-              return result;
-            },
-          }),
           search_for_movies: tool({
             description: "Search for movies based on an input",
             parameters: searchForMoviesRequestSchema,
@@ -339,7 +321,6 @@ export async function continueConversation(
               limit,
             }) {
               contentStream.update(`Searching for movies of ${input}...`);
-              displayStream.update(<Spinner />);
               const result = await searchForMovies({
                 input,
                 minimumIMDBRating,
@@ -356,87 +337,10 @@ export async function continueConversation(
 
         onStepFinish({ toolCalls, toolResults, usage }) {
           console.log("step finished");
-          console.log("Tool Calls: ", toolCalls);
+          // console.log("Tool Calls: ", toolCalls);
           if (toolCalls.length === 0) {
             return;
           }
-
-          const toolResultsUI = toolResults.map((toolResult) => {
-            switch (toolResult.toolName) {
-              case "get_current_weather":
-                return (
-                  <>
-                    <CurrentWeatherCard currentWeather={toolResult.result} />
-                  </>
-                );
-              case "get_weather_forecast":
-                return (
-                  <WeatherForecastCard weatherForecast={toolResult.result} />
-                );
-              case "return_web_results":
-              case "return_news_web_results":
-                return <WebResultGroup results={toolResult.result} />;
-              case "search_for_images":
-                return (
-                  <div className="grid grid-cols-2 gap-4">
-                    {toolResult.result.map((result: any, index: number) => (
-                      <div key={index} className="flex flex-col gap-2">
-                        <a href={result.url} target="_blank" rel="noreferrer">
-                          <img
-                            className="rounded-md"
-                            src={result.src}
-                            alt={result.title}
-                          />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                );
-              case "search_for_gifs":
-                return (
-                  <div className="grid grid-cols-2 gap-4">
-                    {toolResult.result.map((result: any, index: number) => (
-                      <div key={index} className="flex flex-col gap-2">
-                        <a href={result.url} target="_blank" rel="noreferrer">
-                          <img
-                            className="rounded-md"
-                            src={result.images.original.url}
-                            alt={result.title}
-                          />
-                          <h4 className="text-sm text-zinc-500">
-                            {result.title}
-                          </h4>
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                );
-              case "search_for_locations":
-                return Array.isArray(toolResult.result) ? (
-                  <LocationCardGroup locations={toolResult.result} />
-                ) : (
-                  <div>Error: {toolResult.result.error}</div>
-                );
-              case "search_for_movies":
-                return (
-                  <div className="flex flex-col gap-8">
-                    {Array.isArray(toolResult.result) ? (
-                      toolResult.result.map((movie: MovieCardProps, index) => (
-                        <MovieCard key={index} {...movie} />
-                      ))
-                    ) : (
-                      <div>Error: {toolResult.result.error}</div>
-                    )}
-                  </div>
-                );
-              default:
-                return null;
-            }
-          });
-
-          displayStream.update(
-            <div className="flex flex-col gap-8">{toolResultsUI}</div>,
-          );
 
           aiState.update({
             ...aiState.get(),
@@ -468,6 +372,7 @@ export async function continueConversation(
       });
       spinnerStream.update(null);
       let textContent = "";
+      let displayContent: React.ReactNode = <></>;
 
       for await (const part of result.fullStream) {
         switch (part.type) {
@@ -475,6 +380,159 @@ export async function continueConversation(
             textContent += part.textDelta;
             contentStream.update(<MarkdownContainer children={textContent} />);
             break;
+          }
+          case "tool-call": {
+            switch (part.toolName) {
+              case "get_current_weather": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <CurrentWeatherCard
+                      location={part.args.location}
+                      countryCode={part.args.countryCode}
+                      units={part.args.units}
+                    />
+                  </div>
+                );
+                displayStream.update(displayContent);
+                break;
+              }
+              case "get_weather_forecast": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <WeatherForecastCard
+                      location={part.args.location}
+                      forecastDays={part.args.forecastDays}
+                      countryCode={undefined}
+                      units={undefined}
+                    />
+                  </div>
+                );
+                displayStream.update(displayContent);
+                break;
+              }
+              case "get_web_results": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <WebResultGroup
+                      query={part.args.query}
+                      country={part.args.country}
+                      freshness={part.args.freshness}
+                      units={part.args.units}
+                      count={part.args.count}
+                      offset={part.args.offset}
+                    />
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "get_news_web_results": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <WebResultGroup
+                      query={part.args.query}
+                      country={part.args.country}
+                      freshness={part.args.freshness}
+                      units={part.args.units}
+                      count={part.args.count}
+                      offset={part.args.offset}
+                    />
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+            }
+            break;
+          }
+          case "tool-result": {
+            switch (part.toolName) {
+              case "search_for_images": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                      {Array.isArray(part.result) ? (
+                        part.result.map((image: ImageResult) => (
+                          <a
+                            href={image.imageSrc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col gap-2"
+                          >
+                            <img
+                              className="h-auto max-w-full rounded-lg"
+                              src={image.imageSrc}
+                              alt={image.imageTitle}
+                            />
+                            <h5 className="text-sm font-medium text-zinc-400 dark:text-zinc-800">
+                              {image.imageTitle}
+                            </h5>
+                          </a>
+                        ))
+                      ) : (
+                        <div>{part.result.error}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "search_for_gifs": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                      {Array.isArray(part.result) ? (
+                        part.result.map((gif: GifResult) => (
+                          <a
+                            href={gif.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              className="h-auto max-w-full rounded-lg"
+                              src={gif.imageSrc}
+                              alt={gif.imageTitle}
+                            />
+                          </a>
+                        ))
+                      ) : (
+                        <div>{part.result.error}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "search_for_movies": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    {Array.isArray(part.result) ? (
+                      part.result.map((movie: MovieCardProps) => (
+                        <MovieCard {...movie} />
+                      ))
+                    ) : (
+                      <div>{part.result.error}</div>
+                    )}
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+            }
           }
         }
       }
@@ -505,7 +563,7 @@ export async function continueConversation(
         ],
       });
       contentStream.update("Sorry, there was an error");
-      displayStream.update(null);
+      // displayStream.update(null);
     } finally {
       aiState.done({ ...aiState.get(), isFinished: true });
       contentStream.done();
@@ -551,7 +609,6 @@ export async function createExampleMessages(userLocation?: {
         - 🌄 Display multiple fun or entertaining gifs
         - 🌤️ Get the current weather for a location
         - ⛅️ Get the weather forecast for a location
-        - 🌍 Search for locations or places to visit
         - 🍿 Get movies from a database based on an input
         - 📸 Search for images on the web for a given topic or query
         ${
@@ -592,8 +649,8 @@ export async function createExampleMessages(userLocation?: {
 export async function getWeatherForecastUI(
   location: string,
   forecastDays: number,
-  countryCode?: string,
-  units?: "metric" | "imperial",
+  countryCode?: CountryCode,
+  units?: Units,
 ) {
   "use server";
 
@@ -601,7 +658,14 @@ export async function getWeatherForecastUI(
   const contentStream = createStreamableUI(
     `Fetching the weather forecast for ${location}`,
   );
-  const displayStream = createStreamableUI(<WeatherForecastCardSkeleton />);
+  const displayStream = createStreamableUI(
+    <WeatherForecastCard
+      location={location}
+      forecastDays={forecastDays}
+      units={units}
+      countryCode={countryCode}
+    />,
+  );
   const spinnerStream = createStreamableUI(<Spinner />);
 
   const toolCallId = generateId();
@@ -666,7 +730,6 @@ export async function getWeatherForecastUI(
       contentStream.update(
         `Here's the ${forecastDays} day forecast for ${location}`,
       );
-      displayStream.update(<WeatherForecastCard weatherForecast={response} />);
     } catch (error) {
       aiState.update({
         ...aiState.get(),
@@ -715,8 +778,8 @@ export async function getWeatherForecastUI(
 
 export async function getCurrentWeatherUI(
   location: string,
-  countryCode?: string,
-  units?: "metric" | "imperial",
+  countryCode?: CountryCode,
+  units?: Units,
 ) {
   "use server";
 
@@ -728,7 +791,13 @@ export async function getCurrentWeatherUI(
   const contentStream = createStreamableUI(
     `Fetching the current weather for ${location}`,
   );
-  const displayStream = createStreamableUI(<CurrentWeatherCardSkeleton />);
+  const displayStream = createStreamableUI(
+    <CurrentWeatherCard
+      location={location}
+      countryCode={countryCode as CountryCode}
+      units={units}
+    />,
+  );
   const spinnerStream = createStreamableUI(<Spinner />);
   const toolCallId = generateId();
 
@@ -788,7 +857,6 @@ export async function getCurrentWeatherUI(
         ],
       });
       contentStream.update(`Here's the current weather for ${location}`);
-      displayStream.update(<CurrentWeatherCard currentWeather={response} />);
     } catch (error) {
       aiState.update({
         ...aiState.get(),

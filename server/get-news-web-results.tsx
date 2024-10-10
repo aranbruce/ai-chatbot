@@ -1,24 +1,15 @@
-import { CountryCode, FreshnessOptions } from "@/libs/schema";
+import { GetWebResultsRequest } from "@/libs/schema";
 
-interface Request {
-  query: string;
-  country?: CountryCode;
-  freshness?: FreshnessOptions;
-  units?: "metric" | "imperial";
-  count?: number;
-  offset?: number;
-}
-
-export default async function searchTheNews({
+export default async function getNewsWebResults({
   query,
   country,
   freshness,
   units,
   count = 8,
   offset,
-}: Request) {
+}: GetWebResultsRequest) {
   "use server";
-  console.log("Request received for search_the_news action");
+  console.log("Request received for get_news_results action");
 
   let freshnessParam = "";
 

@@ -2,12 +2,6 @@ const { tavily } = require("@tavily/core");
 
 const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
-type webPageContent = {
-  url: string;
-  article?: string;
-  error?: any;
-};
-
 export default async function getWebpageContents(urls: string[]) {
   "use server";
 

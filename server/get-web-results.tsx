@@ -1,24 +1,15 @@
-import { CountryCode, FreshnessOptions } from "@/libs/schema";
+import { GetNewsResultsRequest } from "@/libs/schema";
 
-interface Request {
-  query: string;
-  country?: CountryCode;
-  freshness?: FreshnessOptions;
-  units?: "metric" | "imperial";
-  count?: number;
-  offset?: number;
-}
-
-export default async function searchTheWeb({
+export default async function getWebResults({
   query,
   country,
   freshness,
   units,
   count = 8,
   offset,
-}: Request) {
+}: GetNewsResultsRequest) {
   "use server";
-  console.log("Request received for search_the_web action");
+  console.log("Request received for get_web_results action");
 
   let freshnessParam = "";
 
@@ -34,15 +25,16 @@ export default async function searchTheWeb({
     }
   }
   try {
-    const url = new URL(
-      `https://api.search.brave.com/res/v1/web/search?q=${query}&text_decorations=0&count=${count}`,
+    let url = new URL(
+      `https://api.search.brave.com/res/v1/web/search?q=${query}&text_decorations=0&count=${count}&result_filter=web`,
     );
+
     // add optional parameters
     if (country) {
       url.searchParams.append("country", country);
     }
-    if (freshness) {
-      url.searchParams.append("freshness", freshness);
+    if (freshnessParam) {
+      url.searchParams.append("freshness", freshnessParam);
     }
     if (units) {
       url.searchParams.append("units", units);
@@ -67,6 +59,7 @@ export default async function searchTheWeb({
     }
 
     const data = await response.json();
+
     let results = data.web.results;
 
     results = results.map((result: any, index: number) => ({
