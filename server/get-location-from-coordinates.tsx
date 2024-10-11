@@ -1,6 +1,9 @@
 "use server";
 
-import { GetLocationFromCoordinatesRequest } from "@/libs/schema";
+import {
+  GetCoordinatesFromLocationRequest,
+  GetLocationFromCoordinatesRequest,
+} from "@/libs/schema";
 
 export default async function getLocationFromCoordinates({
   latitude,
@@ -28,10 +31,12 @@ export default async function getLocationFromCoordinates({
 
     const data = await response.json();
     const location = data[0].name;
+    const country = data[0].country;
 
     return {
       location: location,
-    };
+      country: country,
+    } as GetCoordinatesFromLocationRequest;
   } catch (error) {
     console.error("Error:", error);
     return { error: "Error occurred" };

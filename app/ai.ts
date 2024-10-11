@@ -1,18 +1,37 @@
 import { CoreMessage } from "ai";
 import { createAI } from "ai/rsc";
 import {
-  ClientMessage,
   continueConversation,
   createExampleMessages,
   getWeatherForecastUI,
   getCurrentWeatherUI,
 } from "@/server/actions";
+import { CountryCode } from "@/libs/schema";
+import { PutBlobResult } from "@vercel/blob";
 
 export type AIState = {
   currentModelVariable: string;
+  location: {
+    isLoaded: boolean;
+    locationName?: string;
+    countryCode?: CountryCode;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    } | null;
+  };
   isFinished: boolean;
   messages: CoreMessage[];
-  abortSignal?: AbortSignal;
+};
+
+export type ClientMessage = {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content?: React.ReactNode;
+  display?: React.ReactNode;
+  spinner?: React.ReactNode;
+  file?: PutBlobResult;
+  model: string;
 };
 
 export type UIState = ClientMessage[];
@@ -29,6 +48,10 @@ export const AI = createAI<AIState, UIState>({
     currentModelVariable: "gpt-4o-mini",
     isFinished: true,
     messages: [],
+    location: {
+      coordinates: null,
+      isLoaded: false,
+    },
   } as AIState,
   initialUIState: [] as UIState,
 });

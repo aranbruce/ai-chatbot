@@ -21,16 +21,16 @@ export const modelVariableOptions = [
     label: "3.5 Turbo",
     provider: "openai" as Provider,
   },
-  {
-    value: "gemini-1.5-pro-latest",
-    label: "1.5 Pro",
-    provider: "gemini" as Provider,
-  },
-  {
-    value: "gemini-1.5-flash-latest",
-    label: "1.5 Flash",
-    provider: "gemini" as Provider,
-  },
+  // {
+  //   value: "gemini-1.5-pro-latest",
+  //   label: "1.5 Pro",
+  //   provider: "gemini" as Provider,
+  // },
+  // {
+  //   value: "gemini-1.5-flash-latest",
+  //   label: "1.5 Flash",
+  //   provider: "gemini" as Provider,
+  // },
   {
     value: "mistral-large-latest",
     label: "Large",

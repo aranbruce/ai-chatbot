@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useAIState } from "ai/rsc";
 import { PutBlobResult } from "@vercel/blob";
 
-import { AIState } from "@/server/actions";
+import { AIState } from "@/app/ai";
 import { modelVariableOptions } from "@/libs/models";
 
 import Select from "@/components/select";

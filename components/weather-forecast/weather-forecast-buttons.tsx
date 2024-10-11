@@ -1,7 +1,7 @@
 "use client";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
-import type { ClientMessage, AIState } from "@/server/actions";
+import type { AIState, ClientMessage } from "@/app/ai";
 import { WeatherForecastProps } from "@/components/weather-forecast/weather-forecast-card";
 
 export default function WeatherForecastButtons({

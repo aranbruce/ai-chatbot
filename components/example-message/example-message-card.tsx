@@ -5,7 +5,7 @@ import { generateId } from "ai";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
-import { ClientMessage } from "@/server/actions";
+import { ClientMessage } from "@/app/ai";
 
 export interface ExampleMessageCardProps {
   index: number;
@@ -34,7 +34,7 @@ export default function ExampleMessageCard({
       },
     ]);
     // Submit and get response message
-    const response = await continueConversation(subheading, modelVariable);
+    const response = await continueConversation(subheading);
     setMessages((messages: ClientMessage[]) => [...messages, response]);
   }
 

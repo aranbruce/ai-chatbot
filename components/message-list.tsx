@@ -1,5 +1,5 @@
 import MessageCard from "@/components/message-card";
-import type { ClientMessage } from "@/server/actions";
+import type { ClientMessage } from "@/app/ai";
 
 interface MessageListProps {
   messages: ClientMessage[];

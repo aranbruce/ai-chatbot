@@ -1,19 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
-interface Location {
-  latitude: number;
-  longitude: number;
-}
+import { useAIState } from "ai/rsc";
+
+import getLocationFromCoordinates from "@/server/get-location-from-coordinates";
 
 export default function useLocation() {
-  const [location, setLocation] = useState<Location | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [aiState, setAIState] = useAIState();
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setError(new Error("Geolocation is not supported by your browser"));
-      setIsLoaded(true);
+      console.log("Geolocation is not supported by your browser.");
+      setAIState({
+        ...aiState,
+        location: {
+          coordinates: null,
+          isLoaded: true,
+        },
+      });
       return;
     }
 
@@ -21,32 +24,70 @@ export default function useLocation() {
       timeout: 5000, // Timeout after 5 seconds
     };
 
-    const success = (position: GeolocationPosition) => {
-      setLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+    const success = async (position: GeolocationPosition) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const response = await getLocationFromCoordinates({
+        latitude: latitude,
+        longitude: longitude,
       });
-      setIsLoaded(true);
+      const result = await response;
+      if ("location" in result) {
+        const locationName = result.location;
+        const countryCode = result.countryCode;
+        const location = {
+          isLoaded: true,
+          locationName: locationName,
+          countryCode: countryCode,
+          coordinates: {
+            latitude: latitude,
+            longitude: longitude,
+          },
+        };
+
+        setAIState({
+          ...aiState,
+          location: location,
+        });
+      } else {
+        console.error("Error fetching location: ", result.error);
+        setAIState({
+          ...aiState,
+          location: {
+            coordinates: null,
+            isLoaded: true,
+          },
+        });
+        return;
+      }
+
       clearTimeout(timerId);
     };
 
     const handleError = (error: GeolocationPositionError) => {
+      let errorMessage;
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          setError(new Error("User denied the request for Geolocation."));
+          errorMessage = "User denied the request for Geolocation.";
           break;
         case error.POSITION_UNAVAILABLE:
-          setError(new Error("Location information is unavailable."));
+          errorMessage = "Location information is unavailable.";
           break;
         case error.TIMEOUT:
-          setError(new Error("The request to get user location timed out."));
-          console.log("The request to get user location timed out.");
+          errorMessage = "The request to get user location timed out.";
           break;
         default:
-          setError(new Error("An unknown error occurred."));
+          errorMessage = "An unknown error occurred.";
           break;
       }
-      setIsLoaded(true);
+      console.error(errorMessage);
+      setAIState({
+        ...aiState,
+        location: {
+          ...aiState.location,
+          isLoaded: true,
+        },
+      });
       clearTimeout(timerId);
     };
 
@@ -61,15 +102,23 @@ export default function useLocation() {
       if (watchId !== undefined) {
         navigator.geolocation.clearWatch(watchId);
       }
-      if (!isLoaded) {
+      if (!aiState.location.isLoaded) {
         console.log("No response from user.");
-        setError(new Error("No response from user."));
-        setIsLoaded(true);
+        setAIState({
+          ...aiState,
+          location: {
+            ...aiState.location,
+            isLoaded: true,
+          },
+        });
       }
     }, 5000); // Timeout after 5 seconds
 
     return () => clearTimeout(timerId); // Clear the timeout if the component is unmounted.
   }, []);
 
-  return { location, error, isLoaded };
+  return {
+    location: aiState.location.coordinates,
+    isLoaded: aiState.location.isLoaded,
+  };
 }

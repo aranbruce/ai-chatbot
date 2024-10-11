@@ -14,9 +14,8 @@ import {
   generateId,
 } from "ai";
 import { createStreamableUI, getAIState, getMutableAIState } from "ai/rsc";
-import { PutBlobResult } from "@vercel/blob";
 
-import { AI } from "@/app/ai";
+import { AI, ClientMessage } from "@/app/ai";
 
 import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
 import getLocationFromCoordinates from "@/server/get-location-from-coordinates";
@@ -60,24 +59,6 @@ const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export interface ClientMessage {
-  id: string;
-  role: "user" | "assistant";
-  content?: React.ReactNode;
-  display?: React.ReactNode;
-  spinner?: React.ReactNode;
-  file?: PutBlobResult;
-  model: string;
-}
-
-export type AIState = {
-  currentModelVariable: string;
-  isFinished: boolean;
-  messages: CoreMessage[];
-};
-
-export type UIState = ClientMessage[];
-
 function getModelFromModelVariable(modelVariable: string) {
   if (!modelVariable) {
     throw new Error("MODEL environment variable is not set");
@@ -98,17 +79,17 @@ function getModelFromModelVariable(modelVariable: string) {
 
 export async function continueConversation(
   content: string,
-  userLocation?: { latitude: number; longitude: number },
   attachment?: any,
 ): Promise<ClientMessage> {
   "use server";
 
-  const aiState = getMutableAIState();
+  const aiState = getMutableAIState<typeof AI>();
   const contentStream = createStreamableUI();
   const displayStream = createStreamableUI();
   const spinnerStream = createStreamableUI(<Spinner />);
   const modelVariable = aiState.get().currentModelVariable;
   const model: LanguageModelV1 = getModelFromModelVariable(modelVariable);
+  const location = aiState.get().location?.coordinates;
 
   if (attachment) {
     aiState.update({
@@ -143,7 +124,7 @@ export async function continueConversation(
     });
   }
 
-  const history = aiState.get().messages.map((message: ClientMessage) => ({
+  const history = aiState.get().messages.map((message: CoreMessage) => ({
     role: message.role,
     content: message.content,
   }));
@@ -157,7 +138,9 @@ export async function continueConversation(
           You are an AI designed to help users with their queries. You can perform tools like searching the web,
           help users find information from the web, get the weather or find out the latest news.
           If asked to describe an image or asked about an image that the user has been provided, assume the user is visually impaired and provide a description of the image.
-          If you need to get the coordinates of a location, you can use the tool \`get_coordinates\`.
+          If you need to get the coordinates of a location, you can use the tool \`get_coordinates_from_location\`.
+          If you need to get the name of a location based on the latitude and longitude, you can use the tool \`get_location_from_coordinates\`.
+          If you do not know a user's location, you can ask the user for their location.
           If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
           If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
           If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
@@ -172,8 +155,8 @@ export async function continueConversation(
           Whe you have called the \`search_for_movies\` tools, Recommend the top 3 movies. Do not show each movie in your response.
           Do not try to use any other tools that are not mentioned here.
           If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
-          ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}` : ""}`,
-        messages: [...history],
+          ${location ? `The user is located at ${location.latitude}, ${location.longitude}. You can find the name of the location by using the \`get_location_from_coordinates'\ tool` : ""}`,
+        messages: history as CoreMessage[],
         tools: {
           get_coordinates_from_location: tool({
             description:
@@ -187,18 +170,18 @@ export async function continueConversation(
               return result;
             },
           }),
-          //
-          //   description:
-          //     "Get the name of a location based on the latitude and longitude",
-          //   parameters: getLocationFromCoordinatesRequestSchema,
-          //   execute: async function ({ latitude, longitude }) {
-          //     const result = await getLocationFromCoordinates({
-          //       latitude,
-          //       longitude,
-          //     });
-          //     return result;
-          //   },
-          // }),
+          get_location_from_coordinates: tool({
+            description:
+              "Get the name of a location based on the latitude and longitude",
+            parameters: getLocationFromCoordinatesRequestSchema,
+            execute: async function ({ latitude, longitude }) {
+              const result = await getLocationFromCoordinates({
+                latitude,
+                longitude,
+              });
+              return result;
+            },
+          }),
           get_current_weather: tool({
             description: "Get the current weather forecast for a location",
             parameters: getCurrentWeatherRequestSchema,
@@ -293,7 +276,6 @@ export async function continueConversation(
               return result;
             },
           }),
-
           search_for_gifs: tool({
             description:
               "Search for gifs on the web for a given topic or query",
@@ -333,7 +315,7 @@ export async function continueConversation(
             },
           }),
         },
-        maxSteps: 3,
+        maxSteps: 5,
 
         onStepFinish({ toolCalls, toolResults, usage }) {
           console.log("step finished");
@@ -347,12 +329,10 @@ export async function continueConversation(
             messages: [
               ...aiState.get().messages,
               {
-                id: generateId(),
                 role: "assistant",
                 content: toolCalls,
               },
               {
-                id: generateId(),
                 role: "tool",
                 content: toolResults,
               },
@@ -543,7 +523,6 @@ export async function continueConversation(
         messages: [
           ...aiState.get().messages,
           {
-            id: generateId(),
             role: "assistant",
             content: textContent,
           },
@@ -556,7 +535,6 @@ export async function continueConversation(
         messages: [
           ...aiState.get().messages,
           {
-            id: generateId(),
             role: "assistant",
             content: "Sorry, there was an error",
           },
@@ -582,12 +560,9 @@ export async function continueConversation(
   };
 }
 
-export async function createExampleMessages(userLocation?: {
-  latitude: number;
-  longitude: number;
-}) {
+export async function createExampleMessages() {
   "use server";
-  const aiState = getMutableAIState();
+  const aiState = getMutableAIState<typeof AI>();
 
   const modelVariable = aiState.get().currentModelVariable;
   const model: LanguageModelV1 = getModelFromModelVariable(modelVariable);
@@ -611,12 +586,7 @@ export async function createExampleMessages(userLocation?: {
         - ⛅️ Get the weather forecast for a location
         - 🍿 Get movies from a database based on an input
         - 📸 Search for images on the web for a given topic or query
-        ${
-          userLocation
-            ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}. Try to make the example messages relevant to their location.
-        Try to use the name of location in the example messages rather than the coordinates`
-            : ""
-        }`,
+        `,
         prompt: `Generate 4 example messages to inspire the user to start a conversation with the LLM assistant using.
         Select randomly for the capabilities of the LLM assistant.
         Include emojis at the start of each example message to make them more engaging.`,
@@ -654,7 +624,7 @@ export async function getWeatherForecastUI(
 ) {
   "use server";
 
-  const aiState = getMutableAIState();
+  const aiState = getMutableAIState<typeof AI>();
   const contentStream = createStreamableUI(
     `Fetching the weather forecast for ${location}`,
   );

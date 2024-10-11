@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 import { useUIState, useAIState, useActions } from "ai/rsc";
 import { generateId } from "ai";
@@ -8,11 +8,11 @@ import PromptForm from "@/components/prompt-form";
 import MessageList from "@/components/message-list";
 import EmptyScreen from "@/components/empty-screen";
 import { useScrollAnchor } from "@/libs/hooks/use-scroll-anchor";
-import useLocation from "@/libs/hooks/use-location";
 
 import useFileUpload from "@/libs/hooks/use-file-upload";
 
-import type { AIState, ClientMessage } from "@/server/actions";
+import type { ClientMessage, AIState } from "@/app/ai";
+import useLocation from "@/libs/hooks/use-location";
 
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
@@ -20,12 +20,12 @@ export default function Chat() {
   const [aiState, setAIState] = useAIState();
 
   const { continueConversation } = useActions();
+  const { location } = useLocation();
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const { location, error, isLoaded } = useLocation();
   const { fileUpload, setFileUpload, handleFileUpload, inputFileRef } =
     useFileUpload();
 
@@ -58,8 +58,8 @@ export default function Chat() {
       file: fileUpload ? fileUpload : undefined,
       model: aiState.currentModelVariable,
     });
-
-    const response = await continueConversation(message, location, fileUpload);
+    console.log("location", location);
+    const response = await continueConversation(message, fileUpload);
 
     addMessage(response);
   }
@@ -73,11 +73,7 @@ export default function Chat() {
         {messages.length ? (
           <MessageList messages={messages} visibilityRef={visibilityRef} />
         ) : (
-          <EmptyScreen
-            userLocation={location ? location : undefined}
-            locationError={error ? error : undefined}
-            locationIsLoaded={isLoaded}
-          />
+          <EmptyScreen />
         )}
       </div>
       <PromptForm

@@ -2,47 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useAIState, useActions } from "ai/rsc";
-import { AIState } from "@/server/actions";
+import { AIState } from "@/app/ai";
 
 import Select from "./select";
 import ExampleMessageCardGroup from "./example-message/example-message-group";
 import { modelVariableOptions } from "@/libs/models";
 
-interface EmptyScreenProps {
-  userLocation?: { latitude: number; longitude: number };
-  locationError?: Error;
-  locationIsLoaded?: boolean;
-}
-
-export default function EmptyScreen({
-  userLocation,
-  locationError,
-  locationIsLoaded,
-}: EmptyScreenProps) {
+export default function EmptyScreen() {
   const [examplesUI, setExamplesUI] = useState(null);
   const { createExampleMessages } = useActions();
   const [AIState, setAIState] = useAIState();
 
   useEffect(() => {
-    if (!locationIsLoaded) {
-      return;
-    }
-    if (locationError) {
-      fetchExamples(AIState.currentModelVariable);
-    } else if (userLocation) {
-      fetchExamples(AIState.currentModelVariable, userLocation);
-    }
-    async function fetchExamples(
-      model: string,
-      userLocation?: { latitude: number; longitude: number },
-    ) {
-      const exampleMessagesUI = await createExampleMessages(
-        model,
-        userLocation,
-      );
+    async function fetchExamples() {
+      const exampleMessagesUI = await createExampleMessages();
       setExamplesUI(exampleMessagesUI);
     }
-  }, [locationIsLoaded, locationError]);
+    fetchExamples();
+  }, []);
 
   function setSelectedValue(value: string) {
     setAIState((AIState: AIState) => {

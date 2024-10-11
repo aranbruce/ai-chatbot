@@ -20,7 +20,6 @@ export default async function getCurrentWeather({
     location,
     countryCode,
   });
-  console.log(`Coordinates for ${location}: ${latitude}, ${longitude}`);
 
   try {
     const url = new URL(
