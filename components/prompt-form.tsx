@@ -68,7 +68,7 @@ export default function PromptForm({
         </div>
       )}
       <div className="relative bottom-0 flex w-full flex-col items-center justify-center bg-gradient-to-t from-white via-white to-transparent backdrop-blur-[1px] dark:from-zinc-950 dark:via-zinc-950">
-        <div className="w-full space-y-4 px-4 pb-4 pt-2 md:mx-5 md:max-w-2xl">
+        <div className="w-full space-y-3 px-4 pb-3 pt-2 md:mx-5 md:max-w-2xl">
           <form
             onSubmit={(event) => {
               event.preventDefault();

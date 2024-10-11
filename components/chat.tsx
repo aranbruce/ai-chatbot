@@ -68,7 +68,7 @@ export default function Chat() {
     <div className="h-svh w-full overflow-scroll" ref={scrollRef}>
       <div
         ref={messagesRef}
-        className="mx-auto max-w-2xl px-4 pb-[200px] pt-32"
+        className="mx-auto max-w-2xl px-4 pb-[256px] pt-32"
       >
         {messages.length ? (
           <MessageList messages={messages} visibilityRef={visibilityRef} />
