@@ -5,77 +5,93 @@ import { mistral } from "@ai-sdk/mistral";
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 
-import { CoreMessage, streamObject, streamText } from "ai";
 import {
-  createAI,
-  createStreamableUI,
-  getAIState,
-  getMutableAIState,
-  streamUI,
-} from "ai/rsc";
+  CoreMessage,
+  LanguageModelV1,
+  streamObject,
+  streamText,
+  tool,
+  generateId,
+} from "ai";
+import { createStreamableUI, getAIState, getMutableAIState } from "ai/rsc";
 
-import { z } from "zod";
-import Image from "next/image";
-import { generateId } from "ai";
-import { PutBlobResult } from "@vercel/blob";
+import { AI, ClientMessage } from "@/app/ai";
 
 import getCoordinatesFromLocation from "@/server/get-coordinates-from-location";
+import getLocationFromCoordinates from "@/server/get-location-from-coordinates";
 import getCurrentWeather from "@/server/get-current-weather";
 import getWeatherForecast from "@/server/get-weather-forecast";
-import searchTheWeb from "@/server/search-the-web";
-import searchForImages from "./search-for-images";
-import searchTheNews from "@/server/search-the-news";
-import searchForLocations from "@/server/search-for-locations";
+import getWebResults from "@/server/get-web-results";
+import getNewsResults from "@/server/get-news-results";
+import searchForImages, { ImageResult } from "./search-for-images";
 import searchForMovies from "@/server/search-for-movies";
-import searchForGifs from "@/server/search-for-gifs";
+import searchForGifs, { GifResult } from "@/server/search-for-gifs";
+import getWebpageContents from "@/server/get-webpage-content";
 
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
-import CurrentWeatherCardSkeleton from "@/components/current-weather/current-weather-card-skeleton";
 import Spinner from "@/components/spinner";
 import WebResultGroup from "@/components/web-results/web-result-group";
-import WebResultCardGroupSkeleton from "@/components/web-results/web-result-group-skeleton";
 import WeatherForecastCard from "@/components/weather-forecast/weather-forecast-card";
-import WeatherForecastCardSkeleton from "@/components/weather-forecast/weather-forecast-card-skeleton";
 import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
-import LocationCardGroup from "@/components/location-card/location-card-group";
-import LocationCardGroupSkeleton from "@/components/location-card/location-card-group-skeleton";
 import MarkdownContainer from "@/components/markdown";
 import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
+
+import { ExampleMessageCardProps } from "@/components/example-message/example-message-card";
+
+import {
+  CountryCode,
+  exampleMessageSchema,
+  getCoordinatesFromLocationRequestSchema,
+  getLocationFromCoordinatesRequestSchema,
+  getCurrentWeatherRequestSchema,
+  getWeatherForecastRequestSchema,
+  getWebpageContentRequestSchema,
+  searchForGifsRequestSchema,
+  searchForImagesRequestSchema,
+  searchForMoviesRequestSchema,
+  getWebResultsRequestSchema,
+  getNewsResultsRequestSchema,
+  Units,
+} from "@/libs/schema";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export interface ClientMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: React.ReactNode;
-  file?: PutBlobResult;
-  model: string;
+function getModelFromModelVariable(modelVariable: string) {
+  if (!modelVariable) {
+    throw new Error("MODEL environment variable is not set");
+  } else if (modelVariable.startsWith("gpt-")) {
+    return openai(modelVariable);
+  } else if (modelVariable.startsWith("mistral-")) {
+    return mistral(modelVariable);
+  } else if (modelVariable.startsWith("claude-")) {
+    return anthropic(modelVariable);
+  } else if (modelVariable.includes("gemini-")) {
+    return google("models/gemini-pro");
+  } else if (modelVariable.includes("llama3-")) {
+    return groq(modelVariable);
+  } else {
+    throw new Error("Model is not a supported model");
+  }
 }
 
-export type AIState = {
-  currentModelVariable: string;
-  isFinished: boolean;
-  messages: CoreMessage[];
-};
-
-export type UIState = ClientMessage[];
-
-async function continueConversation(
-  message: string,
-  userLocation?: { latitude: number; longitude: number },
-  imageURL?: string,
+export async function continueConversation(
+  content: string,
+  attachment?: any,
 ): Promise<ClientMessage> {
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
-  const summaryUI = createStreamableUI(null);
+  const contentStream = createStreamableUI();
+  const displayStream = createStreamableUI();
+  const spinnerStream = createStreamableUI(<Spinner />);
+  const modelVariable = aiState.get().currentModelVariable;
+  const model: LanguageModelV1 = getModelFromModelVariable(modelVariable);
+  const location = aiState.get().location?.coordinates;
 
-  console.log("imageURL: ", imageURL);
-
-  if (imageURL) {
+  if (attachment) {
     aiState.update({
       ...aiState.get(),
       messages: [
@@ -85,11 +101,11 @@ async function continueConversation(
           content: [
             {
               type: "text",
-              text: message,
+              text: content,
             },
             {
               type: "image",
-              image: imageURL,
+              image: attachment.url,
             },
           ],
         },
@@ -102,1577 +118,465 @@ async function continueConversation(
         ...aiState.get().messages,
         {
           role: "user",
-          content: message,
+          content: content,
         },
       ],
     });
   }
 
-  const modelVariable = aiState.get().currentModelVariable;
+  const history = aiState.get().messages.map((message: CoreMessage) => ({
+    role: message.role,
+    content: message.content,
+  }));
 
-  function getModelFromModelVariable(modelVariable: string) {
-    if (!modelVariable) {
-      throw new Error("MODEL environment variable is not set");
-    } else if (modelVariable.startsWith("gpt-")) {
-      return openai(modelVariable);
-    } else if (modelVariable.startsWith("mistral-")) {
-      return mistral(modelVariable);
-    } else if (modelVariable.startsWith("claude-")) {
-      return anthropic(modelVariable);
-    } else if (modelVariable.includes("gemini-")) {
-      return google("models/gemini-pro");
-    } else if (modelVariable.includes("llama3-")) {
-      return groq(modelVariable);
-    } else {
-      throw new Error("Model is not a supported model");
-    }
-  }
-
-  const model: any = getModelFromModelVariable(modelVariable);
-
-  const result = await streamUI({
-    model,
-    initial: <Spinner />,
-    temperature: 0.1,
-    system: `
-      You are an AI designed to help users with their queries. You can perform tools like searching the web,
-      help users find information from the web, get the weather or find out the latest news.
-      If asked to describe an image or asked about an image that the user has been provided, assume the user is visually impaired and provide a description of the image.
-      If you need to get the coordinates of a location, you can use the tool \`get_coordinates\`.
-      If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
-      If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
-      If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
-      If someone asks you to search the web, you can use the tool \`search_the_web\`. Unless the user specifies a number of results, you should return 8 results.
-      If someone asks you to get the latest news, you can use the tool \`search_the_news\`. 
-      If someone asks a question about movies, you can use the tool \`search_for_movies\`.
-      If someone asks a question about locations or places to visit, you can use the tool \`search_for_locations\`.
-      If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
-      Do not try to use any other tools that are not mentioned here.
-      If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
-      ${userLocation ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}` : ""}`,
-    messages: aiState.get().messages,
-    text: ({ content, done }) => {
-      try {
-        if (done) {
-          aiState.done({
-            ...aiState.get(),
-            isFinished: true,
-            messages: [
-              ...aiState.get().messages,
-              { role: "assistant", content },
-            ],
-          });
-        }
-        return <MarkdownContainer children={content} />;
-      } catch (error) {
-        console.log("error: ", error);
-        aiState.done({
-          ...aiState.get(),
-          isFinished: true,
-          messages: [
-            ...aiState.get().messages,
-            {
-              role: "assistant",
-              content: `Sorry, looks like something went wrong`,
+  (async () => {
+    try {
+      const result = await streamText({
+        model: model,
+        temperature: 0.2,
+        system: `
+          You are an AI designed to help users with their queries. You can perform tools like searching the web,
+          help users find information from the web, get the weather or find out the latest news.
+          If asked to describe an image or asked about an image that the user has been provided, assume the user is visually impaired and provide a description of the image.
+          If you need to get the coordinates of a location, you can use the tool \`get_coordinates_from_location\`.
+          If you need to get the name of a location based on the latitude and longitude, you can use the tool \`get_location_from_coordinates\`.
+          If you do not know a user's location, you can ask the user for their location.
+          If someone asks you to get the current weather, you can use the tool \`get_current_weather\`.
+          If someone asks you to get the weather forecast or how the weather will look in the future, you can use the tool \`get_weather_forecast\`.
+          If someone asks you to get the current weather or the weather forecast and does not provide a unit, you can infer the unit based on the location.
+          If someone asks you to get the content of a webpage, you can use the tool \`get_webpage_content\`.
+          If someone asks you to search the web for information on a given topic, you can use the tool \`get_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
+          If someone asks you to search the web for news on a given topic, you can use the tool \`get_news_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
+          You should call the \`get_webpage_content\` after getting results from the \`get_web_results\` or \`get_news_web_results\` tools.
+          If someone asks a question about movies, you can use the tool \`search_for_movies\`.
+          If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
+          When you have called the \`search_for_images\` tools, only reply with some suggested related search queries. Do not show each image in your response.
+          When you have called the \`search_for_gifs\` tools, only reply with some suggested related search queries. Do not show each gif in your response.
+          Whe you have called the \`search_for_movies\` tools, Recommend the top 3 movies. Do not show each movie in your response.
+          Do not try to use any other tools that are not mentioned here.
+          If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
+          ${location ? `The user is located at ${location.latitude}, ${location.longitude}. You can find the name of the location by using the \`get_location_from_coordinates'\ tool` : ""}`,
+        messages: history as CoreMessage[],
+        tools: {
+          get_coordinates_from_location: tool({
+            description:
+              "Get the coordinates (latitude and longitude) of a location",
+            parameters: getCoordinatesFromLocationRequestSchema,
+            execute: async function ({ location, countryCode }) {
+              const result = await getCoordinatesFromLocation({
+                location,
+                countryCode,
+              });
+              return result;
             },
-          ],
-        });
-        return <>Sorry, looks like something went wrong</>;
-      }
-    },
-    tools: {
-      get_coordinates: {
-        description:
-          "Get the coordinates (latitude and longitude) of a location",
-        parameters: z.object({
-          location: z
-            .string()
-            .describe(
-              "The location to get the current weather for, excluding the country",
-            ),
-          countryCode: z
-            .string()
-            .optional()
-            .describe(
-              "The country code of the location to get the coordinates for. This should be an ISO 3166 country code",
-            ),
-        }),
-        generate: async function* ({ location, countryCode }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">
-                Getting the coordinates for {location}...
-              </p>
-              <Spinner />
-            </>
-          );
-          try {
-            const response = await getCoordinatesFromLocation({
-              location,
-              countryCode,
-            });
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "get_coordinates",
-                      args: { location, countryCode },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "get_coordinates",
-                      result: response,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `The coordinates for ${location} are: ${JSON.stringify(
-                    response,
-                  )}`,
-                },
-              ],
-            });
-            return (
-              <>
-                The coordinates for {location} are:{" "}
-                {JSON.stringify(response, null, 2)}
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "get_coordinates",
-                      args: { location, countryCode },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "get_coordinates",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error getting the coordinates for ${location}`,
-                },
-              ],
-            });
-            return (
-              <>
-                {`Sorry, there was an error getting the coordinates for ${location}`}
-              </>
-            );
-          }
-        },
-      },
-      get_current_weather: {
-        description: "Get the current weather forecast for a location",
-        parameters: z.object({
-          location: z
-            .string()
-            .describe(
-              "The location to get the current weather for, excluding the country. This can also be inferred from the user's location if available.",
-            ),
-          countryCode: z
-            .string()
-            .optional()
-            .describe(
-              "The country code of the location to get the current weather for. This should be an ISO 3166 country code. This can also be inferred from the user's location if available.",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'. If no unit is provided by the user, infer the unit based on the location e.g. London would use metric.",
-            ),
-        }),
-        generate: async function* ({ location, countryCode, units }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">
-                Getting the current weather for {location}...
-              </p>
-              <CurrentWeatherCardSkeleton />
-            </>
-          );
-          try {
-            const response = await getCurrentWeather({
-              location,
-              countryCode,
-              units,
-            });
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "get_current_weather",
-                      args: { location, countryCode, units },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "get_current_weather",
-                      result: {
-                        ...response,
-                        location,
-                        units,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here's the current weather for ${location}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here's the current weather for {location}:
-                <CurrentWeatherCard currentWeather={response} />
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "get_current_weather",
-                      args: { location, countryCode, units },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "get_current_weather",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error getting the current weather for ${location}`,
-                },
-              ],
-            });
-            return (
-              <>
-                {`Sorry, there was an error getting the current weather for ${location}`}
-              </>
-            );
-          }
-        },
-      },
-      get_weather_forecast: {
-        description: "Get the weather forecast for a location",
-        parameters: z.object({
-          location: z
-            .string()
-            .describe(
-              "The location to get the weather forecast for, excluding the country. This can also be inferred from the user's location if available.",
-            ),
-          forecastDays: z
-            .number()
-            .min(1)
-            .max(7)
-            .describe(
-              "The number of days to forecast the weather for. Max 7 days",
-            ),
-          countryCode: z
-            .string()
-            .optional()
-            .describe(
-              "The country code of the location to get the weather forecast for. This should be an ISO 3166 country code",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
-            ),
-        }),
-        generate: async function* ({
-          location,
-          forecastDays,
-          countryCode,
-          units,
-        }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">
-                Getting the weather forecast for {location}...
-              </p>
-              <WeatherForecastCardSkeleton />
-            </>
-          );
-          try {
-            const response = await getWeatherForecast({
+          }),
+          get_location_from_coordinates: tool({
+            description:
+              "Get the name of a location based on the latitude and longitude",
+            parameters: getLocationFromCoordinatesRequestSchema,
+            execute: async function ({ latitude, longitude }) {
+              const result = await getLocationFromCoordinates({
+                latitude,
+                longitude,
+              });
+              return result;
+            },
+          }),
+          get_current_weather: tool({
+            description: "Get the current weather forecast for a location",
+            parameters: getCurrentWeatherRequestSchema,
+            execute: async function ({ location, countryCode, units }) {
+              const result = await getCurrentWeather({
+                location,
+                countryCode,
+                units,
+              });
+              return result;
+            },
+          }),
+          get_weather_forecast: tool({
+            description: "Get the weather forecast for a location",
+            parameters: getWeatherForecastRequestSchema,
+            execute: async function ({
               location,
               forecastDays,
               countryCode,
               units,
-            });
-            console.log("response: ", response);
-
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "get_weather_forecast",
-                      args: { location, forecastDays, countryCode, units },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "get_weather_forecast",
-                      result: {
-                        ...response,
-                        location,
-                        forecastDays,
-                        countryCode,
-                        units,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here's the ${forecastDays} day forecast for ${location}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here's the {forecastDays} day forecast for {location}:
-                <WeatherForecastCard weatherForecast={response} />
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "get_weather_forecast",
-                      args: { location, forecastDays, units },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "get_weather_forecast",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error getting the weather forecast for ${location}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Sorry, there was an error getting the weather forecast for{" "}
-                {location}
-              </>
-            );
-          }
-        },
-      },
-      search_the_web: {
-        description:
-          "Search the web for information on a given topic or for a specific query",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for news on"),
-          country: z
-            .enum([
-              "AR",
-              "AU",
-              "AT",
-              "BE",
-              "BR",
-              "CA",
-              "CL",
-              "DK",
-              "FI",
-              "FR",
-              "DE",
-              "HK",
-              "IN",
-              "ID",
-              "IT",
-              "JP",
-              "KR",
-              "MY",
-              "MX",
-              "NL",
-              "NZ",
-              "NO",
-              "CN",
-              "PL",
-              "PT",
-              "PH",
-              "RU",
-              "SA",
-              "ZA",
-              "ES",
-              "SE",
-              "CH",
-              "TW",
-              "TH",
-              "TR",
-              "GB",
-              "US",
-            ])
-            .optional()
-            .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
-            ),
-          freshness: z
-            .enum(["past-day", "past-week", "past-month", "past-year"])
-            .optional()
-            .describe(
-              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
-            ),
-          count: z
-            .number()
-            .optional()
-            .describe("The number of search results to return"),
-          offset: z
-            .number()
-            .min(1)
-            .max(20)
-            .optional()
-            .describe(
-              "The number of pages of search results to skip. The number of results per page is equal to the count parameter.",
-            ),
-        }),
-        generate: async function* ({
-          query,
-          country,
-          freshness,
-          units,
-          count,
-          offset,
-        }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">
-                Searching the web for {query}...
-              </p>
-              <WebResultCardGroupSkeleton />
-            </>
-          );
-          try {
-            const response = await searchTheWeb({
+            }) {
+              const result = await getWeatherForecast({
+                location,
+                forecastDays,
+                countryCode,
+                units,
+              });
+              return result;
+            },
+          }),
+          get_webpage_content: tool({
+            description: "Get the content of a webpage",
+            parameters: getWebpageContentRequestSchema,
+            execute: async function ({ urls }: { urls: string[] }) {
+              const result = await getWebpageContents(urls);
+              return result;
+            },
+          }),
+          get_web_results: tool({
+            description:
+              "Returns a list of websites that contain information on a given topic. It should be used for web searches",
+            parameters: getWebResultsRequestSchema,
+            execute: async function ({
               query,
               country,
               freshness,
               units,
               count,
               offset,
-            });
-
-            (async () => {
-              const { textStream } = await streamText({
-                model: getModelFromModelVariable(modelVariable),
-                temperature: 0.1,
-                system: `The user has performed a web search for the following message: <message>${message}</message>
-                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in
-                the search results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use the number for that source's result.id with a link with a title of "source" in the following format:
-                [result.id](result.url "source")
-                Where result.id is the value of the id field in the result,
-                result.url is the value of the url field in the result.
-                Only the number use the source number for the source link.
-                Do not include a title of "source" for normal links, only for sources.
-                Source Examples:
-                """
-                [1](https://example.com "source")
-                [2](https://example.com "source")
-                [3](https://example.com "source")
-                """
-                Normal Link Example:
-                """
-                [Link text](https://example.com)
-                """
-                Incorrect Example:
-                """
-                [BBC News](https://bbc.co.uk "source")
-                """
-                
-                `,
-
-                prompt: `Here are the web search results: <results>${JSON.stringify(response)}</results>`,
+            }) {
+              const result = await getWebResults({
+                query,
+                country,
+                freshness,
+                units,
+                count,
+                offset,
               });
-
-              let summaryText = "";
-
-              for await (const delta of textStream) {
-                summaryText += delta;
-                summaryUI.update(<MarkdownContainer children={summaryText} />);
-              }
-              summaryUI.done();
-            })();
-
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_web",
-                      args: { query, country, freshness, units, count, offset },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_web",
-                      result: {
-                        ...response,
-                        query,
-                        country,
-                        freshness,
-                        units,
-                        count,
-                        offset,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here are the search results for {query}:
-                <WebResultGroup results={response} summary={summaryUI.value} />
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_web",
-                      args: { query, country, freshness, units, count, offset },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_web",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error searching the web for ${query}`,
-                },
-              ],
-            });
-            return <>Sorry, there was an error searching the web for {query}</>;
-          }
-        },
-      },
-      search_for_images: {
-        description: "Search for images on the web for a given topic or query",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for news on"),
-          country: z
-            .enum([
-              "AR",
-              "AU",
-              "AT",
-              "BE",
-              "BR",
-              "CA",
-              "CL",
-              "DK",
-              "FI",
-              "FR",
-              "DE",
-              "HK",
-              "IN",
-              "ID",
-              "IT",
-              "JP",
-              "KR",
-              "MY",
-              "MX",
-              "NL",
-              "NZ",
-              "NO",
-              "CN",
-              "PL",
-              "PT",
-              "PH",
-              "RU",
-              "SA",
-              "ZA",
-              "ES",
-              "SE",
-              "CH",
-              "TW",
-              "TH",
-              "TR",
-              "GB",
-              "US",
-            ])
-            .optional()
-            .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
-            ),
-          count: z
-            .number()
-            .min(1)
-            .max(100)
-            .optional()
-            .describe("The number of search results to return"),
-        }),
-        generate: async function* ({ query, country, count }) {
-          const toolCallId = generateId();
-          yield <>Searching for images of {query}...</>;
-          try {
-            const response = await searchForImages({
-              query,
-              country,
-              count,
-            });
-
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_images",
-                      args: { query, country, count },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_form_images",
-                      result: {
-                        ...response,
-                        query,
-                        country,
-                        count,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here are images of ${query}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here are images of {query}:
-                {/* <WebResultGroup results={response} /> */}
-                <div className="grid grid-cols-2 gap-4">
-                  {response.map((result: any, index: number) => (
-                    <div key={index} className="flex flex-col gap-2">
-                      <a href={result.url} target="_blank" rel="noreferrer">
-                        <img
-                          className="rounded-md"
-                          src={result.src}
-                          alt={result.title}
-                        />
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_images",
-                      args: { query, country, count },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_images",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error searching the web for ${query}`,
-                },
-              ],
-            });
-            return <>Sorry, there was an error searching the web for {query}</>;
-          }
-        },
-      },
-      search_the_news: {
-        description: "Search for news on the web for a given topic",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for news on"),
-          country: z
-            .enum([
-              "AR",
-              "AU",
-              "AT",
-              "BE",
-              "BR",
-              "CA",
-              "CL",
-              "DK",
-              "FI",
-              "FR",
-              "DE",
-              "HK",
-              "IN",
-              "ID",
-              "IT",
-              "JP",
-              "KR",
-              "MY",
-              "MX",
-              "NL",
-              "NZ",
-              "NO",
-              "CN",
-              "PL",
-              "PT",
-              "PH",
-              "RU",
-              "SA",
-              "ZA",
-              "ES",
-              "SE",
-              "CH",
-              "TW",
-              "TH",
-              "TR",
-              "GB",
-              "US",
-            ])
-            .optional()
-            .describe(
-              "The search query country, where the results come from. The country string is limited to 2 character country codes of supported countries.",
-            ),
-          freshness: z
-            .enum(["past-day", "past-week", "past-month", "past-year"])
-            .optional()
-            .describe(
-              "The freshness of the search results. This filters search results by when they were discovered. Can be 'past-day', 'past-week', 'past-month', or 'past-year'.",
-            ),
-          units: z
-            .enum(["metric", "imperial"])
-            .optional()
-            .describe(
-              "The units to display the temperature in. Can be 'metric' or 'imperial'. For celsius, use 'metric' and for fahrenheit, use 'imperial'",
-            ),
-          count: z
-            .number()
-            .min(1)
-            .max(100)
-            .optional()
-            .describe("The number of search results to return"),
-          offset: z
-            .number()
-            .min(1)
-            .max(100)
-            .optional()
-            .describe(
-              "The number of pages of search results to skip. The number of results per page is equal to the count parameter.",
-            ),
-        }),
-        generate: async function* ({
-          query,
-          country,
-          freshness,
-          units,
-          count,
-          offset,
-        }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">Searching for news...</p>
-              <WebResultCardGroupSkeleton />
-            </>
-          );
-          try {
-            const response = await searchTheNews({
+              return result;
+            },
+          }),
+          get_news_web_results: tool({
+            description:
+              "Get a list of websites that contain news on a given topic. It should be used for news searches",
+            parameters: getNewsResultsRequestSchema,
+            execute: async function ({
               query,
               country,
               freshness,
               units,
               count,
               offset,
-            });
-
-            (async () => {
-              const { textStream } = await streamText({
-                model: getModelFromModelVariable(modelVariable),
-                temperature: 0.1,
-                system: `
-                The user has performed a web search for the following message: <message>${message}</message>
-                and the following query: <query>${query}</query>. Try to use all the relevant web results provided in
-                the search results to respond to the user's message, providing useful and succinct insights.
-                Make sure to denote any sources you use the number for that source's result.id with a link with a title of "source" in the following format:
-                [result.id](result.url "source")
-                Where result.id is the value of the id field in the result,
-                result.url is the value of the url field in the result.
-                Only the number use the source number for the source link.
-                Do not include a title of "source" for normal links, only for sources.
-                Source Examples:
-                """
-                [1](https://example.com "source")
-                [2](https://example.com "source")
-                [3](https://example.com "source")
-                """
-                Normal Link Example:
-                """
-                [Link text](https://example.com)
-                """
-                Incorrect Example:
-                """
-                [BBC News](https://bbc.co.uk "source")
-                
-                """`,
-                prompt: `Here are the news search results: ${JSON.stringify(response)}`,
+            }) {
+              const result = await getNewsResults({
+                query,
+                country,
+                freshness,
+                units,
+                count,
+                offset,
               });
-
-              let summaryText = "";
-
-              for await (const delta of textStream) {
-                summaryText += delta;
-                summaryUI.update(<MarkdownContainer children={summaryText} />);
-              }
-              summaryUI.done();
-            })();
-
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_news",
-                      args: { query, country, freshness, units, count, offset },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_news",
-                      result: {
-                        ...response,
-                        query,
-                        country,
-                        freshness,
-                        units,
-                        count,
-                        offset,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here are the latest news articles about ${query}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here are the latest news articles about {query}:
-                <WebResultGroup results={response} summary={summaryUI.value} />
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_news",
-                      args: { query, country, freshness, units, count, offset },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_the_news",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error searching for news about ${query}`,
-                },
-              ],
-            });
-            return (
-              <>Sorry, there was an error searching for news about {query}</>
-            );
-          }
-        },
-      },
-      search_for_locations: {
-        description: "Search for locations or places to visit",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe(
-              "The search query or topic to search for locations on. This can include the location.",
-            ),
-          latitude: z
-            .number()
-            .optional()
-            .describe(
-              "The latitude of the location to search for. This should be a float value.",
-            ),
-          longitude: z
-            .number()
-            .optional()
-            .describe(
-              "The longitude of the location to search for. This should be a float value.",
-            ),
-          category: z
-            .enum(["hotels", "restaurants", "attractions", "geos"])
-            .optional()
-            .describe(
-              "The category of locations to search for. Can be 'hotels', 'restaurants', 'attractions', or 'geos'.",
-            ),
-          currency: z
-            .string()
-            .optional()
-            .describe(
-              "The currency the pricing should be returned in. The currency string is limited to 3 character currency codes following ISO 4217.",
-            ),
-        }),
-        generate: async function* ({
-          query,
-          latitude,
-          longitude,
-          category,
-          currency,
-        }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">Searching for locations...</p>
-              <LocationCardGroupSkeleton />
-            </>
-          );
-          try {
-            const response = await searchForLocations({
-              query,
-              latitude,
-              longitude,
-              category,
-              currency,
-            });
-
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_locations",
-                      args: { query, latitude, longitude, category, currency },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_locations",
-                      result: {
-                        ...response,
-                        query,
-                        latitude,
-                        longitude,
-                        category,
-                        currency,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here are the search results for ${query}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here are the search results for {query}:
-                <LocationCardGroup
-                  locations={Array.isArray(response) ? response : []}
-                />
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_locations",
-                      args: { query, latitude, longitude, category, currency },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_locations",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error searching for locations related to ${query}`,
-                },
-              ],
-            });
-            return (
-              <>
-                {`Sorry, there was an error searching for locations related to ${query}`}
-              </>
-            );
-          }
-        },
-      },
-      search_for_movies: {
-        description: "Get movies from a database based on an input",
-        parameters: z.object({
-          input: z
-            .string()
-            .describe("A description of the type of movies to search for"),
-          minimumIMDBRating: z
-            .number()
-            .optional()
-            .describe("The minimum IMDB rating of the movies to search for"),
-          minimumReleaseYear: z
-            .number()
-            .optional()
-            .describe("The minimum release year of the movies to search for"),
-          maximumReleaseYear: z
-            .number()
-            .optional()
-            .describe("The maximum release year of the movies to search for"),
-          director: z
-            .string()
-            .optional()
-            .describe("The director of the movies to search for"),
-          limit: z
-            .number()
-            .optional()
-            .describe("The number of movies to return"),
-        }),
-        generate: async function* ({
-          input,
-          minimumIMDBRating,
-          minimumReleaseYear,
-          maximumReleaseYear,
-          director,
-          limit,
-        }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">Searching for movies...</p>
-              <Spinner />
-            </>
-          );
-          try {
-            const response = await searchForMovies({
+              return result;
+            },
+          }),
+          search_for_images: tool({
+            description:
+              "Search for images on the web for a given topic or query",
+            parameters: searchForImagesRequestSchema,
+            execute: async function ({ query, country, count }) {
+              contentStream.update(`Searching for images of ${query}...`);
+              const result = await searchForImages({ query, country, count });
+              return result;
+            },
+          }),
+          search_for_gifs: tool({
+            description:
+              "Search for gifs on the web for a given topic or query",
+            parameters: searchForGifsRequestSchema,
+            execute: async function ({ query, limit, offset, rating }) {
+              contentStream.update(`Searching for gifs of ${query}...`);
+              const result = await searchForGifs({
+                query,
+                limit,
+                offset,
+                rating,
+              });
+              return result;
+            },
+          }),
+          search_for_movies: tool({
+            description: "Search for movies based on an input",
+            parameters: searchForMoviesRequestSchema,
+            execute: async function ({
               input,
               minimumIMDBRating,
               minimumReleaseYear,
               maximumReleaseYear,
               director,
               limit,
-            });
+            }) {
+              contentStream.update(`Searching for movies of ${input}...`);
+              const result = await searchForMovies({
+                input,
+                minimumIMDBRating,
+                minimumReleaseYear,
+                maximumReleaseYear,
+                director,
+                limit,
+              });
+              return result;
+            },
+          }),
+        },
+        maxSteps: 5,
 
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_movies",
-                      args: {
-                        input,
-                        minimumIMDBRating,
-                        minimumReleaseYear,
-                        maximumReleaseYear,
-                        director,
-                        limit,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_movies",
-                      result: {
-                        ...response,
-                        input,
-                        minimumIMDBRating,
-                        minimumReleaseYear,
-                        maximumReleaseYear,
-                        director,
-                        limit,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here are movies related to ${input}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <div className="flex flex-col gap-8">
-                {Array.isArray(response) ? (
-                  response.map((movie: MovieCardProps, index: number) => (
-                    <MovieCard
-                      title={movie.title}
-                      description={movie.description}
-                      imdbRating={movie.imdbRating}
-                      releaseYear={movie.releaseYear}
-                      director={movie.director}
-                      genre={movie.genre}
-                      stars={movie.stars}
-                      imageURL={movie.imageURL}
-                      key={index}
+        onStepFinish({ toolCalls, toolResults, usage }) {
+          console.log("step finished");
+          // console.log("Tool Calls: ", toolCalls);
+          if (toolCalls.length === 0) {
+            return;
+          }
+
+          aiState.update({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              {
+                role: "assistant",
+                content: toolCalls,
+              },
+              {
+                role: "tool",
+                content: toolResults,
+              },
+            ],
+          });
+          // console.log("Tool Calls: ", toolCalls);
+          // console.log("Tool Results: ", toolResults);
+          // console.log("Usage: ", usage);
+
+          // Add error handling
+        },
+        onFinish({ finishReason, usage, text }) {
+          console.log("finish reason", finishReason);
+          console.log("usage", usage);
+          // console.log("text", text);
+        },
+      });
+      spinnerStream.update(null);
+      let textContent = "";
+      let displayContent: React.ReactNode = <></>;
+
+      for await (const part of result.fullStream) {
+        switch (part.type) {
+          case "text-delta": {
+            textContent += part.textDelta;
+            contentStream.update(<MarkdownContainer children={textContent} />);
+            break;
+          }
+          case "tool-call": {
+            switch (part.toolName) {
+              case "get_current_weather": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <CurrentWeatherCard
+                      location={part.args.location}
+                      countryCode={part.args.countryCode}
+                      units={part.args.units}
                     />
-                  ))
-                ) : (
-                  <div>
-                    Sorry, there was an error searching for movies related to{" "}
-                    {input}
                   </div>
-                )}
-              </div>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_movies",
-                      args: {
-                        input,
-                        minimumIMDBRating,
-                        minimumReleaseYear,
-                        maximumReleaseYear,
-                        director,
-                        limit,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_movies",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error searching for movies related to ${input}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Sorry, there was an error searching for movies related to{" "}
-                {input}
-              </>
-            );
+                );
+                displayStream.update(displayContent);
+                break;
+              }
+              case "get_weather_forecast": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <WeatherForecastCard
+                      location={part.args.location}
+                      forecastDays={part.args.forecastDays}
+                      countryCode={undefined}
+                      units={undefined}
+                    />
+                  </div>
+                );
+                displayStream.update(displayContent);
+                break;
+              }
+              case "get_web_results": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <WebResultGroup
+                      query={part.args.query}
+                      country={part.args.country}
+                      freshness={part.args.freshness}
+                      units={part.args.units}
+                      count={part.args.count}
+                      offset={part.args.offset}
+                    />
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "get_news_web_results": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <WebResultGroup
+                      query={part.args.query}
+                      country={part.args.country}
+                      freshness={part.args.freshness}
+                      units={part.args.units}
+                      count={part.args.count}
+                      offset={part.args.offset}
+                    />
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+            }
+            break;
           }
-        },
-      },
-      search_for_gifs: {
-        description: "Search for gifs on the web",
-        parameters: z.object({
-          query: z
-            .string()
-            .describe("The search query or topic to search for gifs on"),
-          limit: z.number().optional().describe("The number of gifs to return"),
-          offset: z
-            .number()
-            .optional()
-            .describe(
-              "The offset of the gifs to return. Specifies the starting position of the results. Can be used to return the next set of gifs.",
-            ),
-          rating: z
-            .enum(["g", "pg", "pg-13", "r"])
-            .optional()
-            .describe(
-              "The rating of the gifs to return. Can be 'g', 'pg', 'pg-13', or 'r'.",
-            ),
-        }),
-        generate: async function* ({ query, limit, offset, rating }) {
-          const toolCallId = generateId();
-          yield (
-            <>
-              <p className="animate-text_loading">
-                Searching for gifs related to {query}...
-              </p>
-              <Spinner />
-            </>
-          );
-          try {
-            const response = await searchForGifs({
-              query,
-              limit,
-              offset,
-              rating,
-            });
-
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_gifs",
-                      args: { query, limit, offset, rating },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_gifs",
-                      result: {
-                        ...response,
-                        query,
-                        limit,
-                        offset,
-                        rating,
-                      },
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Here are the gifs related to ${query}: ${JSON.stringify(response)}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Here are the gifs related to {query}:
-                <div className="grid grid-cols-2 gap-4">
-                  {response.map((gif: any, index: number) => (
-                    <div key={index} className="flex flex-col gap-2">
-                      <Image
-                        unoptimized
-                        className="rounded-md"
-                        src={gif.images.original.url}
-                        alt={JSON.stringify(gif.title)}
-                        width={gif.images.original.width}
-                        height={gif.images.original.height}
-                      />
-                      <h4 className="text-sm text-zinc-500">
-                        {JSON.stringify(gif.title)}
-                      </h4>
+          case "tool-result": {
+            switch (part.toolName) {
+              case "search_for_images": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                      {Array.isArray(part.result) ? (
+                        part.result.map((image: ImageResult) => (
+                          <a
+                            href={image.imageSrc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col gap-2"
+                          >
+                            <img
+                              className="h-auto max-w-full rounded-lg"
+                              src={image.imageSrc}
+                              alt={image.imageTitle}
+                            />
+                            <h5 className="text-sm font-medium text-zinc-400 dark:text-zinc-800">
+                              {image.imageTitle}
+                            </h5>
+                          </a>
+                        ))
+                      ) : (
+                        <div>{part.result.error}</div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </>
-            );
-          } catch (error) {
-            aiState.done({
-              ...aiState.get(),
-              isFinished: true,
-              messages: [
-                ...aiState.get().messages,
-                {
-                  role: "assistant",
-                  content: [
-                    {
-                      type: "tool-call",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_gifs",
-                      args: { query, limit, offset, rating },
-                    },
-                  ],
-                },
-                {
-                  role: "tool",
-                  content: [
-                    {
-                      type: "tool-result",
-                      toolCallId: toolCallId,
-                      toolName: "search_for_gifs",
-                      result: { error: error },
-                      isError: true,
-                    },
-                  ],
-                },
-                {
-                  role: "assistant",
-                  content: `Sorry, there was an error searching for gifs related to ${query}`,
-                },
-              ],
-            });
-            return (
-              <>
-                Sorry, there was an error searching for gifs related to {query}
-              </>
-            );
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "search_for_gifs": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                      {Array.isArray(part.result) ? (
+                        part.result.map((gif: GifResult) => (
+                          <a
+                            href={gif.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              className="h-auto max-w-full rounded-lg"
+                              src={gif.imageSrc}
+                              alt={gif.imageTitle}
+                            />
+                          </a>
+                        ))
+                      ) : (
+                        <div>{part.result.error}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "search_for_movies": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
+                    {Array.isArray(part.result) ? (
+                      part.result.map((movie: MovieCardProps) => (
+                        <MovieCard {...movie} />
+                      ))
+                    ) : (
+                      <div>{part.result.error}</div>
+                    )}
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+            }
           }
-        },
-      },
-    },
-  });
+        }
+      }
+
+      aiState.update({
+        ...aiState.get(),
+        isFinished: true,
+        messages: [
+          ...aiState.get().messages,
+          {
+            role: "assistant",
+            content: textContent,
+          },
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+      aiState.update({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            role: "assistant",
+            content: "Sorry, there was an error",
+          },
+        ],
+      });
+      contentStream.update("Sorry, there was an error");
+      // displayStream.update(null);
+    } finally {
+      aiState.done({ ...aiState.get(), isFinished: true });
+      contentStream.done();
+      displayStream.done();
+      spinnerStream.done(null);
+    }
+  })();
 
   return {
     id: generateId(),
     role: "assistant",
-    content: result.value,
-    model: getAIState().currentModelVariable,
+    content: contentStream.value,
+    display: displayStream.value,
+    spinner: spinnerStream.value,
+    model: modelVariable,
   };
 }
 
-async function createExampleMessages(
-  modelVariable: string,
-  userLocation?: { latitude: number; longitude: number },
-) {
+export async function createExampleMessages() {
   "use server";
+  const aiState = getMutableAIState<typeof AI>();
+
+  const modelVariable = aiState.get().currentModelVariable;
+  const model: LanguageModelV1 = getModelFromModelVariable(modelVariable);
+
   const exampleMessagesUI = createStreamableUI(
     <ExampleMessageCardGroup exampleMessages={[]} />,
   );
 
   (async () => {
-    const { partialObjectStream } = await streamObject({
-      model: openai("gpt-4o"),
-      system: `
+    try {
+      const { elementStream: examples } = await streamObject({
+        model: model,
+        output: "array",
+        system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
         The LLM assistant has the following capabilities:
         - 🗞️ Search for news on the web for a given topic
@@ -1680,93 +584,86 @@ async function createExampleMessages(
         - 🌄 Display multiple fun or entertaining gifs
         - 🌤️ Get the current weather for a location
         - ⛅️ Get the weather forecast for a location
-        - 🌍 Search for locations or places to visit
         - 🍿 Get movies from a database based on an input
         - 📸 Search for images on the web for a given topic or query
-        ${
-          userLocation
-            ? `The user is located at ${userLocation.latitude}, ${userLocation.longitude}. Try to make the example messages relevant to their location.
-        Try to use the name of location in the example messages rather than the coordinates`
-            : ""
-        }`,
-      prompt: `Generate 4 example messages to inspire the user to start a conversation with the LLM assistant using.
+        `,
+        prompt: `Generate 4 example messages to inspire the user to start a conversation with the LLM assistant using.
         Select randomly for the capabilities of the LLM assistant.
         Include emojis at the start of each example message to make them more engaging.`,
-      temperature: 1,
-      schema: z.object({
-        examples: z.array(
-          z.object({
-            heading: z
-              .string()
-              .describe("A short heading for the example message of 4-5 words"),
-            subheading: z
-              .string()
-              .describe(
-                "A short description of the example message. This is the message that will be sent to the LLM. This should be 12-15 words long.",
-              ),
-          }),
-        ),
-      }),
-    });
-
-    for await (const partialObject of partialObjectStream) {
-      const examples = partialObject.examples;
-      // add the model variable to each example
-      if (examples !== undefined) {
-        const result = examples.map((example, index) => ({
+        temperature: 0.5,
+        schema: exampleMessageSchema,
+      });
+      const exampleArray: ExampleMessageCardProps[] = [];
+      for await (const example of examples) {
+        // update example to include model variable
+        const generatedExample: ExampleMessageCardProps = {
           ...example,
-          index,
-          modelVariable,
-        }));
-
-        // check if examples is array and if it is display the ExampleMessageCardGroup
-        if (Array.isArray(result)) {
-          exampleMessagesUI.update(
-            <ExampleMessageCardGroup exampleMessages={result} />,
-          );
-        }
+          index: exampleArray.length,
+          modelVariable: modelVariable,
+        };
+        exampleArray.push(generatedExample);
+        exampleMessagesUI.update(
+          <ExampleMessageCardGroup exampleMessages={exampleArray} />,
+        );
       }
+    } catch (error) {
+      console.error(error);
+      exampleMessagesUI.update("Sorry, there was an error");
+    } finally {
+      exampleMessagesUI.done();
     }
-
-    exampleMessagesUI.done();
   })();
   return exampleMessagesUI.value;
 }
 
-async function getWeatherForecastUI(
+export async function getWeatherForecastUI(
   location: string,
   forecastDays: number,
-  countryCode?: string,
-  units?: "metric" | "imperial",
+  countryCode?: CountryCode,
+  units?: Units,
 ) {
   "use server";
 
   const aiState = getMutableAIState<typeof AI>();
+  const contentStream = createStreamableUI(
+    `Fetching the weather forecast for ${location}`,
+  );
+  const displayStream = createStreamableUI(
+    <WeatherForecastCard
+      location={location}
+      forecastDays={forecastDays}
+      units={units}
+      countryCode={countryCode}
+    />,
+  );
+  const spinnerStream = createStreamableUI(<Spinner />);
+
   const toolCallId = generateId();
 
-  const uiStream = createStreamableUI(
-    <>
-      Getting the weather forecast for {location}...
-      <WeatherForecastCardSkeleton />
-    </>,
-  );
-  try {
-    (async () => {
+  aiState.update({
+    ...aiState.get(),
+    messages: [
+      ...aiState.get().messages,
+      {
+        role: "user",
+        content: `Fetch the weather forecast at ${location}, ${countryCode}  for ${forecastDays} days, in ${units} units`,
+      },
+    ],
+  });
+
+  (async () => {
+    try {
       const response = await getWeatherForecast({
         location,
         forecastDays,
         countryCode,
         units,
       });
-      aiState.done({
+      aiState.update({
         ...aiState.get(),
         isFinished: true,
         messages: [
           ...aiState.get().messages,
-          {
-            role: "user",
-            content: `Get the weather forecast for ${location} for ${forecastDays} days`,
-          },
           {
             role: "assistant",
             content: [
@@ -1800,54 +697,59 @@ async function getWeatherForecastUI(
           },
         ],
       });
-      uiStream.done(
+      contentStream.update(
+        `Here's the ${forecastDays} day forecast for ${location}`,
+      );
+    } catch (error) {
+      aiState.update({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            role: "assistant",
+            content: [
+              {
+                type: "tool-call",
+                toolCallId: toolCallId,
+                toolName: "get_weather_forecast",
+                args: { location, forecastDays, countryCode, units },
+              },
+            ],
+          },
+          {
+            role: "assistant",
+            content: `Sorry, there was an error getting the weather forecast for ${location}`,
+          },
+        ],
+      });
+      contentStream.update(
         <>
-          Here's the {forecastDays} day forecast for {location}:
-          <WeatherForecastCard weatherForecast={response} />
+          Sorry, there was an error getting the weather forecast for {location}
         </>,
       );
-    })();
-  } catch (error) {
-    aiState.done({
-      ...aiState.get(),
-      isFinished: true,
-      messages: [
-        ...aiState.get().messages,
-        {
-          role: "assistant",
-          content: [
-            {
-              type: "tool-call",
-              toolCallId: toolCallId,
-              toolName: "get_weather_forecast",
-              args: { location, forecastDays, countryCode, units },
-            },
-          ],
-        },
-        {
-          role: "assistant",
-          content: `Sorry, there was an error getting the weather forecast for ${location}`,
-        },
-      ],
-    });
-    uiStream.done(
-      <>
-        Sorry, there was an error getting the weather forecast for {location}
-      </>,
-    );
-  }
+      displayStream.update(null);
+    } finally {
+      aiState.done({ ...aiState.get(), isFinished: true });
+      contentStream.done();
+      displayStream.done();
+      spinnerStream.done(null);
+    }
+  })();
+
   return {
     id: generateId(),
     role: "assistant",
-    content: uiStream.value,
+    content: contentStream.value,
+    display: displayStream.value,
+    spinner: spinnerStream.value,
     model: getAIState().currentModelVariable,
   };
 }
 
-async function getCurrentWeatherUI(
+export async function getCurrentWeatherUI(
   location: string,
-  countryCode?: string,
-  units?: "metric" | "imperial",
+  countryCode?: CountryCode,
+  units?: Units,
 ) {
   "use server";
 
@@ -1856,30 +758,41 @@ async function getCurrentWeatherUI(
   }
 
   const aiState = getMutableAIState<typeof AI>();
+  const contentStream = createStreamableUI(
+    `Fetching the current weather for ${location}`,
+  );
+  const displayStream = createStreamableUI(
+    <CurrentWeatherCard
+      location={location}
+      countryCode={countryCode as CountryCode}
+      units={units}
+    />,
+  );
+  const spinnerStream = createStreamableUI(<Spinner />);
   const toolCallId = generateId();
 
-  const uiStream = createStreamableUI(
-    <>
-      Getting the current weather for {location}...
-      <CurrentWeatherCardSkeleton />
-    </>,
-  );
-  try {
-    (async () => {
+  aiState.update({
+    ...aiState.get(),
+    messages: [
+      ...aiState.get().messages,
+      {
+        role: "user",
+        content: `Fetch the current weather for ${location}, ${countryCode} in ${units} units`,
+      },
+    ],
+  });
+
+  (async () => {
+    try {
       const response = await getCurrentWeather({
         location,
         countryCode,
         units,
       });
-      aiState.done({
+      aiState.update({
         ...aiState.get(),
-        isFinished: true,
         messages: [
           ...aiState.get().messages,
-          {
-            role: "user",
-            content: `Get the current weather for ${location}`,
-          },
           {
             role: "assistant",
             content: [
@@ -1913,58 +826,49 @@ async function getCurrentWeatherUI(
           },
         ],
       });
-
-      uiStream.done(
+      contentStream.update(`Here's the current weather for ${location}`);
+    } catch (error) {
+      aiState.update({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            role: "assistant",
+            content: [
+              {
+                type: "tool-call",
+                toolCallId: toolCallId,
+                toolName: "get_current_weather",
+                args: { location, countryCode, units },
+              },
+            ],
+          },
+          {
+            role: "assistant",
+            content: `Sorry, there was an error getting the current weather for ${location}`,
+          },
+        ],
+      });
+      contentStream.update(
         <>
-          Here's the current weather for {location}:
-          <CurrentWeatherCard currentWeather={response} />
+          Sorry, there was an error getting the current weather for {location}
         </>,
       );
-    })();
-  } catch (error) {
-    aiState.done({
-      ...aiState.get(),
-      isFinished: true,
-      messages: [
-        ...aiState.get().messages,
-        {
-          role: "assistant",
-          content: [
-            {
-              type: "tool-call",
-              toolCallId: toolCallId,
-              toolName: "get_current_weather",
-              args: { location, countryCode, units },
-            },
-          ],
-        },
-        {
-          role: "assistant",
-          content: `Sorry, there was an error getting the current weather for ${location}`,
-        },
-      ],
-    });
-  }
+      displayStream.update(null);
+    } finally {
+      aiState.done({ ...aiState.get(), isFinished: true });
+      contentStream.done();
+      displayStream.done();
+      spinnerStream.done(null);
+    }
+  })();
 
   return {
     id: generateId(),
     role: "assistant",
-    content: uiStream.value,
+    content: contentStream.value,
+    display: displayStream.value,
+    spinner: spinnerStream.value,
     model: getAIState().currentModelVariable,
   };
 }
-
-export const AI = createAI<AIState, UIState>({
-  actions: {
-    continueConversation,
-    createExampleMessages,
-    getWeatherForecastUI,
-    getCurrentWeatherUI,
-  },
-  initialAIState: {
-    currentModelVariable: "gpt-4o-mini",
-    isFinished: true,
-    messages: [],
-  } as AIState,
-  initialUIState: [] as UIState,
-});

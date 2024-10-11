@@ -3,6 +3,20 @@
 import { embed } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { Pinecone } from "@pinecone-database/pinecone";
+import { SearchForMoviesRequest } from "@/libs/schema";
+
+export type Movie = {
+  id: string;
+  values: number[];
+  title: string;
+  imdbRating: number;
+  genre: string;
+  releaseYear: number;
+  director: string;
+  imageURL: string;
+  description: string;
+  stars: string[];
+};
 
 // Set up Pinecone client
 const pc = new Pinecone({
@@ -12,15 +26,6 @@ const pc = new Pinecone({
 // Set up Pinecone index
 const index = pc.index("movies-index");
 
-interface Request {
-  input: string;
-  minimumIMDBRating?: number;
-  minimumReleaseYear?: number;
-  maximumReleaseYear?: number;
-  director?: string;
-  limit?: number;
-}
-
 export default async function searchFormMovies({
   input,
   minimumIMDBRating,
@@ -28,9 +33,13 @@ export default async function searchFormMovies({
   maximumReleaseYear,
   director,
   limit = 5,
-}: Request) {
+}: SearchForMoviesRequest) {
   "use server";
   console.log("Request received for movies-vector-db action");
+
+  if (!minimumIMDBRating) {
+    minimumIMDBRating = 6;
+  }
 
   try {
     const { embedding } = await embed({
@@ -82,7 +91,7 @@ export default async function searchFormMovies({
       };
     });
 
-    return results as any[];
+    return results as Movie[];
   } catch (error) {
     console.error("Error:", error);
     return { error: `Error occurred: ${error}` };

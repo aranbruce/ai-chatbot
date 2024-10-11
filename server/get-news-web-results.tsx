@@ -1,83 +1,27 @@
-import getWebpageContents from "./get-webpage-content";
+import { GetWebResultsRequest } from "@/libs/schema";
 
-interface Request {
-  query: string;
-  country?: countryOptions;
-  freshness?: freshnessOptions;
-  units?: "metric" | "imperial";
-  count?: number;
-  offset?: number;
-}
-
-type countryOptions =
-  | "AR"
-  | "AU"
-  | "AT"
-  | "BE"
-  | "BR"
-  | "CA"
-  | "CL"
-  | "DK"
-  | "FI"
-  | "FR"
-  | "DE"
-  | "HK"
-  | "IN"
-  | "ID"
-  | "IT"
-  | "JP"
-  | "KR"
-  | "MY"
-  | "MX"
-  | "NL"
-  | "NZ"
-  | "NO"
-  | "CN"
-  | "PL"
-  | "PT"
-  | "PH"
-  | "RU"
-  | "SA"
-  | "ZA"
-  | "ES"
-  | "SE"
-  | "CH"
-  | "TW"
-  | "TH"
-  | "TR"
-  | "GB"
-  | "US";
-
-type freshnessOptions =
-  | "past-day"
-  | "pd"
-  | "past-week"
-  | "pw"
-  | "past-month"
-  | "pm"
-  | "past-year"
-  | "py";
-
-export default async function searchTheNews({
+export default async function getNewsWebResults({
   query,
   country,
   freshness,
   units,
   count = 8,
   offset,
-}: Request) {
+}: GetWebResultsRequest) {
   "use server";
-  console.log("Request received for search_the_news action");
+  console.log("Request received for get_news_results action");
+
+  let freshnessParam = "";
 
   if (freshness) {
     if (freshness === "past-day") {
-      freshness = "pd";
+      freshnessParam = "pd";
     } else if (freshness === "past-week") {
-      freshness = "pw";
+      freshnessParam = "pw";
     } else if (freshness === "past-month") {
-      freshness = "pm";
+      freshnessParam = "pm";
     } else if (freshness === "past-year") {
-      freshness = "py";
+      freshnessParam = "py";
     }
   }
 
@@ -90,7 +34,7 @@ export default async function searchTheNews({
       url.searchParams.append("country", country);
     }
     if (freshness) {
-      url.searchParams.append("freshness", freshness);
+      url.searchParams.append("freshness", freshnessParam);
     }
     if (units) {
       url.searchParams.append("units", units);
@@ -123,20 +67,6 @@ export default async function searchTheNews({
       author: result.meta_url?.netloc,
       extra: result.extra_snippets,
     }));
-
-    async function enhanceResultsWithArticles(results: any[]) {
-      const promises = results.map(async (result) => {
-        const article = await getWebpageContents(result.url);
-        if (article) {
-          return { ...result, article: article };
-        } else {
-          return result;
-        }
-      });
-      return Promise.all(promises);
-    }
-
-    results = await enhanceResultsWithArticles(results);
 
     return results;
   } catch (error) {

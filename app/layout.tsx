@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { CSPostHogProvider } from "./providers";
 
 import Header from "@/components/header";
-import { AI } from "../server/actions";
+import { AI } from "@/app/ai";
 
 export const metadata: Metadata = {
   title: "Pal | AI Chatbot",

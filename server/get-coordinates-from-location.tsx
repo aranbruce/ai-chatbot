@@ -1,14 +1,11 @@
 "use server";
 
-interface Request {
-  location: string;
-  countryCode?: string;
-}
+import { GetCoordinatesFromLocationRequest } from "@/libs/schema";
 
 export default async function getCoordinatesFromLocation({
   location,
   countryCode,
-}: Request) {
+}: GetCoordinatesFromLocationRequest) {
   "use server";
   try {
     console.log("Request received for get-coordinates-from-location action");

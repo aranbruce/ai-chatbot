@@ -1,9 +1,9 @@
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useAIState } from "ai/rsc";
 import { PutBlobResult } from "@vercel/blob";
 
-import { AIState } from "@/server/actions";
+import { AIState } from "@/app/ai";
 import { modelVariableOptions } from "@/libs/models";
 
 import Select from "@/components/select";
@@ -13,7 +13,9 @@ import ProviderImage from "@/components/provider-image";
 interface MessageProps {
   id: string;
   role: string;
-  content: string | ReactNode | undefined;
+  content?: React.ReactNode;
+  display?: React.ReactNode;
+  spinner?: React.ReactNode;
   file?: PutBlobResult;
   model?: string;
 }
@@ -22,6 +24,8 @@ export default function MessageCard({
   id,
   role,
   content,
+  display,
+  spinner,
   file,
   model,
 }: MessageProps) {
@@ -74,11 +78,9 @@ export default function MessageCard({
         <div
           className={`flex flex-col gap-4 text-zinc-950 dark:text-zinc-300 ${role === "user" && "w-auto rounded-xl bg-zinc-200/60 px-4 py-2 dark:bg-zinc-800"}`}
         >
-          {typeof content === "string" ? (
-            <MarkdownContainer children={content} />
-          ) : (
-            content
-          )}
+          {display && <div>{display}</div>}
+          {content && <div>{content}</div>}
+          {spinner}
         </div>
         {role === "assistant" && (
           <div className="mt-2 flex flex-row gap-1">

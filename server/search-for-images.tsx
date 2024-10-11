@@ -1,53 +1,17 @@
-interface Request {
-  query: string;
-  country?: countryOptions;
-  count?: number;
-}
+import { SearchForImagesRequest } from "@/libs/schema";
 
-type countryOptions =
-  | "AR"
-  | "AU"
-  | "AT"
-  | "BE"
-  | "BR"
-  | "CA"
-  | "CL"
-  | "DK"
-  | "FI"
-  | "FR"
-  | "DE"
-  | "HK"
-  | "IN"
-  | "ID"
-  | "IT"
-  | "JP"
-  | "KR"
-  | "MY"
-  | "MX"
-  | "NL"
-  | "NZ"
-  | "NO"
-  | "CN"
-  | "PL"
-  | "PT"
-  | "PH"
-  | "RU"
-  | "SA"
-  | "ZA"
-  | "ES"
-  | "SE"
-  | "CH"
-  | "TW"
-  | "TH"
-  | "TR"
-  | "GB"
-  | "US";
+export type ImageResult = {
+  imageTitle: string;
+  imageSrc: string;
+  websiteUrl: string;
+  websiteName: string;
+};
 
 export default async function searchForImages({
   query,
   country,
   count = 5,
-}: Request) {
+}: SearchForImagesRequest) {
   "use server";
   console.log("Request received for search_for_images action");
 
@@ -75,15 +39,14 @@ export default async function searchForImages({
     const responseJson = await response.json();
     let results = responseJson.results;
 
-    // transform the results to the format expected by the client by only returning title, description, url, date, author, and imageURL
     results = results.map((result: any) => ({
-      title: result.title,
-      url: result.url,
-      source: result.source,
-      src: result.thumbnail.src,
-    }));
+      imageTitle: result.title,
+      imageSrc: result.thumbnail.src,
+      websiteUrl: result.url,
+      websiteName: result.source,
+    })) as ImageResult[];
 
-    return results;
+    return results as ImageResult[];
   } catch (error) {
     console.error("Error:", error);
     return { error: `Error occurred: ${error}` };

@@ -46,30 +46,28 @@ export default function Select({
       as="div"
       className={`relative inline-block ${variant === "primary" ? "w-40" : "w-36"} text-left`}
     >
-      <div>
-        <MenuButton
-          className={variant === "primary" ? primaryClasses : secondaryClasses}
+      <MenuButton
+        className={variant === "primary" ? primaryClasses : secondaryClasses}
+      >
+        <div className="flex w-full flex-row items-center gap-2 text-left text-sm">
+          {selectedOption?.provider && (
+            <ProviderImage provider={selectedOption?.provider} />
+          )}
+          {selectedOption?.label}
+        </div>
+        <svg
+          className="-mr-1 h-5 w-5 text-zinc-400"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
         >
-          <div className="flex w-full flex-row items-center gap-2 text-left text-sm">
-            {selectedOption?.provider && (
-              <ProviderImage provider={selectedOption?.provider} />
-            )}
-            {selectedOption?.label}
-          </div>
-          <svg
-            className="-mr-1 h-5 w-5 text-zinc-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-              clipRule="evenodd"
-            ></path>
-          </svg>
-        </MenuButton>
-      </div>
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+            clipRule="evenodd"
+          ></path>
+        </svg>
+      </MenuButton>
       <Transition
         as={Fragment}
         enter="transition ease-out duration-100"
@@ -80,7 +78,8 @@ export default function Select({
         leaveTo="transform opacity-0 scale-95"
       >
         <MenuItems
-          className={`absolute right-0 z-10 mt-2 ${variant === "primary" ? "max-h-40" : "max-h-20"} w-full origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800`}
+          anchor="bottom start"
+          className={`h-40 w-[var(--button-width)] origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 [--anchor-gap:8px] [--anchor-padding:100px] focus:outline-none dark:bg-zinc-800`}
         >
           <div className="py-1">
             {options.map((option) => (
