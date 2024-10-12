@@ -1,56 +1,63 @@
+import { Movie } from "@/server/search-for-movies";
 import Image from "next/image";
 
-export type MovieCardProps = {
-  title: string;
-  description: string;
-  imdbRating: number;
-  releaseYear: number;
-  director: string;
-  genre: string;
-  stars: string[];
-  imageURL: string;
-};
-
-export default function  MovieCard ({
+export default function MovieCard({
+  id,
   title,
-  description,
-  imdbRating,
-  releaseYear,
-  director,
-  genre,
-  stars,
-  imageURL,
-}: MovieCardProps) {
+  backdropPath,
+  genreIds,
+  overview,
+  popularity,
+  posterPath,
+  releaseDate,
+  voteAverage,
+  voteCount,
+}: Movie) {
   return (
-    <div className="flex flex-col items-start	 gap-8 rounded-lg border border-zinc-200 bg-white p-4 sm:flex-row dark:border-zinc-800 dark:bg-zinc-900">
-      {imageURL && (
-        <Image
-          className="rounded-md"
-          src={imageURL}
-          width={80}
-          height={117}
-          alt={title}
-        />
-      )}
-      <div className="flex flex-col justify-between gap-4">
-        <h3 className="font-semibold text-zinc-950 dark:text-white">{title}</h3>
-        <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-400">
-          <p>{description}</p>
-          <p>IMDB Rating: {imdbRating}</p>
-          <p>Release Year: {releaseYear}</p>
-          <p>Director: {director}</p>
-          <p>Genre: {genre}</p>
-          <div className="flex flex-row flex-wrap gap-2">
-            <p>Stars: </p>
-            {stars.map((star: string, index: number) => (
-              <span key={index}>
-                {star}
-                {index < stars.length - 1 && ", "}
-              </span>
-            ))}
+    <div className="relative flex min-w-80 snap-start flex-col items-start overflow-hidden rounded-lg border border-zinc-200 bg-white text-zinc-950 shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
+      {backdropPath && (
+        <>
+          <div className="relative w-full">
+            <img
+              className="h-48 w-full object-cover"
+              src={`https://media.themoviedb.org/t/p/w1920_and_h800_multi_faces/${backdropPath}`}
+              alt={title}
+            />
+            <div className="absolute inset-0 bg-black opacity-50"></div>
+            <p className="absolute right-4 top-4 text-xs font-semibold text-white">
+              {new Date(releaseDate).toLocaleDateString()}
+            </p>
           </div>
+        </>
+      )}
+      <div className="flex h-full w-full flex-col justify-between gap-3 p-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-row items-center gap-2">
+              <h3 className="line-clamp-2- w-full text-lg font-semibold">
+                {title}
+              </h3>
+              <div className="flex flex-row items-center gap-1">
+                <h4 className="font-semibold">{voteAverage.toFixed(1)}</h4>
+                <p className="text-sm">({voteCount.toLocaleString()})</p>
+              </div>
+            </div>
+            <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 text-sm dark:text-zinc-300"></div>
+          </div>
+          <p className="line-clamp-6 text-sm">{overview}</p>
         </div>
+        <p className="mt-2 text-xs text-zinc-500">
+          Provided by{" "}
+          <a
+            href="https://www.themoviedb.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-zinc-500 transition hover:text-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300"
+          >
+            The Movie Database
+          </a>
+        </p>
       </div>
     </div>
   );
-};
+}

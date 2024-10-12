@@ -79,7 +79,7 @@ export default function Select({
       >
         <MenuItems
           anchor="bottom start"
-          className={`h-40 w-[var(--button-width)] origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 [--anchor-gap:8px] [--anchor-padding:100px] focus:outline-none dark:bg-zinc-800`}
+          className={`h-40 w-[var(--button-width)] origin-top-right overflow-scroll rounded-lg bg-white px-1 shadow-lg ring-1 ring-black ring-opacity-5 [--anchor-gap:8px] [--anchor-padding:24px] focus:outline-none dark:bg-zinc-800`}
         >
           <div className="py-1">
             {options.map((option) => (

@@ -2,12 +2,12 @@ import { useState } from "react";
 import Image from "next/image";
 import { useAIState } from "ai/rsc";
 import { PutBlobResult } from "@vercel/blob";
+import { motion } from "framer-motion";
 
 import { AIState } from "@/app/ai";
 import { modelVariableOptions } from "@/libs/models";
 
 import Select from "@/components/select";
-import MarkdownContainer from "@/components/markdown";
 import ProviderImage from "@/components/provider-image";
 
 interface MessageProps {
@@ -45,9 +45,11 @@ export default function MessageCard({
   }
 
   return (
-    <div
+    <motion.div
+      // initial={{ y: 50, opacity: 0 }}
+      // animate={{ y: 0, opacity: 1 }}
       key={id}
-      className="flex animate-message_appear flex-row items-start gap-3 whitespace-pre-wrap pb-8"
+      className="flex animate-message_appear flex-row items-start gap-2 whitespace-pre-wrap pb-8"
     >
       <div className="flex flex-row items-center gap-4">
         {role !== "user" && (
@@ -93,6 +95,6 @@ export default function MessageCard({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

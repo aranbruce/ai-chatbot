@@ -8,7 +8,7 @@ export default function FileUploadButton({
   handleFileUpload,
 }: FileUploadButtonProps) {
   return (
-    <div className="mb-3 ml-2">
+    <div className="mb-3 ml-3">
       <label
         htmlFor="file"
         className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-50"

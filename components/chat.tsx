@@ -13,6 +13,7 @@ import useFileUpload from "@/libs/hooks/use-file-upload";
 
 import type { ClientMessage, AIState } from "@/app/ai";
 import useLocation from "@/libs/hooks/use-location";
+import MovieCard from "./movie-card/movie-card";
 
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");
@@ -60,6 +61,8 @@ export default function Chat() {
     });
     console.log("location", location);
     const response = await continueConversation(message, fileUpload);
+    // wait 300ms
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     addMessage(response);
   }
@@ -68,7 +71,7 @@ export default function Chat() {
     <div className="h-svh w-full overflow-scroll" ref={scrollRef}>
       <div
         ref={messagesRef}
-        className="mx-auto max-w-2xl px-4 pb-[256px] pt-32"
+        className="mx-auto max-w-2xl px-3 pb-[256px] pt-32"
       >
         {messages.length ? (
           <MessageList messages={messages} visibilityRef={visibilityRef} />
