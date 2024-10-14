@@ -35,8 +35,6 @@ export default async function searchFormMovies({
   "use server";
   console.log("Request received for search-for-movies action");
 
-  console.log("genreIds: ", withGenres);
-
   // transform genreIds from an array of numbers to a string with | between each number
   let genreIdsString = "";
   if (withGenres) {
@@ -124,8 +122,6 @@ export default async function searchFormMovies({
     }
 
     let data = await response.json();
-
-    console.log("data: ", data);
 
     const movies = data.results.map((movie: any) => {
       return {

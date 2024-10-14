@@ -32,7 +32,7 @@ import CurrentWeatherCard from "@/components/current-weather/current-weather-car
 import Spinner from "@/components/spinner";
 import WebResultGroup from "@/components/web-results/web-result-group";
 import WeatherForecastCard from "@/components/weather-forecast/weather-forecast-card";
-import MovieCard from "@/components/movie-card/movie-card";
+import MovieCardGroup from "@/components/movie-card/movie-card-group";
 import MarkdownContainer from "@/components/markdown";
 import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
 
@@ -55,7 +55,6 @@ import {
   getMovieGenresRequestSchema,
 } from "@/libs/schema";
 import getMovieGenres from "./get-movie-genres";
-import { MovieCardGroup } from "@/components/movie-card/movie-card-group";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -531,6 +530,7 @@ export async function continueConversation(
                 displayContent = (
                   <div className="flex flex-col gap-8">
                     {displayContent}
+
                     {Array.isArray(part.result) ? (
                       <MovieCardGroup movies={part.result} />
                     ) : (

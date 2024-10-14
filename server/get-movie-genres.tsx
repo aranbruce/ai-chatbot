@@ -19,7 +19,6 @@ export default async function getMovieGenres() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     let result = await response.json();
-    console.log("Result: ", result);
 
     return result;
   } catch (error) {

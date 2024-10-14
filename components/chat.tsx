@@ -59,7 +59,6 @@ export default function Chat() {
       file: fileUpload ? fileUpload : undefined,
       model: aiState.currentModelVariable,
     });
-    console.log("location", location);
     const response = await continueConversation(message, fileUpload);
     // wait 300ms
     await new Promise((resolve) => setTimeout(resolve, 300));
