@@ -235,27 +235,77 @@ export type GetWebpageContentRequest = z.infer<
   typeof getWebpageContentRequestSchema
 >;
 
+export const getMovieGenresRequestSchema = z.object({});
+
+export type GetMovieGenresRequest = z.infer<typeof getMovieGenresRequestSchema>;
+
 export const searchForMoviesRequestSchema = z.object({
-  input: z
-    .string()
-    .describe("A description of the type of movies to search for"),
-  minimumIMDBRating: z
+  page: z
     .number()
     .optional()
-    .describe("The minimum IMDB rating of the movies to search for"),
-  minimumReleaseYear: z
+    .describe("The page of the search results to return"),
+  releaseDateGreaterThan: z
+    .date()
+    .optional()
+    .describe(
+      "The release date of the movies to return. Only movies released after this date will be returned",
+    ),
+  releaseDateLessThan: z
+    .date()
+    .optional()
+    .describe(
+      "The release date of the movies to return. Only movies released before this date will be returned",
+    ),
+  sortBy: z
+    .enum([
+      "popularity.asc",
+      "popularity.desc",
+      "revenue.asc",
+      "revenue.desc",
+      "primary_release_date.asc",
+      "primary_release_date.desc",
+      "original_title.asc",
+      "original_title.desc",
+      "vote_average.asc",
+      "vote_average.desc",
+      "vote_count.asc",
+      "vote_count.desc",
+    ])
+    .optional()
+    .describe("The sort order of the movies to return"),
+  voteAverageGreaterThan: z
+    .number()
+    .min(0)
+    .max(10)
+    .optional()
+    .describe("The minimum vote average of the movies to return"),
+  voteAverageLessThan: z
+    .number()
+    .min(0)
+    .max(10)
+    .optional()
+    .describe("The maximum vote average of the movies to return"),
+  voteCountGreaterThan: z
     .number()
     .optional()
-    .describe("The minimum release year of the movies to search for"),
-  maximumReleaseYear: z
+    .describe("The minimum vote count of the movies to return"),
+  voteCountLessThan: z
     .number()
     .optional()
-    .describe("The maximum release year of the movies to search for"),
-  director: z
-    .string()
+    .describe("The maximum vote count of the movies to return"),
+  withGenres: z
+    .array(z.number())
     .optional()
-    .describe("The director of the movies to search for"),
-  limit: z.number().optional().describe("The number of movies to return"),
+    .describe(
+      "A list of genre IDs of the movies to include in the search results. These IDs can be found by calling the `get-movie-genres action`. When you want to return movies that cover multiple genres, you can include multiple genre IDs in the array",
+    ),
+  withoutGenres: z
+    .array(z.number())
+    .optional()
+    .describe(
+      "A list of genre IDs of the movies to exclude from the search results. These IDs can be found by calling the `get-movie-genres action`. When you want to exclude movies that cover multiple genres, you can include multiple genre IDs in the array",
+    ),
+  year: z.number().optional().describe("The year of the movies to return"),
 });
 
 export type SearchForMoviesRequest = z.infer<

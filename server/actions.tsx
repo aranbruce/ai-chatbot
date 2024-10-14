@@ -32,7 +32,7 @@ import CurrentWeatherCard from "@/components/current-weather/current-weather-car
 import Spinner from "@/components/spinner";
 import WebResultGroup from "@/components/web-results/web-result-group";
 import WeatherForecastCard from "@/components/weather-forecast/weather-forecast-card";
-import MovieCard, { MovieCardProps } from "@/components/movie-card/movie-card";
+import MovieCardGroup from "@/components/movie-card/movie-card-group";
 import MarkdownContainer from "@/components/markdown";
 import ExampleMessageCardGroup from "@/components/example-message/example-message-group";
 
@@ -52,7 +52,9 @@ import {
   getWebResultsRequestSchema,
   getNewsResultsRequestSchema,
   Units,
+  getMovieGenresRequestSchema,
 } from "@/libs/schema";
+import getMovieGenres from "./get-movie-genres";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -152,7 +154,8 @@ export async function continueConversation(
           If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
           When you have called the \`search_for_images\` tools, only reply with some suggested related search queries. Do not show each image in your response.
           When you have called the \`search_for_gifs\` tools, only reply with some suggested related search queries. Do not show each gif in your response.
-          Whe you have called the \`search_for_movies\` tools, Recommend the top 3 movies. Do not show each movie in your response.
+          Use the tool \`get_movie_genres\` to get a mapping of movie genres to their respective IDs for use in the \`search_for_movies\` tool.
+          When you have called the \`search_for_movies\` tools, Recommend the top 3 movies. Do not show each movie in your response. Do not show images of the movie in your response
           Do not try to use any other tools that are not mentioned here.
           If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
           ${location ? `The user is located at ${location.latitude}, ${location.longitude}. You can find the name of the location by using the \`get_location_from_coordinates'\ tool` : ""}`,
@@ -271,7 +274,11 @@ export async function continueConversation(
               "Search for images on the web for a given topic or query",
             parameters: searchForImagesRequestSchema,
             execute: async function ({ query, country, count }) {
-              contentStream.update(`Searching for images of ${query}...`);
+              contentStream.update(
+                <div className="animate-text_loading">
+                  Searching for images of {query}...
+                </div>,
+              );
               const result = await searchForImages({ query, country, count });
               return result;
             },
@@ -281,7 +288,11 @@ export async function continueConversation(
               "Search for gifs on the web for a given topic or query",
             parameters: searchForGifsRequestSchema,
             execute: async function ({ query, limit, offset, rating }) {
-              contentStream.update(`Searching for gifs of ${query}...`);
+              contentStream.update(
+                <div className="animate-text_loading">
+                  Searching for gifs of {query}...
+                </div>,
+              );
               const result = await searchForGifs({
                 query,
                 limit,
@@ -291,25 +302,45 @@ export async function continueConversation(
               return result;
             },
           }),
+          get_movie_genres: tool({
+            description:
+              "Get a mapping of movie genres to their respective IDs for use in the search_for_movies tool",
+            parameters: getMovieGenresRequestSchema,
+            execute: async function () {
+              const result = await getMovieGenres();
+              return result;
+            },
+          }),
+
           search_for_movies: tool({
             description: "Search for movies based on an input",
             parameters: searchForMoviesRequestSchema,
             execute: async function ({
-              input,
-              minimumIMDBRating,
-              minimumReleaseYear,
-              maximumReleaseYear,
-              director,
-              limit,
+              page,
+              releaseDateGreaterThan,
+              releaseDateLessThan,
+              sortBy,
+              voteAverageGreaterThan,
+              voteAverageLessThan,
+              withGenres,
+              withoutGenres,
+              year,
             }) {
-              contentStream.update(`Searching for movies of ${input}...`);
+              contentStream.update(
+                <div className="animate-text_loading">
+                  Searching for movies...
+                </div>,
+              );
               const result = await searchForMovies({
-                input,
-                minimumIMDBRating,
-                minimumReleaseYear,
-                maximumReleaseYear,
-                director,
-                limit,
+                page,
+                releaseDateGreaterThan,
+                releaseDateLessThan,
+                sortBy,
+                voteAverageGreaterThan,
+                voteAverageLessThan,
+                withGenres,
+                withoutGenres,
+                year,
               });
               return result;
             },
@@ -451,7 +482,7 @@ export async function continueConversation(
                               src={image.imageSrc}
                               alt={image.imageTitle}
                             />
-                            <h5 className="text-sm font-medium text-zinc-400 dark:text-zinc-800">
+                            <h5 className="text-sm font-medium text-zinc-500 dark:text-zinc-500">
                               {image.imageTitle}
                             </h5>
                           </a>
@@ -499,10 +530,9 @@ export async function continueConversation(
                 displayContent = (
                   <div className="flex flex-col gap-8">
                     {displayContent}
+
                     {Array.isArray(part.result) ? (
-                      part.result.map((movie: MovieCardProps) => (
-                        <MovieCard {...movie} />
-                      ))
+                      <MovieCardGroup movies={part.result} />
                     ) : (
                       <div>{part.result.error}</div>
                     )}

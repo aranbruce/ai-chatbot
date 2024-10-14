@@ -39,7 +39,7 @@ export default function PromptForm({
   };
 
   return (
-    <div className="fixed bottom-0 flex w-full flex-col items-center justify-center">
+    <div className="fixed bottom-0 z-10 flex w-full flex-col items-center justify-center">
       {!isAtBottom && (
         <div className="relative inset-x-0 top-[-48px] mx-auto h-0 w-[42px] drop-shadow-sm">
           <Button
@@ -68,7 +68,7 @@ export default function PromptForm({
         </div>
       )}
       <div className="relative bottom-0 flex w-full flex-col items-center justify-center bg-gradient-to-t from-white via-white to-transparent backdrop-blur-[1px] dark:from-zinc-950 dark:via-zinc-950">
-        <div className="w-full space-y-3 px-4 pb-3 pt-2 md:mx-5 md:max-w-2xl">
+        <div className="w-full space-y-3 px-3 pb-3 pt-2 md:mx-5 md:max-w-2xl">
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -107,7 +107,7 @@ export default function PromptForm({
                   required={true}
                 />
               </div>
-              <div className="absolute bottom-[0.375rem] right-3">
+              <div className="absolute bottom-[0.375rem] right-2">
                 <Button
                   variant="secondary"
                   rounded
@@ -136,7 +136,7 @@ export default function PromptForm({
             </div>
           </form>
           <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-            This chatbot can make mistakes. Consider checking information.
+            This chatbot can make mistakes. Check important info
           </p>
         </div>
       </div>

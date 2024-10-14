@@ -15,10 +15,6 @@ export default async function search_for_gifs({
   rating,
 }: SearchForGifsRequest) {
   "use server";
-  console.log("Request received for search_for_gifs action");
-  console.log("Query:", query);
-  console.log("Offset:", offset);
-  console.log("Limit:", limit);
 
   // call giphy API
   let url = new URL(

@@ -11,44 +11,65 @@ export default function MarkdownContainer({ children }: { children: string }) {
       remarkPlugins={[remarkGfm]}
       components={{
         h1: "h2",
-        h2(props) {
-          const { node, ...rest } = props;
-          return <h2 className="text-xl font-semibold" {...rest} />;
-        },
-        h3(props) {
-          const { node, ...rest } = props;
-          return <h3 className="text-lg font-semibold" {...rest} />;
-        },
-        h4(props) {
-          const { node, ...rest } = props;
-          return <h4 className="text-md font-semibold" {...rest} />;
-        },
-        ol(props) {
-          const { node } = props;
+        h2: ({ node, children, ...props }): any => {
           return (
-            <div className="flex flex-col flex-wrap gap-4">
-              {props.children}
+            <h2 className="text-xl font-semibold" {...props}>
+              {children}
+            </h2>
+          );
+        },
+        h3: ({ node, children, ...props }): any => {
+          return (
+            <h3 className="text-lg font-semibold" {...props}>
+              {children}
+            </h3>
+          );
+        },
+        h4: ({ node, children, ...props }): any => {
+          return (
+            <h4 className="text-md font-semibold" {...props}>
+              {children}
+            </h4>
+          );
+        },
+        ol: ({ node, children, ...props }: any) => {
+          return (
+            <div className="flex flex-col flex-wrap gap-4" {...props}>
+              {children}
             </div>
           );
         },
-        ul(props) {
-          const { node } = props;
+
+        ul: ({ node, children, ...props }: any) => {
           return (
-            <div className="flex flex-col flex-wrap gap-4">
-              {props.children}
+            <div className="flex flex-col flex-wrap gap-4" {...props}>
+              {children}
             </div>
           );
         },
-        li(props) {
-          const { node, ...rest } = props;
-          return <div className="contents">{props.children}</div>;
+        li: ({ node, children, ...props }: any) => {
+          return (
+            <div className="contents" {...props}>
+              {children}
+            </div>
+          );
         },
-        strong(props) {
-          const { node, ...rest } = props;
-          return <strong className="contents font-semibold" {...rest} />;
+        strong: ({ node, children, ...props }: any) => {
+          return (
+            <span className="font-semibold" {...props}>
+              {children}
+            </span>
+          );
         },
-        a(props) {
-          const { node, title, ...rest } = props;
+        hr: ({ node, ...props }): any => {
+          return (
+            <hr
+              className="border-t border-zinc-200 dark:border-zinc-800"
+              {...props}
+            />
+          );
+        },
+        a: ({ node, children, title, ...props }): any => {
           return (
             <a
               target="_blank"
@@ -58,16 +79,20 @@ export default function MarkdownContainer({ children }: { children: string }) {
                   ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 p-2 text-xs font-semibold text-zinc-600 no-underline dark:bg-zinc-700 dark:text-zinc-300"
                   : "text-zinc-950 underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:ring-offset-2 dark:text-zinc-50 dark:ring-offset-zinc-900 dark:focus-visible:ring-zinc-300"
               }
-              {...rest}
-            />
+              {...props}
+            >
+              {children}
+            </a>
           );
         },
-        pre(props) {
-          const { node, ...rest } = props;
-          return <pre className="grid w-full" {...rest} />;
+        pre: ({ node, children, ...props }): any => {
+          return (
+            <pre className="grid w-full" {...props}>
+              {children}
+            </pre>
+          );
         },
-        code(props) {
-          const { children, className, node, ...rest } = props;
+        code: ({ node, className, children, ...props }): any => {
           const match = /language-(\w+)/.exec(className || "");
           const language = match ? match[1] : "text";
           const capitalizedLanguage =
@@ -79,7 +104,7 @@ export default function MarkdownContainer({ children }: { children: string }) {
               children={children}
             />
           ) : (
-            <code {...rest} className="text-sm font-semibold">
+            <code {...props} className="contents text-sm font-semibold">
               {children}
             </code>
           );

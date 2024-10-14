@@ -24,7 +24,6 @@ export default async function searchForImages({
       url.searchParams.append("country", country);
     }
 
-    console.log("URL:", url);
     const response = await fetch(url, {
       method: "GET",
       headers: {
