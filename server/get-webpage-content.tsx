@@ -14,6 +14,14 @@ export default async function getWebpageContents(urls: string[]) {
     const response = await tvly.extract(urls);
     const results = response.results;
 
+    console.log("Results: ", results);
+    // trim the content to 5000 characters
+    results.forEach((result: { rawContent: string }) => {
+      if (result.rawContent.length > 5000) {
+        result.rawContent = result.rawContent.substring(0, 5000);
+      }
+    });
+
     return results;
   } catch (error) {
     console.log("Error: ", error);

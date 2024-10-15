@@ -61,7 +61,7 @@ export default function WebResultContent({
                     alt={result.title}
                     width={16}
                     height={16}
-                    className="rounded-full"
+                    className="h-4 w-4 rounded-full"
                   />
                 ))}
               </span>

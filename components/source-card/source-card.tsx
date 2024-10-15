@@ -42,7 +42,7 @@ export default function SourceCard({
             alt={title}
             width={16}
             height={16}
-            className="rounded-full"
+            className="h-4 w-4 rounded-full"
           />
           <h5 className="overflow-hidden text-ellipsis whitespace-nowrap text-xs">
             {author}
