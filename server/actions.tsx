@@ -25,10 +25,11 @@ import getWebResults from "@/server/get-web-results";
 import getNewsResults from "@/server/get-news-results";
 import searchForImages, { ImageResult } from "./search-for-images";
 import searchForMovies from "@/server/search-for-movies";
-import searchForGifs, { GifResult } from "@/server/search-for-gifs";
-import getWebpageContents from "@/server/get-webpage-content";
+import searchForNowPlayingMovies from "@/server/search-for-now-playing-movies";
 import getMovieGenres from "@/server/get-movie-genres";
 import getMovieRegions from "@/server/get-movie-regions";
+import searchForGifs, { GifResult } from "@/server/search-for-gifs";
+import getWebpageContents from "@/server/get-webpage-content";
 
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
 import Spinner from "@/components/spinner";
@@ -56,6 +57,7 @@ import {
   Units,
   getMovieGenresRequestSchema,
   getMovieRegionsRequestSchema,
+  searchForNowPlayingMoviesRequestSchema,
 } from "@/libs/schema";
 
 const groq = createOpenAI({
@@ -81,6 +83,11 @@ function getModelFromModelVariable(modelVariable: string) {
   }
 }
 
+function getTodaysDate() {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+}
+
 export async function continueConversation(
   content: string,
   attachment?: any,
@@ -94,6 +101,7 @@ export async function continueConversation(
   const modelVariable = aiState.get().currentModelVariable;
   const model: LanguageModelV1 = getModelFromModelVariable(modelVariable);
   const location = aiState.get().location?.coordinates;
+  const todaysDate = getTodaysDate();
 
   if (attachment) {
     aiState.update({
@@ -141,6 +149,7 @@ export async function continueConversation(
         system: `
           You are an AI designed to help users with their queries. You can perform tools like searching the web,
           help users find information from the web, get the weather or find out the latest news.
+          Today's date is ${todaysDate}.
           If asked to describe an image or asked about an image that the user has been provided, assume the user is visually impaired and provide a description of the image.
           If you need to get the coordinates of a location, you can use the tool \`get_coordinates_from_location\`.
           If you need to get the name of a location based on the latitude and longitude, you can use the tool \`get_location_from_coordinates\`.
@@ -153,10 +162,12 @@ export async function continueConversation(
           If someone asks you to search the web for news on a given topic, you can use the tool \`get_news_web_results\`. After getting the results, you should call the \`get_webpage_content\` tool.
           You should call the \`get_webpage_content\` after getting results from the \`get_web_results\` or \`get_news_web_results\` tools.
           If someone asks a question about movies, you can use the tool \`search_for_movies\`.
+          If someone asks you about the top rated movies, you can use the tool \`search_for_movies\`.
+          If someone asks you to search for movies that came out recently use the tool \`search_for_now_playing_movies\`.
+          Use the tool \`get_movie_genres\` to get a mapping of movie genres to their respective IDs for use in the \`search_for_movies\` tool.
           If someone asks you to find a gif, you can use the tool \`search_for_gifs\`.
           When you have called the \`search_for_images\` tools, only reply with some suggested related search queries. Do not show each image in your response.
           When you have called the \`search_for_gifs\` tools, only reply with some suggested related search queries. Do not show each gif in your response.
-          Use the tool \`get_movie_genres\` to get a mapping of movie genres to their respective IDs for use in the \`search_for_movies\` tool.
           When you have called the \`search_for_movies\` tools, Recommend the top 3 movies. Do not show each movie in your response. Do not show images of the movie in your response
           Do not try to use any other tools that are not mentioned here.
           If it is appropriate to use a tool, you can use the tool to get the information. You do not need to explain the tool to the user.
@@ -322,14 +333,15 @@ export async function continueConversation(
               return result;
             },
           }),
-
           search_for_movies: tool({
-            description: "Search for movies based on an input",
+            description:
+              "Search for movies based genres, release date, popularity, and more",
             parameters: searchForMoviesRequestSchema,
             execute: async function ({
               page,
-              releaseDateGreaterThan,
-              releaseDateLessThan,
+              region,
+              minDate,
+              maxDate,
               sortBy,
               voteAverageGreaterThan,
               voteAverageLessThan,
@@ -344,8 +356,9 @@ export async function continueConversation(
               );
               const result = await searchForMovies({
                 page,
-                releaseDateGreaterThan,
-                releaseDateLessThan,
+                region,
+                minDate,
+                maxDate,
                 sortBy,
                 voteAverageGreaterThan,
                 voteAverageLessThan,
@@ -356,8 +369,24 @@ export async function continueConversation(
               return result;
             },
           }),
+          search_for_now_playing_movies: tool({
+            description: "Search for movies that are currently playing",
+            parameters: searchForNowPlayingMoviesRequestSchema,
+            execute: async function ({ page, region }) {
+              contentStream.update(
+                <div className="animate-text_loading">
+                  Searching for movies now playing...
+                </div>,
+              );
+              const result = await searchForNowPlayingMovies({
+                page,
+                region,
+              });
+              return result;
+            },
+          }),
         },
-        maxSteps: 5,
+        maxSteps: 10,
 
         onStepFinish({ toolCalls, toolResults, usage }) {
           console.log("step finished");
@@ -541,6 +570,21 @@ export async function continueConversation(
                 displayContent = (
                   <div className="flex flex-col gap-8">
                     {displayContent}
+                    {Array.isArray(part.result) ? (
+                      <MovieCardGroup movies={part.result} />
+                    ) : (
+                      <div>{part.result.error}</div>
+                    )}
+                  </div>
+                );
+                contentStream.update(<Spinner />);
+                displayStream.update(displayContent);
+                break;
+              }
+              case "search_for_now_playing_movies": {
+                displayContent = (
+                  <div className="flex flex-col gap-8">
+                    {displayContent}
 
                     {Array.isArray(part.result) ? (
                       <MovieCardGroup movies={part.result} />
@@ -604,6 +648,7 @@ export async function continueConversation(
 export async function createExampleMessages() {
   "use server";
   const aiState = getMutableAIState<typeof AI>();
+  const todaysDate = getTodaysDate();
 
   const modelVariable = aiState.get().currentModelVariable;
   const model: LanguageModelV1 = getModelFromModelVariable(modelVariable);
@@ -619,6 +664,7 @@ export async function createExampleMessages() {
         output: "array",
         system: `
         You generate fun and engaging examples messages to inspire the user to start a conversation with the LLM assistant.
+        Today's date is ${todaysDate}.
         The LLM assistant has the following capabilities:
         - 🗞️ Search for news on the web for a given topic
         - 🔎 Search the web for information on a given topic or for a specific query

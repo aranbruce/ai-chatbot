@@ -2,7 +2,9 @@ export default async function getMovieGenres() {
   console.log("Request received for get-movie-genres action");
 
   try {
-    const url = new URL(`https://api.themoviedb.org/3/genre/movie/list`);
+    const url = new URL(
+      `https://api.themoviedb.org/3/genre/movie/list?language=en-US`,
+    );
     const headers = {
       Accept: "application/json",
       Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,

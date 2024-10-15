@@ -49,9 +49,9 @@ export default function MarkdownContainer({ children }: { children: string }) {
         },
         li: ({ node, children, ...props }: any) => {
           return (
-            <div className="contents" {...props}>
+            <span className="inline-flex" {...props}>
               {children}
-            </div>
+            </span>
           );
         },
         strong: ({ node, children, ...props }: any) => {
