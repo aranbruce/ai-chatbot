@@ -1,4 +1,4 @@
-import { Movie } from "@/server/search-for-movies";
+import { Movie } from "@/components/movie-card/movie-card";
 import MovieCard from "./movie-card";
 
 export default function MovieCardGroup({ movies }: { movies: Movie[] }) {

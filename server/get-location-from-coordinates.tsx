@@ -9,7 +9,6 @@ export default async function getLocationFromCoordinates({
   latitude,
   longitude,
 }: GetLocationFromCoordinatesRequest) {
-  "use server";
   try {
     console.log("Request received for get-location-from-coordinates action");
 

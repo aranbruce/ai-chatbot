@@ -239,18 +239,29 @@ export const getMovieGenresRequestSchema = z.object({});
 
 export type GetMovieGenresRequest = z.infer<typeof getMovieGenresRequestSchema>;
 
+export const getMovieRegionsRequestSchema = z.object({});
+
+export type GetMovieRegionsRequest = z.infer<
+  typeof getMovieRegionsRequestSchema
+>;
+
 export const searchForMoviesRequestSchema = z.object({
   page: z
     .number()
     .optional()
     .describe("The page of the search results to return"),
-  releaseDateGreaterThan: z
+  region: z
+    .string()
+    .describe(
+      "The country code of the region to get the movies for. If you know the user's location, you can use this to get the movies playing in their region. The string should match an option returned by the `get-movie-regions` action",
+    ),
+  minDate: z
     .date()
     .optional()
     .describe(
-      "The release date of the movies to return. Only movies released after this date will be returned",
+      "The release date of the movies to return. Only movies released after this date will be returned. This can be used to search for recent movies",
     ),
-  releaseDateLessThan: z
+  maxDate: z
     .date()
     .optional()
     .describe(
@@ -310,6 +321,22 @@ export const searchForMoviesRequestSchema = z.object({
 
 export type SearchForMoviesRequest = z.infer<
   typeof searchForMoviesRequestSchema
+>;
+
+export const searchForNowPlayingMoviesRequestSchema = z.object({
+  page: z
+    .number()
+    .optional()
+    .describe("The page of the search results to return"),
+  region: z
+    .string()
+    .describe(
+      "The country code of the region to get the movies for. If you know the user's location, you can use this to get the movies playing in their region. The string should match an option returned by the `get-movie-regions` action",
+    ),
+});
+
+export type SearchForNowPlayingMoviesRequest = z.infer<
+  typeof searchForNowPlayingMoviesRequestSchema
 >;
 
 export const searchForGifsRequestSchema = z.object({

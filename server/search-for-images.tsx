@@ -12,9 +12,6 @@ export default async function searchForImages({
   country,
   count = 5,
 }: SearchForImagesRequest) {
-  "use server";
-  console.log("Request received for search_for_images action");
-
   try {
     const url = new URL(
       `https://api.search.brave.com/res/v1/images/search?q=${query}&count=${count}`,

@@ -1,28 +1,11 @@
-"use server";
-
+import { Movie } from "@/components/movie-card/movie-card";
 import { SearchForMoviesRequest } from "@/libs/schema";
 
-export type Movie = {
-  adult: boolean;
-  backdropPath: string;
-  genreIds: number[];
-  id: number;
-  originalLanguage: string;
-  originalTitle: string;
-  overview: string;
-  popularity: number;
-  posterPath: string;
-  releaseDate: string;
-  title: string;
-  video: boolean;
-  voteAverage: number;
-  voteCount: number;
-};
-
-export default async function searchFormMovies({
+export default async function searchForMovies({
   page,
-  releaseDateGreaterThan,
-  releaseDateLessThan,
+  region,
+  minDate,
+  maxDate,
   sortBy,
   voteAverageGreaterThan,
   voteAverageLessThan,
@@ -32,8 +15,8 @@ export default async function searchFormMovies({
   withoutGenres,
   year,
 }: SearchForMoviesRequest) {
-  "use server";
   console.log("Request received for search-for-movies action");
+  console.log("region:", region);
 
   // transform genreIds from an array of numbers to a string with | between each number
   let genreIdsString = "";
@@ -48,28 +31,24 @@ export default async function searchFormMovies({
   }
 
   if (!voteCountGreaterThan) {
-    voteCountGreaterThan = 100;
+    voteCountGreaterThan = 200;
   }
 
   try {
     let url = new URL(
       `https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US`,
     );
-
     if (page) {
       url.searchParams.append("page", page.toString());
     }
-    if (releaseDateGreaterThan) {
-      url.searchParams.append(
-        "release_date.gte",
-        releaseDateGreaterThan.toISOString(),
-      );
+    if (region) {
+      url.searchParams.append("region", region);
     }
-    if (releaseDateLessThan) {
-      url.searchParams.append(
-        "release_date.lte",
-        releaseDateLessThan.toISOString(),
-      );
+    if (minDate) {
+      url.searchParams.append("release_date.gte", minDate.toISOString());
+    }
+    if (maxDate) {
+      url.searchParams.append("release_date.lte", maxDate.toISOString());
     }
     if (sortBy) {
       url.searchParams.append("sort_by", sortByString);

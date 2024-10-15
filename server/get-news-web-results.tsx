@@ -8,7 +8,6 @@ export default async function getNewsWebResults({
   count = 8,
   offset,
 }: GetWebResultsRequest) {
-  "use server";
   console.log("Request received for get_news_results action");
 
   let freshnessParam = "";

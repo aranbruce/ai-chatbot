@@ -13,7 +13,6 @@ import useFileUpload from "@/libs/hooks/use-file-upload";
 
 import type { ClientMessage, AIState } from "@/app/ai";
 import useLocation from "@/libs/hooks/use-location";
-import MovieCard from "./movie-card/movie-card";
 
 export default function Chat() {
   const [inputValue, setInputValue] = useState("");

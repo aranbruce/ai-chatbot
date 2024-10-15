@@ -34,7 +34,10 @@ export default function MarkdownContainer({ children }: { children: string }) {
         },
         ol: ({ node, children, ...props }: any) => {
           return (
-            <div className="flex flex-col flex-wrap gap-4" {...props}>
+            <div
+              className="flex flex-col flex-wrap gap-4 whitespace-normal"
+              {...props}
+            >
               {children}
             </div>
           );
@@ -42,14 +45,17 @@ export default function MarkdownContainer({ children }: { children: string }) {
 
         ul: ({ node, children, ...props }: any) => {
           return (
-            <div className="flex flex-col flex-wrap gap-4" {...props}>
+            <div
+              className="flex flex-col flex-wrap gap-4 whitespace-normal"
+              {...props}
+            >
               {children}
             </div>
           );
         },
         li: ({ node, children, ...props }: any) => {
           return (
-            <div className="contents" {...props}>
+            <div className="h-auto whitespace-normal" {...props}>
               {children}
             </div>
           );

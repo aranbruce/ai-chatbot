@@ -3,8 +3,6 @@ const { tavily } = require("@tavily/core");
 const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
 export default async function getWebpageContents(urls: string[]) {
-  "use server";
-
   console.log("Request received for get webpage contents action");
   console.log("URLs: ", urls);
 
@@ -15,6 +13,14 @@ export default async function getWebpageContents(urls: string[]) {
 
     const response = await tvly.extract(urls);
     const results = response.results;
+
+    console.log("Results: ", results);
+    // trim the content to 5000 characters
+    results.forEach((result: { rawContent: string }) => {
+      if (result.rawContent.length > 5000) {
+        result.rawContent = result.rawContent.substring(0, 5000);
+      }
+    });
 
     return results;
   } catch (error) {

@@ -1,5 +1,3 @@
-"use server";
-
 import { SearchForGifsRequest } from "@/libs/schema";
 
 export type GifResult = {
@@ -14,8 +12,6 @@ export default async function search_for_gifs({
   offset,
   rating,
 }: SearchForGifsRequest) {
-  "use server";
-
   // call giphy API
   let url = new URL(
     `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${query}&limit=${limit}&rating=g&lang=en&bundle=messaging_non_clips`,
