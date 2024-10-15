@@ -1,8 +1,10 @@
-export default async function getMovieGenres() {
-  console.log("Request received for get-movie-genres action");
+export default async function getMovieRegions() {
+  console.log("Request received for get-movie-regions action");
 
   try {
-    const url = new URL(`https://api.themoviedb.org/3/genre/movie/list`);
+    const url = new URL(
+      `https://api.themoviedb.org/3/watch/providers/regions?language=en-US`,
+    );
     const headers = {
       Accept: "application/json",
       Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,

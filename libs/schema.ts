@@ -239,6 +239,12 @@ export const getMovieGenresRequestSchema = z.object({});
 
 export type GetMovieGenresRequest = z.infer<typeof getMovieGenresRequestSchema>;
 
+export const getMovieRegionsRequestSchema = z.object({});
+
+export type GetMovieRegionsRequest = z.infer<
+  typeof getMovieRegionsRequestSchema
+>;
+
 export const searchForMoviesRequestSchema = z.object({
   page: z
     .number()

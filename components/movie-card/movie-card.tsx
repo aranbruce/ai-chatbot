@@ -1,5 +1,21 @@
-import { Movie } from "@/server/search-for-movies";
 import Image from "next/image";
+
+export type Movie = {
+  adult: boolean;
+  backdropPath: string;
+  genreIds: number[];
+  id: number;
+  originalLanguage: string;
+  originalTitle: string;
+  overview: string;
+  popularity: number;
+  posterPath: string;
+  releaseDate: string;
+  title: string;
+  video: boolean;
+  voteAverage: number;
+  voteCount: number;
+};
 
 export default function MovieCard({
   id,

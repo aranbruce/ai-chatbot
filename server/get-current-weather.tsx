@@ -1,5 +1,3 @@
-"use server";
-
 import { GetCurrentWeatherRequest } from "@/libs/schema";
 import getCoordinates from "./get-coordinates-from-location";
 
@@ -8,7 +6,6 @@ export default async function getCurrentWeather({
   countryCode,
   units,
 }: GetCurrentWeatherRequest) {
-  "use server";
   console.log("Request received for get-current-weather action");
 
   if (!units || (units !== "metric" && units !== "imperial")) {

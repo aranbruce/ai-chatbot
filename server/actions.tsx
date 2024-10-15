@@ -27,6 +27,8 @@ import searchForImages, { ImageResult } from "./search-for-images";
 import searchForMovies from "@/server/search-for-movies";
 import searchForGifs, { GifResult } from "@/server/search-for-gifs";
 import getWebpageContents from "@/server/get-webpage-content";
+import getMovieGenres from "@/server/get-movie-genres";
+import getMovieRegions from "@/server/get-movie-regions";
 
 import CurrentWeatherCard from "@/components/current-weather/current-weather-card";
 import Spinner from "@/components/spinner";
@@ -53,8 +55,8 @@ import {
   getNewsResultsRequestSchema,
   Units,
   getMovieGenresRequestSchema,
+  getMovieRegionsRequestSchema,
 } from "@/libs/schema";
-import getMovieGenres from "./get-movie-genres";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -308,6 +310,15 @@ export async function continueConversation(
             parameters: getMovieGenresRequestSchema,
             execute: async function () {
               const result = await getMovieGenres();
+              return result;
+            },
+          }),
+          get_movie_regions: tool({
+            description:
+              "Get a list of the countries that can be used in the search_for_movies tool",
+            parameters: getMovieRegionsRequestSchema,
+            execute: async function () {
+              const result = await getMovieRegions();
               return result;
             },
           }),

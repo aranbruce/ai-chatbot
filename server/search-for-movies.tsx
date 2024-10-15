@@ -1,23 +1,5 @@
-"use server";
-
+import { Movie } from "@/components/movie-card/movie-card";
 import { SearchForMoviesRequest } from "@/libs/schema";
-
-export type Movie = {
-  adult: boolean;
-  backdropPath: string;
-  genreIds: number[];
-  id: number;
-  originalLanguage: string;
-  originalTitle: string;
-  overview: string;
-  popularity: number;
-  posterPath: string;
-  releaseDate: string;
-  title: string;
-  video: boolean;
-  voteAverage: number;
-  voteCount: number;
-};
 
 export default async function searchFormMovies({
   page,
@@ -32,7 +14,6 @@ export default async function searchFormMovies({
   withoutGenres,
   year,
 }: SearchForMoviesRequest) {
-  "use server";
   console.log("Request received for search-for-movies action");
 
   // transform genreIds from an array of numbers to a string with | between each number
