@@ -39,7 +39,7 @@ export default function SourceCard({
           </h5>
         </div>
       </a>
-      <div className="absolute left-0 top-full z-10 mt-2 hidden w-64 flex-col gap-2 rounded-md bg-white p-4 shadow-lg shadow-md transition group-hover:flex dark:bg-zinc-700">
+      <div className="absolute left-0 top-full z-10 mt-2 hidden w-64 flex-col gap-2 rounded-md bg-white p-4 shadow-lg transition group-hover:flex dark:bg-zinc-700">
         <h4 className="text-sm font-semibold">{title}</h4>
         {date && (
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
